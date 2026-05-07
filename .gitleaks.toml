@@ -1,0 +1,12 @@
+title = "a2a gitleaks configuration"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+targetRules = ["generic-api-key"]
+description = "wake proof matrix failCell scenario codes are not credentials"
+condition = "AND"
+regexTarget = "line"
+paths = ['''^packages/broker/src/core/wake-proof-matrix\.ts$''']
+regexes = ['''failCell\(fixture, wakeKey, "S[1-5]_[A-Z_]+",''']

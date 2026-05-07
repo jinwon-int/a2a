@@ -6,6 +6,7 @@
 
 - [ ] `npm ci --ignore-scripts --include=dev`
 - [ ] `npm run check`
+- [ ] `npm run scan:public-readiness`
 
 ## Safety checklist
 
@@ -16,4 +17,4 @@
 
 ## Related issues
 
-- Parent: #12
+- Parent/issue:

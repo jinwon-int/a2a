@@ -1,1 +1,3 @@
-# CODEOWNERS placeholder. Add real public maintainer/team owners before repository visibility review.
+# Interim private visibility-review owner. This is not a public maintainer roster.
+# Replace with the approved public maintainer team before any repository visibility change.
+* @jinon86

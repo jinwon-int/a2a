@@ -53,9 +53,9 @@ See [R3 Secret / History Scan Disposition](./security/r3-secret-history-disposit
 
 The original source repositories and histories are not approved for public exposure as-is. Public review is scoped to the sanitized/squash monorepo candidate only.
 
-## Review ownership draft
+## Review ownership
 
-`CODEOWNERS` is currently a private placeholder and must be replaced with actual maintainers or teams before any public release.
+`CODEOWNERS` now records an interim private visibility-review owner so the file is no longer an empty placeholder. This is not a public maintainer roster; replace it with the approved public maintainer team before any repository visibility change.
 
 ## License decision
 

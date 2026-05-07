@@ -4,7 +4,7 @@ This repository is private until every gate below is closed with evidence.
 
 ## NO-GO gates
 
-- [ ] License/NOTICE decision approved and committed.
+- [x] License decision approved and committed: MIT. NOTICE is not required for MIT unless future third-party notices require it.
 - [ ] Secret and history scan clean or explicitly dispositioned with redacted evidence.
 - [ ] Private topology, host names, local paths, Telegram/provider IDs, and real-looking fake credentials removed from public docs/examples.
 - [ ] Broker, plugin, runner, contracts, and examples import via sanitized/squash import.
@@ -22,3 +22,7 @@ This repository is private until every gate below is closed with evidence.
 ## Review ownership draft
 
 `CODEOWNERS` is currently a private placeholder and must be replaced with actual maintainers or teams before any public release.
+
+## License decision
+
+Operator decision for R2 gate #6: use MIT License for the A2A monorepo candidate. Public visibility remains blocked until the rest of this readiness gate is closed.

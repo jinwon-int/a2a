@@ -37,12 +37,15 @@ A peer missing the required scope fails closed before task creation or evidence 
 }
 ```
 
+`requestedTeamId` is the authenticated requesting/source team, not a grant to attach destination workers. The destination side remains defined by `destinationBrokerId` and `brokerOfRecord`; worker routing and terminal state mutation stay under the destination broker's own policy.
+
 Required invariants:
 
 1. `brokerOfRecord` equals `destinationBrokerId`.
 2. `idempotencyKey` identifies one logical handoff. Replays with the same logical envelope return the existing destination task.
 3. Reuse of an idempotency key for a different source/destination/team/link is a conflict, not a second dispatch.
 4. Peer identity must match `sourceBrokerId` and have `handoff:create`.
+5. Peer team identity must match `requestedTeamId`; a handoff must fail closed if the source broker tries to authenticate as the destination team.
 
 ## Status/result relay
 

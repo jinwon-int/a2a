@@ -63,6 +63,9 @@ describe("broker handoff protocol contract", () => {
 
     const wrongBroker = ledger.request({ ...seoseoPeer, brokerId: "gwakga" }, baseRequest);
     assert.deepEqual(wrongBroker, { status: "refused", reason: "peer broker mismatch: expected seoseo" });
+
+    const destinationTeamAsSource = ledger.request({ ...seoseoPeer, teamId: "team2" }, baseRequest);
+    assert.deepEqual(destinationTeamAsSource, { status: "refused", reason: "peer team mismatch: expected team1" });
   });
 
   it("enforces destination broker as broker of record", () => {

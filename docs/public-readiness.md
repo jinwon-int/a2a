@@ -36,6 +36,11 @@ Final local validation on the candidate tree passed at `2026-05-07T14:57:00Z`:
 - [x] Release notes state no deploy/restart/provider send/DB mutation/terminal ACK/visibility change was performed unless explicitly approved.
 - [ ] Explicit operator approval for public repository visibility.
 - [ ] Final runner PR/CI evidence for this closeout refresh.
+- [ ] R4 external secret/history scanner evidence from `npm run scan:external-secrets`, or explicit Block evidence that no supported scanner was available in the operator environment.
+
+## R4 evidence lane
+
+See [R4 External Scan and Release Dry-Run Freeze](./security/r4-external-scan-and-freeze.md). R4 remains a dry-run evidence lane only: keep the repository private, use redacted evidence, and do not publish npm/Docker artifacts or create a public release.
 
 ## R3 closeout validation
 

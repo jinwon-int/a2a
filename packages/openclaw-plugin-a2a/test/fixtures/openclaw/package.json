@@ -1,0 +1,9 @@
+{
+  "name": "openclaw",
+  "version": "0.0.0-test-peer",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./plugin-sdk/plugin-entry": "./plugin-sdk/plugin-entry.js"
+  }
+}

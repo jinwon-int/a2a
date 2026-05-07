@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { spawnSync } from 'node:child_process';
 const deny = [
   { kind: 'runtime-bootstrap', re: /^(AGENTS|SOUL|USER|TOOLS|HEARTBEAT|IDENTITY)\.md$/ },
   { kind: 'openclaw-state', re: /^\.openclaw\// },
@@ -18,8 +19,16 @@ function walk(dir) {
   }
   return out;
 }
+function candidateFiles() {
+  const git = spawnSync('git', ['ls-files', '--cached', '--others', '--exclude-standard', '-z'], {
+    cwd: process.cwd(),
+    encoding: 'utf8',
+  });
+  if (git.status === 0) return git.stdout.split('\0').filter(Boolean);
+  return walk(process.cwd());
+}
 const findings = [];
-for (const file of walk(process.cwd())) {
+for (const file of candidateFiles()) {
   for (const rule of deny) {
     if (rule.re.test(file)) findings.push({ kind: rule.kind, file });
   }

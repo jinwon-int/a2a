@@ -65,6 +65,12 @@ Final R4 local validation on the closeout refresh passed at `2026-05-07T20:19:47
 
 This R4 closeout refresh performed only redacted repository evidence updates and local validation. It did **not** perform any repository visibility change, release, deploy, Gateway/broker/worker restart, production database mutation, live provider/Telegram send, terminal-outbox ACK, secret rotation, secret disclosure, history rewrite, or force-push.
 
+## Team1 P0 libero aggregate closeout framework
+
+Issue `#44` uses the read-only `npm run libero:public-preflight-closeout -- --input <redacted-evidence.json> --markdown` framework to aggregate the required `bangtong`, `sogyo`, and `nosuk` lanes before any public visibility decision. The framework fails closed as `Waiting` when any sibling lane is still active or missing, and as `Block` when terminal lane evidence, scanner evidence, safety flags, or approval separation are unresolved.
+
+A public visibility **GO** must not be declared unless both local public-readiness and external secret/history scanner evidence are clean, the repository remains private up to the decision point, and operator approval is explicitly separated from any visibility execution step. Without explicit visibility approval from 진원님, the aggregate decision remains **NO-GO** even when all lanes and scanners are clean.
+
 ## NO-GO gates
 
 - [x] License decision approved and committed: MIT. NOTICE is not required for MIT unless future third-party notices require it.

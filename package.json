@@ -14,8 +14,9 @@
     "check:compatibility-baselines": "node scripts/check-compatibility-baselines.mjs",
     "scan:public-readiness": "node scripts/public-readiness-scan.mjs",
     "scan:external-secrets": "node scripts/external-secret-scan.mjs",
+    "libero:public-preflight-closeout": "node scripts/libero-public-preflight-closeout.mjs",
     "test": "npm run check",
-    "test:release-gate": "node --test scripts/check-compatibility-baselines.test.mjs"
+    "test:release-gate": "node --test scripts/check-compatibility-baselines.test.mjs scripts/libero-public-preflight-closeout.test.mjs"
   },
   "license": "MIT"
 }

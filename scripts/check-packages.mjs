@@ -17,20 +17,28 @@ const packages = fs
   .sort();
 
 if (!packages.length) {
-  console.log('package checks skipped: no package manifests yet');
-  process.exit(0);
+  console.error('package checks failed: no package manifests found under packages/');
+  process.exit(1);
 }
 
+const missingChecks = [];
 for (const dir of packages) {
   const manifest = JSON.parse(fs.readFileSync(path.join(root, dir, 'package.json'), 'utf8'));
   if (!manifest.scripts?.check) {
-    console.log(`package check skipped: ${dir} has no check script`);
+    missingChecks.push(dir);
     continue;
   }
   console.log(`package check: ${dir}`);
-  const result = spawnSync('npm', ['--workspace', dir, 'run', 'check', '--if-present'], {
+  const result = spawnSync('npm', ['--workspace', dir, 'run', 'check'], {
     cwd: root,
     stdio: 'inherit',
   });
   if (result.status !== 0) process.exit(result.status ?? 1);
 }
+
+if (missingChecks.length) {
+  console.error(`package checks failed: missing check script in ${missingChecks.join(', ')}`);
+  process.exit(1);
+}
+
+console.log(`package checks ok: ${packages.length} packages`);

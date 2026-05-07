@@ -7,9 +7,10 @@
     "packages/*"
   ],
   "scripts": {
-    "check": "npm run check:layout && npm run scan:public-readiness",
+    "check": "npm run check:layout && npm run check:packages && npm run scan:public-readiness",
     "check:layout": "node scripts/check-layout.mjs",
     "scan:public-readiness": "node scripts/public-readiness-scan.mjs",
-    "test": "npm run check"
+    "test": "npm run check",
+    "check:packages": "node scripts/check-packages.mjs"
   }
 }

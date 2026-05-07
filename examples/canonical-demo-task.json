@@ -1,0 +1,28 @@
+{
+  "intent": "propose_patch",
+  "taskOrigin": "github",
+  "requester": {
+    "id": "operator-node",
+    "kind": "node",
+    "role": "hub"
+  },
+  "target": {
+    "id": "worker-node",
+    "kind": "node",
+    "role": "analyst"
+  },
+  "assignedWorkerId": "worker-node",
+  "payload": {
+    "mode": "github-propose-patch",
+    "repo": "OWNER/REPOSITORY",
+    "issueNumber": 123,
+    "issue": "#123",
+    "issueUrl": "https://github.com/OWNER/REPOSITORY/issues/123",
+    "runId": "demo-run-placeholder"
+  },
+  "policyContext": {
+    "requiresApproval": false,
+    "liveImpact": false,
+    "targetEnvironment": "development"
+  }
+}

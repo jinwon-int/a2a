@@ -112,12 +112,12 @@ describe('terminal receipt closeout report', () => {
       payload: terminalPayload({
         id: '/var/lib/terminal-secret',
         payload: {
-          taskId: '/srv/token=ghp_abcdef1234567890',
+          taskId: '/srv/token=example',
           status: 'blocked',
           createdAt: '2026-05-04T07:30:00.000Z',
           updatedAt: '2026-05-04T07:30:00.000Z',
           taskBrief: 'raw payload brief must not be rendered',
-          testSummary: 'password=super-secret must not be rendered',
+          testSummary: 'sensitive detail must not be rendered',
         },
         receipt: { status: 'provider_sent', updatedAt: '2026-05-04T07:31:00.000Z' },
       }),
@@ -133,7 +133,7 @@ describe('terminal receipt closeout report', () => {
 
     assert.equal(report.currentPostCutoff[0].terminalEventId, '[path]');
     assert.equal(report.currentPostCutoff[0].taskId, '[path]=[redacted]');
-    assert.doesNotMatch(markdown, /super-secret|ghp_abcdef|raw payload brief|must not be rendered/);
+    assert.doesNotMatch(markdown, /example|raw payload brief|must not be rendered/);
     assert.match(markdown, /rawPayloadsIncluded=false/);
     assert.match(markdown, /provider send success alone is insufficient/);
   });

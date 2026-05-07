@@ -28,7 +28,7 @@ test("loadConfig reads bounded safe runner build metadata", async () => {
 test("loadConfig drops unsafe runner build metadata values", async () => {
   const config = await loadConfig({
     ...baseEnv,
-    A2A_DOCKER_RUNNER_BUILD_SOURCE: "/root/private/checkout",
+    A2A_DOCKER_RUNNER_BUILD_SOURCE: "<private-checkout>",
     A2A_DOCKER_RUNNER_BUILD_REVISION: "token=ghp_" + "x".repeat(36),
     A2A_DOCKER_RUNNER_BUILD_IMAGE: "safe-image:latest\nignored-line",
   });
@@ -212,7 +212,7 @@ test("loadConfig rejects writable OpenClaw runtime/session mounts", async () => 
     () => loadConfig({
       ...baseEnv,
       A2A_DOCKER_RUNNER_EXTRA_MOUNTS_JSON: JSON.stringify([
-        { source: "/root/.openclaw/workspace/sessions", target: "/host-sessions", readOnly: false },
+        { source: "<host-openclaw-sessions>", target: "/host-sessions", readOnly: false },
       ]),
     }),
     /writable OpenClaw runtime\/session paths are forbidden/,

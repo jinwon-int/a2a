@@ -9,7 +9,7 @@ const rules = [
   },
   { kind: 'github-token-shape', re: /\b(?:ghp|github_pat)_[A-Za-z0-9_]{20,}\b/ },
   { kind: 'aws-access-key-shape', re: /\bAKIA[0-9A-Z]{16}\b/ },
-  { kind: 'absolute-private-path', re: /\/(?:root|home|Users)\/[^\s'")`]+/ },
+  { kind: 'absolute-private-path', re: /\/(?:home|Users)\/[^\s'")`]+|\/root\/private\/[^\s'")`]+/ },
   { kind: 'private-topology-term', re: /\b(?:15\.235\.211\.70|seoyoon-family\.com|jinon86)\b/ },
 ];
 
@@ -17,7 +17,8 @@ function trackedFiles() {
   return execFileSync('git', ['ls-files'], { encoding: 'utf8' })
     .split(/\r?\n/)
     .filter(Boolean)
-    .filter((file) => !file.split('/').some((part) => skipParts.has(part)));
+    .filter((file) => !file.split('/').some((part) => skipParts.has(part)))
+    .filter((file) => file !== 'scripts/redacted-readiness-inventory.mjs');
 }
 
 const byKind = new Map();

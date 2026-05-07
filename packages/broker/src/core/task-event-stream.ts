@@ -349,6 +349,7 @@ function sanitizeOperatorText(value: string): string {
   return value
     .replace(/\b(?:ghp|gho|ghu|ghs|github_pat|sk|xox[abp])-[-_A-Za-z0-9]+\b/g, "[redacted]")
     .replace(/\b(token|secret|password|api[_-]?key)\s*[:=]\s*\S+/gi, "$1=[redacted]")
+    .replace(/<private-[^>]+>/g, "[path]")
     .replace(/(^|\s)(?:[A-Za-z]:)?\/[\w./-]+/g, "$1[path]")
     .replace(/[\r\n]+/g, " ")
     .replace(/\s+/g, " ")

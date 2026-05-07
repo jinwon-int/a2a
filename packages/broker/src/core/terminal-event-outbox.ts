@@ -536,6 +536,7 @@ function sanitizeSummary(value: unknown): string | undefined {
   return trimmed
     .replace(/\b(?:ghp|gho|ghu|ghs|github_pat|sk|xox[abp])-[-_A-Za-z0-9]+\b/g, "[redacted]")
     .replace(/\b(token|secret|password|api[_-]?key)\s*[:=]\s*\S+/gi, "$1=[redacted]")
+    .replace(/<private-[^>]+>/g, "[path]")
     .replace(/(^|\s)(?:[A-Za-z]:)?\/[\w./-]+/g, "$1[path]")
     .replace(/\s+/g, " ")
     .slice(0, MAX_SUMMARY_CHARS);

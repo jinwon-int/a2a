@@ -1,8 +1,23 @@
 # Public Readiness Gate
 
-Current decision: **ready for operator visibility review; public visibility remains NO-GO**.
+Current decision: **NO-GO/Waiting for public visibility**.
 
-This repository must remain private until an operator explicitly approves a visibility change. This page records redacted review evidence only; it does not authorize repository visibility changes, deploys, service restarts, production database mutations, live provider or Telegram sends, terminal-outbox ACK mutations, secret rotation, secret disclosure, history rewrites, or force-pushes.
+The candidate is not ready for an operator public-visibility approval while the external secret/history scanner lane remains incomplete. This repository must remain private until that blocker is cleared and an operator explicitly approves a visibility change. This page records redacted review evidence only; it does not authorize repository visibility changes, deploys, service restarts, production database mutations, live provider or Telegram sends, terminal-outbox ACK mutations, secret rotation, secret disclosure, history rewrites, or force-pushes.
+
+## Team1 P0 public preflight decision table
+
+Updated for run `team1-a2a-public-p0-20260507T221151Z` at `2026-05-07T22:16:10Z`.
+
+| Decision surface | Current state | Operator decision impact | Evidence |
+|---|---|---|---|
+| Repository visibility | Private; no visibility change performed | **Public visibility NO-GO** until explicit approval after all blockers close | GitHub metadata remains private; docs keep the private/public-readiness boundary |
+| R4 closeout lanes | Closed and merged | Candidate evidence is available for operator review, but does not override the external scanner blocker | R4 lane table below |
+| External secret/history scanner | **Blocked/Waiting**: `npm run scan:external-secrets` failed closed because no supported external scanner was installed in this runner | **NO-GO/Waiting**; install `gitleaks` or `trufflehog` in the operator environment and rerun before public visibility approval | `docs/security/r4-external-scan-and-freeze.md`; local command output is redacted and contains no findings payload |
+| Local public-readiness/release gate | Passed in this run | Supports operator review, but is not a substitute for the external scanner lane | `npm ci --ignore-scripts --include=dev`, `npm run check`, `npm run scan:public-readiness`, `node scripts/redacted-readiness-inventory.mjs`, and `npm run test:release-gate` |
+| Runtime/bootstrap hygiene | Clear for this branch/evidence when only tracked diff files are included | Fail closed if any runtime/bootstrap path enters the branch or evidence | Guard paths: `AGENTS.md`, `SOUL.md`, `USER.md`, `TOOLS.md`, `HEARTBEAT.md`, `IDENTITY.md`, `.openclaw/**` |
+| Public docs/SECURITY/templates/CODEOWNERS/README decision surface | Clear private-candidate and hard NO-GO boundaries remain documented | Ready for operator review once scanner and PR evidence blockers are cleared; public visibility remains **NO-GO** now | `README.md`, `SECURITY.md`, `.github/ISSUE_TEMPLATE/*`, `.github/pull_request_template.md`, `CODEOWNERS`, this page |
+
+Explicit state split: the documentation surface is **ready for operator review**, but the repository is **not ready for public visibility**. The active decision is **NO-GO/Waiting** because the external scanner lane is incomplete.
 
 ## R3 operator review state
 

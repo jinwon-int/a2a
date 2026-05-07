@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { execFileSync } from 'node:child_process';
 const deny = [
   { kind: 'runtime-bootstrap', re: /^(AGENTS|SOUL|USER|TOOLS|HEARTBEAT|IDENTITY)\.md$/ },
   { kind: 'openclaw-state', re: /^\.openclaw\// },
@@ -7,6 +8,19 @@ const deny = [
   { kind: 'github-token-shape', re: /\b(ghp|github_pat)_[A-Za-z0-9_]{20,}\b/ },
 ];
 const skipDirs = new Set(['.git', 'node_modules', 'dist', 'coverage']);
+function candidateFiles() {
+  try {
+    return execFileSync('git', ['ls-files', '--cached', '--others', '--exclude-standard'], {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    })
+      .split(/\r?\n/)
+      .filter(Boolean)
+      .sort();
+  } catch {
+    return walk(process.cwd()).sort();
+  }
+}
 function walk(dir) {
   const out = [];
   for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -19,7 +33,7 @@ function walk(dir) {
   return out;
 }
 const findings = [];
-for (const file of walk(process.cwd())) {
+for (const file of candidateFiles()) {
   for (const rule of deny) {
     if (rule.re.test(file)) findings.push({ kind: rule.kind, file });
   }

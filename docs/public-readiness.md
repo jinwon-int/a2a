@@ -10,6 +10,7 @@ This repository is private until every gate below is closed with evidence.
 - [ ] Broker, plugin, runner, contracts, and examples import via sanitized/squash import.
 - [ ] Integrated CI passes: install, build/check, unit tests, public-readiness scan, no-live smoke where available.
 - [ ] Compatibility matrix names exact broker/plugin/runner/OpenClaw baselines.
+- [ ] Shared A2A contracts document Done/Block/PR terminal semantics, provider-send versus ACK boundaries, and worker registration/read-model assumptions.
 - [ ] Release notes state no deploy/restart/provider send/DB mutation/terminal ACK/visibility change was performed unless explicitly approved.
 
 ## Current source repos

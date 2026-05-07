@@ -64,6 +64,10 @@ This R4 closeout refresh performed only redacted repository evidence updates and
 - [ ] Final runner PR/CI evidence for this closeout refresh.
 - [ ] R4 external secret/history scanner evidence from `npm run scan:external-secrets`, or explicit Block evidence that no supported scanner was available in the operator environment.
 
+## Approval-gated transition plan
+
+See [Approval-Gated Public Transition Smoke Plan](./public-transition-smoke-plan.md) for the exact post-approval checklist. The plan is documentation only: keep the repository private unless 진원님 explicitly approves a later visibility transition, use redacted evidence, and do not publish npm/Docker artifacts, create a public release, deploy, restart services, mutate production data, send provider/Telegram messages, ACK terminal outbox records, rotate/disclose secrets, rewrite history, or force-push.
+
 ## R4 evidence lane
 
 See [R4 External Scan and Release Dry-Run Freeze](./security/r4-external-scan-and-freeze.md). R4 remains a dry-run evidence lane only: keep the repository private, use redacted evidence, and do not publish npm/Docker artifacts or create a public release.

@@ -24,6 +24,32 @@ Final local validation on the candidate tree passed at `2026-05-07T14:57:00Z`:
 - GitHub repository metadata: `jinwon-int/a2a` remains private.
 - Runtime/bootstrap hygiene: no tracked or unignored runtime/bootstrap context paths are entering this branch or evidence; root public-readiness scan reported no findings.
 
+## R4 final closeout state
+
+Team1 R4 prerequisite lanes are closed and merged:
+
+| Lane | State | Merged PR |
+|---|---|---|
+| `#32` | Closed | `#38` |
+| `#33` | Closed | `#36` |
+| `#34` | Closed | `#37` |
+
+Final R4 closeout decision: **ready for operator visibility decision; public visibility remains NO-GO** until 진원님 explicitly approves a repository visibility change. GitHub repository metadata was verified private during this closeout refresh.
+
+Final closeout PR for `#35` is this task PR, with parent tracking in `#31`.
+
+Final R4 local validation on the closeout refresh passed at `2026-05-07T20:19:47Z` unless noted:
+
+- `npm ci --ignore-scripts --include=dev`: passed.
+- `npm run scan:public-readiness`: passed with no findings.
+- `npm run check`: passed; release gate completed layout, package checks, public-readiness scan, and compatibility-baseline validation.
+- `node scripts/redacted-readiness-inventory.mjs`: passed with redacted metadata only; total `2` finding classes remained for operator disposition (`absolute-private-path`, `private-topology-term`) with no matched values printed.
+- `npm run test:release-gate`: passed `3/3`.
+- `npm run scan:external-secrets`: blocked because no supported external scanner (`gitleaks` or `trufflehog`) was installed in this runner; this remains fail-closed external scanner evidence, not a substitute scan.
+- Runtime/bootstrap hygiene: no tracked or unignored `AGENTS.md`, `SOUL.md`, `USER.md`, `TOOLS.md`, `HEARTBEAT.md`, `IDENTITY.md`, or `.openclaw/**` paths enter this branch or evidence.
+
+This R4 closeout refresh performed only redacted repository evidence updates and local validation. It did **not** perform any repository visibility change, release, deploy, Gateway/broker/worker restart, production database mutation, live provider/Telegram send, terminal-outbox ACK, secret rotation, secret disclosure, history rewrite, or force-push.
+
 ## NO-GO gates
 
 - [x] License decision approved and committed: MIT. NOTICE is not required for MIT unless future third-party notices require it.

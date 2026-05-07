@@ -1,0 +1,40 @@
+name: Public-readiness task
+about: Track work toward safe public-readiness gates
+labels: [public-readiness]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template for private/public-readiness work. Public visibility remains blocked until every gate is complete and explicitly approved.
+  - type: input
+    id: gate
+    attributes:
+      label: Readiness gate
+      placeholder: Secret/history scan disposition
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: Describe the focused safe change.
+    validations:
+      required: true
+  - type: textarea
+    id: verification
+    attributes:
+      label: Expected verification
+      placeholder: npm ci --ignore-scripts --include=dev; npm run check
+    validations:
+      required: true
+  - type: checkboxes
+    id: no-go
+    attributes:
+      label: NO-GO boundary
+      options:
+        - label: This task does not require changing repository visibility.
+          required: true
+        - label: This task does not require production deploys, service restarts, production DB/outbox mutation, live provider/Telegram sends, secret rotation/disclosure, history rewrite, or force push.
+          required: true
+        - label: Evidence will be redacted and will not include OpenClaw runtime/bootstrap files.
+          required: true

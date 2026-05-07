@@ -1,0 +1,10 @@
+# Draft review ownership for the private A2A monorepo candidate.
+# Replace with actual GitHub teams/users before public release.
+
+* @jinon86
+/packages/broker/ @jinon86
+/packages/openclaw-plugin-a2a/ @jinon86
+/packages/docker-runner/ @jinon86
+/contracts/ @jinon86
+/docs/ @jinon86
+/.github/workflows/ @jinon86

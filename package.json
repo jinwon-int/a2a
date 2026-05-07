@@ -13,6 +13,7 @@
     "check:packages": "node scripts/check-packages.mjs",
     "check:compatibility-baselines": "node scripts/check-compatibility-baselines.mjs",
     "scan:public-readiness": "node scripts/public-readiness-scan.mjs",
+    "scan:external-secrets": "node scripts/external-secret-scan.mjs",
     "test": "npm run check",
     "test:release-gate": "node --test scripts/check-compatibility-baselines.test.mjs"
   },

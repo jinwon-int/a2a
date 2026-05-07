@@ -22,6 +22,16 @@ npm run check
 3. `npm run scan:public-readiness` — runtime/bootstrap files, token-shaped literals, and unsafe secret assignments must be absent from tracked or unignored candidate files.
 4. `node scripts/check-compatibility-baselines.mjs` — compatibility matrix rows must carry exact current baselines and must not retain unsupported baseline placeholders.
 
+## External secret/history scan
+
+R4 adds an operator-run external scan wrapper:
+
+```sh
+npm run scan:external-secrets
+```
+
+The wrapper runs supported redacted scanners when available (`gitleaks` and/or `trufflehog`) and fails closed when neither scanner is installed. See [R4 External Scan and Release Dry-Run Freeze](./security/r4-external-scan-and-freeze.md) for the redacted evidence template and dry-run boundary.
+
 ## No-live smoke boundary
 
 Focused smoke tests used by this gate must be mock/offline checks unless an operator explicitly authorizes a live lane. In particular, the release gate must not:

@@ -17,6 +17,13 @@ docs/                            # public docs, migration notes, release gates
 .github/workflows/               # integrated CI gates
 ```
 
+
+## Public-safe demo and release notes
+
+- [Canonical demo](docs/canonical-demo.md) — no-live reference flow from OpenClaw operator to GitHub PR evidence.
+- [Known limitations](docs/known-limitations.md) — alpha boundary, support policy, and safety limits.
+- [R3 release notes draft](docs/release-notes-r3.md) — private/public-readiness candidate notes.
+
 ## Import policy
 
 Default import mode is **sanitized/squash import**, not full private history preservation.

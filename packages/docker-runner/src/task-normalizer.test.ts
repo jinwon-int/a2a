@@ -319,14 +319,14 @@ test("cross-repo closing ref uses owner/repo#N format in PR body", () => {
     id: "cross-repo-issue",
     intent: "propose_patch",
     mode: "github-propose-patch",
-    repo: "jinon86/other-repo",
+    repo: "example-org/other-repo",
     baseBranch: "main",
-    issueUrl: "https://github.com/jinon86/test-repo/issues/7",
+    issueUrl: "https://github.com/example-org/test-repo/issues/7",
   });
 
   const pipeline = task.commands[1] ?? "";
   const prBody = extractPrBodyFromPipeline(pipeline);
-  assert.ok(prBody.includes("Closes jinon86/test-repo#7"), `Expected cross-repo closing ref, got: ${prBody}`);
+  assert.ok(prBody.includes("Closes example-org/test-repo#7"), `Expected cross-repo closing ref, got: ${prBody}`);
   assert.ok(!prBody.includes("Closes #7"), "Should not use bare #N for cross-repo issue");
 });
 
@@ -335,15 +335,15 @@ test("same-repo closing ref uses bare #N format in PR body", () => {
     id: "same-repo-issue",
     intent: "propose_patch",
     mode: "github-propose-patch",
-    repo: "jinon86/test-repo",
+    repo: "example-org/test-repo",
     baseBranch: "main",
-    issueUrl: "https://github.com/jinon86/test-repo/issues/12",
+    issueUrl: "https://github.com/example-org/test-repo/issues/12",
   });
 
   const pipeline = task.commands[1] ?? "";
   const prBody = extractPrBodyFromPipeline(pipeline);
   assert.ok(prBody.includes("Closes #12"), "Expected bare #N closing ref for same-repo issue");
-  assert.ok(!prBody.includes("Closes jinon86/test-repo#12"), "Should not use full org/repo#N for same-repo");
+  assert.ok(!prBody.includes("Closes example-org/test-repo#12"), "Should not use full org/repo#N for same-repo");
 });
 
 test("no Closes keyword in PR body when issueUrl is absent", () => {
@@ -351,7 +351,7 @@ test("no Closes keyword in PR body when issueUrl is absent", () => {
     id: "no-issue-url",
     intent: "propose_patch",
     mode: "github-propose-patch",
-    repo: "jinon86/test-repo",
+    repo: "example-org/test-repo",
     baseBranch: "main",
     prompt: "Fix a bug.",
   });
@@ -366,16 +366,16 @@ test("PR body contains issue URL and requestedBy when set", () => {
     id: "with-requester",
     intent: "propose_patch",
     mode: "github-propose-patch",
-    repo: "jinon86/test-repo",
+    repo: "example-org/test-repo",
     baseBranch: "main",
     requestedBy: "jinwon",
-    issueUrl: "https://github.com/jinon86/test-repo/issues/3",
+    issueUrl: "https://github.com/example-org/test-repo/issues/3",
   });
 
   const pipeline = task.commands[1] ?? "";
   const prBody = extractPrBodyFromPipeline(pipeline);
   assert.ok(prBody.includes("jinwon"), "PR body should include requestedBy");
-  assert.ok(prBody.includes("https://github.com/jinon86/test-repo/issues/3"), "PR body should include issue URL");
+  assert.ok(prBody.includes("https://github.com/example-org/test-repo/issues/3"), "PR body should include issue URL");
 });
 
 test("PR body is written to pr-body.md artifact path", () => {
@@ -383,7 +383,7 @@ test("PR body is written to pr-body.md artifact path", () => {
     id: "pr-body-path",
     intent: "propose_patch",
     mode: "github-propose-patch",
-    repo: "jinon86/test-repo",
+    repo: "example-org/test-repo",
     baseBranch: "main",
   });
 
@@ -397,9 +397,9 @@ test("PR body heredoc uses quoted delimiter to prevent shell expansion", () => {
     id: "heredoc-safety",
     intent: "propose_patch",
     mode: "github-propose-patch",
-    repo: "jinon86/test-repo",
+    repo: "example-org/test-repo",
     baseBranch: "main",
-    issueUrl: "https://github.com/jinon86/test-repo/issues/1",
+    issueUrl: "https://github.com/example-org/test-repo/issues/1",
     prompt: "Fix: add $VARIABLE handling and `backtick` support.",
   });
 
@@ -416,7 +416,7 @@ test("no gh issue comment in pipeline when issueUrl is absent", () => {
     id: "no-issue-comment",
     intent: "propose_patch",
     mode: "github-propose-patch",
-    repo: "jinon86/test-repo",
+    repo: "example-org/test-repo",
     baseBranch: "main",
   });
 
@@ -429,9 +429,9 @@ test("issue comment uses --body-file for safety, not inline --body arg", () => {
     id: "issue-comment-bodyfile",
     intent: "propose_patch",
     mode: "github-propose-patch",
-    repo: "jinon86/test-repo",
+    repo: "example-org/test-repo",
     baseBranch: "main",
-    issueUrl: "https://github.com/jinon86/test-repo/issues/20",
+    issueUrl: "https://github.com/example-org/test-repo/issues/20",
   });
 
   const pipeline = task.commands[1] ?? "";
@@ -448,16 +448,16 @@ test("issue URL is single-quoted in gh issue comment for shell metacharacter saf
     id: "url-quoting",
     intent: "propose_patch",
     mode: "github-propose-patch",
-    repo: "jinon86/test-repo",
+    repo: "example-org/test-repo",
     baseBranch: "main",
-    issueUrl: "https://github.com/jinon86/test-repo/issues/5",
+    issueUrl: "https://github.com/example-org/test-repo/issues/5",
   });
 
   const pipeline = task.commands[1] ?? "";
   const ghCommentIdx = pipeline.indexOf("gh issue comment");
   const ghCommentLine = pipeline.slice(ghCommentIdx, pipeline.indexOf("\n", ghCommentIdx));
   assert.ok(
-    ghCommentLine.includes("'https://github.com/jinon86/test-repo/issues/5'"),
+    ghCommentLine.includes("'https://github.com/example-org/test-repo/issues/5'"),
     `Issue URL must be single-quoted in gh issue comment, got: ${ghCommentLine}`,
   );
 });
@@ -469,9 +469,9 @@ test("issue URL single quote is shell-escaped in gh issue comment (defensive met
     id: "singlequote-url",
     intent: "propose_patch",
     mode: "github-propose-patch",
-    repo: "jinon86/test-repo",
+    repo: "example-org/test-repo",
     baseBranch: "main",
-    issueUrl: "https://github.com/jinon86/test-repo/issues/5'x",
+    issueUrl: "https://github.com/example-org/test-repo/issues/5'x",
   });
 
   const pipeline = task.commands[1] ?? "";
@@ -481,7 +481,7 @@ test("issue URL single quote is shell-escaped in gh issue comment (defensive met
   assert.ok(ghCommentLine.includes("'\\''"), `Single quote in URL must be POSIX-escaped, got: ${ghCommentLine}`);
   // The fully-escaped URL argument must appear in one piece
   assert.ok(
-    ghCommentLine.includes("'https://github.com/jinon86/test-repo/issues/5'\\''x'"),
+    ghCommentLine.includes("'https://github.com/example-org/test-repo/issues/5'\\''x'"),
     `Expected full POSIX-escaped URL in gh issue comment line, got: ${ghCommentLine}`,
   );
 });

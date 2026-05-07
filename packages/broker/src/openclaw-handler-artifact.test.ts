@@ -1410,11 +1410,11 @@ import { readFileSync } from "node:fs";
 const taskPath = process.argv.at(-1);
 const task = JSON.parse(readFileSync(taskPath, "utf8"));
 if (task.preset !== "openclaw-plugin-a2a-dev") throw new Error("expected plugin preset");
-console.log(JSON.stringify({ ok: true, taskId: task.id, status: "completed", workDir: "/tmp/work-fixture", artifacts: [], prUrl: "https://github.com/jinon86/openclaw-plugin-a2a/pull/2" }));
+console.log(JSON.stringify({ ok: true, taskId: task.id, status: "completed", workDir: "/tmp/work-fixture", artifacts: [], prUrl: "https://github.com/example-org/openclaw-plugin-a2a/pull/2" }));
 `);
 
     const task = githubTask();
-    task.payload.repo = "jinon86/openclaw-plugin-a2a";
+    task.payload.repo = "example-org/openclaw-plugin-a2a";
     const result = spawnSync(process.execPath, [handlerPath], {
       input: JSON.stringify(task),
       encoding: "utf8",
@@ -1429,7 +1429,7 @@ console.log(JSON.stringify({ ok: true, taskId: task.id, status: "completed", wor
 
     assert.equal(result.status, 0, result.stderr);
     const payload = JSON.parse(result.stdout);
-    assert.equal(payload.result.output.github.prUrl, "https://github.com/jinon86/openclaw-plugin-a2a/pull/2");
+    assert.equal(payload.result.output.github.prUrl, "https://github.com/example-org/openclaw-plugin-a2a/pull/2");
   } finally {
     rmSync(tempDir, { recursive: true, force: true });
   }

@@ -215,7 +215,7 @@ describe("TaskEventStream", () => {
       payload: {
         githubRepo: "acme/example",
         githubIssueNumber: 217,
-        githubIssueTitle: "Broker receipt/evidence gate token=ghp_do_not_leak /home/alice/secret",
+        githubIssueTitle: "Broker receipt/evidence gate token=ghp_do_not_leak <private-path>",
         sessionPrompt: "do-not-leak",
       },
     });
@@ -226,7 +226,7 @@ describe("TaskEventStream", () => {
       output: {
         prUrl: "https://github.com/acme/example/pull/9",
         doneUrl: "https://github.com/acme/example/issues/217#issuecomment-1",
-        privatePath: "/home/alice/secret",
+        privatePath: "<private-path>",
         testSummary: { status: "passed", total: 3, passed: 3, summary: "npm test ok\nno raw logs" },
       },
     });
@@ -254,7 +254,7 @@ describe("TaskEventStream", () => {
     assert.ok(!serialized.includes("sessionPrompt"));
     assert.ok(!serialized.includes("do-not-leak"));
     assert.ok(!serialized.includes("privatePath"));
-    assert.ok(!serialized.includes("/home/alice"));
+    assert.ok(!serialized.includes("<private-home>"));
   });
 });
 
@@ -420,7 +420,7 @@ describe("TerminalTaskEventOutbox", () => {
           status: "passed",
           total: 1,
           passed: 1,
-          summary: "operator push proof ok password=hunter2 /home/operator/session.txt",
+          summary: "operator push proof ok password=hunter2 <private-session-path>",
         },
         rawLog: "do-not-leak",
       },
@@ -467,7 +467,7 @@ describe("TerminalTaskEventOutbox", () => {
       "hunter2",
       "/work/private",
       "/work/repo",
-      "/home/operator",
+      "<private-operator-home>",
     ]) {
       assert.ok(!serialized.toLowerCase().includes(forbidden.toLowerCase()), forbidden);
     }

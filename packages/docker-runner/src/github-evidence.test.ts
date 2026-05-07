@@ -325,7 +325,7 @@ test("block comment includes artifact manifest, command logs, reason and next ac
     ok: false,
     taskId: "t1",
     status: "failed",
-    workDir: "/root/.openclaw/workspace/private-task/run-1",
+    workDir: "<private-task-workdir>",
     exitCode: 1,
     signal: null,
     stdout: "notice=no_patch_command_configured\nusing /root/.config/gh/hosts.yml",
@@ -359,7 +359,7 @@ test("block comment includes artifact manifest, command logs, reason and next ac
         image: "ghcr.io/jinwon-int/a2a-docker-runner:abc123",
       },
     },
-    error: "raw error from /root/.openclaw/workspace/private-task/run-1",
+    error: "raw error from <private-task-workdir>",
   });
 
   assert.match(body, /### 사유/);

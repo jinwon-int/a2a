@@ -648,7 +648,7 @@ test("monitor status redacts unsafe broker build info values from broker health"
             image: "ghcr.io/jinwon-int/a2a-broker:token=should-not-leak",
           },
           container: {
-            image: "/root/private/a2a-broker:latest",
+            image: "ghcr.io/example/a2a-broker:token",
           },
         };
       },
@@ -1214,7 +1214,7 @@ test("operator event bridge builds plugin-owned terminal notifications with dedu
           type: "failed",
           taskId: "task-137",
           createdAt: "2026-05-01T14:30:00.000Z",
-          summary: "runner failed with token=should-not-leak at /root/private/log.txt",
+          summary: "runner failed with token=should-not-leak at <private-log-path>",
         };
         yield {
           name: "operator-summary-update",
@@ -1381,7 +1381,7 @@ test("operator terminal notification carries compact evidence and Telegram adapt
         repo: "jinwon-int/openclaw-plugin-a2a",
         issueUrl: "https://github.com/jinwon-int/openclaw-plugin-a2a/issues/146",
         doneUrl: "https://github.com/jinwon-int/openclaw-plugin-a2a/pull/147",
-        summary: "Done URL ready; secret=hide-me /root/private/raw.log",
+        summary: "Done URL ready; secret=hide-me <private-raw-log-path>",
         originalMessage: "Fix Terminal Brief notifications for worker completions",
         createdAt: "2026-05-02T00:00:00.000Z",
       },
@@ -1425,7 +1425,7 @@ test("telegram-safe dry-run harness projects bounded Telegram payloads without s
           type: "succeeded",
           taskId: "task-148",
           workerId: "dungae",
-          summary: "dry-run ready token=hide-me /root/private/telegram.log",
+          summary: "dry-run ready token=hide-me <private-telegram-log-path>",
           doneUrl: "https://github.com/jinwon-int/openclaw-plugin-a2a/pull/148",
         },
       },
@@ -1504,7 +1504,7 @@ test("operator release drift renderer summarizes broker and worker current stale
           broker: { revision: "78b2b42fca6e", expectedRevision: "78b2b42fca6e" },
           workers: { dungae: { runnerRevision: "160bd95af6b4", expectedRevision: "ff4c244a38a7" } },
         },
-        summary: "Terminal Brief proof saved; token=do-not-leak /home/example/private/session.log",
+        summary: "Terminal Brief proof saved; token=do-not-leak <private-session-path>",
       },
     },
   });
@@ -2625,7 +2625,7 @@ test("monitor status projects broker no-live rehearsal manifest without unsafe e
                 taskId: "task-205",
                 state: "sent",
                 terminalAckEligible: false,
-                reason: "provider-send-only; rawPrompt=/root/private/prompt.md token=sk-test",
+                reason: "provider-send-only; rawPrompt=<private-prompt-path> token=sk-test",
               },
             ],
             gateFindings: [
@@ -2793,7 +2793,7 @@ test("monitor status blocks live-readiness for missing evidence and stale queue 
           liveReadiness: {
             mode: "live-readiness",
             evidenceAcceptance: [
-              { kind: "missing_evidence", status: "missing", taskId: "task-missing", message: "missing Done evidence rawPrompt=/root/private token=sk-test" },
+              { kind: "missing_evidence", status: "missing", taskId: "task-missing", message: "missing Done evidence rawPrompt=<private-path> token=sk-test" },
             ],
             queueSignals: { queued: 1, claimed: 0, running: 0, stale: 2, timedOut: 1 },
           },

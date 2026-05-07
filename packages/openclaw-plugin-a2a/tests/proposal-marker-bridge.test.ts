@@ -228,10 +228,10 @@ test("includes source metadata when provided", () => {
 
 test("redacts secret values in summaries", () => {
   const store = new ProposalDeduplicationStore();
-  const event = makeWorkerEvent("Block", "api_key: sk-1234567890abcdef blocked");
+  const event = makeWorkerEvent("Block", "api_key: placeholder blocked");
   const result = bridgeWorkerEventToProposal(event, "conf:repo:94", store);
   assert.ok("event" in result);
-  assert.ok(!result.event.summary?.includes("sk-1234567890abcdef"));
+  assert.equal(result.event.summary, "api_key: [redacted] blocked");
 });
 
 test("redacts code blocks in summaries", () => {

@@ -13,6 +13,10 @@ This repository is private until every gate below is closed with evidence.
 - [ ] Shared A2A contracts document Done/Block/PR terminal semantics, provider-send versus ACK boundaries, and worker registration/read-model assumptions.
 - [ ] Release notes state no deploy/restart/provider send/DB mutation/terminal ACK/visibility change was performed unless explicitly approved.
 
+## R3 security disposition
+
+See [R3 Secret / History Scan Disposition](./security/r3-secret-history-disposition.md). The current monorepo root scanner has no token-shaped findings after Team1 recovery, but public visibility remains blocked until source-history exposure is avoided and private topology/path fixtures are sanitized or dispositioned.
+
 ## Current source repos
 
 - `jinwon-int/a2a-broker`

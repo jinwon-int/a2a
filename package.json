@@ -1,0 +1,15 @@
+{
+  "name": "@jinwon-int/a2a-monorepo",
+  "private": true,
+  "description": "Private A2A monorepo candidate for broker, OpenClaw plugin, Docker runner, contracts, docs, and examples.",
+  "packageManager": "npm@10.9.4",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "check": "npm run check:layout && npm run scan:public-readiness",
+    "check:layout": "node scripts/check-layout.mjs",
+    "scan:public-readiness": "node scripts/public-readiness-scan.mjs",
+    "test": "npm run check"
+  }
+}

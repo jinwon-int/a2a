@@ -1,0 +1,14 @@
+.git/
+node_modules/
+dist/
+coverage/
+.env
+.env.*
+.openclaw/
+AGENTS.md
+SOUL.md
+USER.md
+TOOLS.md
+HEARTBEAT.md
+IDENTITY.md
+*.log

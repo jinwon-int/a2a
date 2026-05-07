@@ -1,0 +1,48 @@
+{
+  "name": "a2a-broker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Minimal standalone A2A broker scaffold",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "npm run build && node --test dist/*.test.js dist/core/*.test.js dist/a2a/*.test.js dist/github/*.test.js dist/workers/*.test.js",
+    "reconcile_closeout": "node scripts/closeout-reconcile.mjs",
+    "command_center_closeout_checklist": "node scripts/command-center-closeout-checklist.mjs",
+    "test:worker": "npm run build && node --test dist/worker.test.js",
+    "start": "node dist/server.js",
+    "start:worker": "node dist/worker.js",
+    "smoke:restart-recovery": "node scripts/restart-recovery-smoke.mjs",
+    "smoke:docker-broker": "node scripts/docker-broker-live-smoke.mjs",
+    "smoke:docker-broker:fleet": "node scripts/docker-broker-live-smoke.mjs --fleet --require-workers bangtong,dungae,sogyo,nosuk",
+    "export:sqlite": "node scripts/export-sqlite-state.mjs",
+    "dev": "node --watch --enable-source-maps src/server.ts",
+    "dev:worker": "node --watch --enable-source-maps src/worker.ts",
+    "release_gate": "node scripts/release-gate.mjs",
+    "docker_runtime_preflight": "node scripts/docker-runtime-preflight.mjs",
+    "rollout_guard": "node scripts/worker-artifact-rollout-guard.mjs",
+    "terminal_outbox_preflight": "node scripts/terminal-outbox-preflight.mjs",
+    "live_readiness_canary": "node scripts/broker-live-readiness-canary.mjs",
+    "receipt_gate_canary": "node scripts/receipt-gate-canary.mjs",
+    "terminal_receipt_gap_matrix": "node scripts/terminal-receipt-gap-matrix.mjs",
+    "lifecycle_proof_evidence": "node scripts/broker-lifecycle-proof-evidence.mjs",
+    "migration_health_gate": "node scripts/broker-migration-health-gate.mjs",
+    "terminal_receipt_closeout_report": "node scripts/terminal-receipt-closeout-report.mjs",
+    "terminal_brief_activation_report": "node scripts/terminal-brief-activation-report.mjs",
+    "test:terminal_brief_activation_report": "node --test scripts/terminal-brief-activation-report.test.mjs",
+    "closeout_release_report": "node scripts/closeout-release-report.mjs",
+    "rehearsal_manifest": "node scripts/broker-rehearsal-manifest.mjs",
+    "scan:public-readiness": "node scripts/public-readiness-scan.mjs",
+    "two_broker_worker_preflight": "node scripts/two-broker-worker-preflight.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^24.6.0",
+    "typescript": "^5.9.3"
+  }
+}

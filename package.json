@@ -1,5 +1,5 @@
 {
-  "name": "@jinwon-int/a2a-monorepo",
+  "name": "@jinwon-int/a2a-plane-monorepo",
   "private": true,
   "description": "Private A2A Plane candidate for broker, adapter plugin, Docker runner, contracts, docs, and examples.",
   "packageManager": "npm@10.9.4",

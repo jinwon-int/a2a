@@ -19,7 +19,7 @@ const baseRequest: BrokerHandoffRequest = {
   destinationBrokerId: "gwakga",
   brokerOfRecord: "gwakga",
   idempotencyKey: "issue-23:team2:docs-slice",
-  sourceIssueUrl: "https://github.com/jinwon-int/a2a/issues/23",
+  sourceIssueUrl: "https://github.com/jinwon-int/a2a-plane/issues/23",
   requestedTeamId: "team1",
   summary: "Team1 requests a Team2 review lane without cross-registering workers.",
 };
@@ -46,7 +46,7 @@ describe("broker handoff protocol contract", () => {
 
     const conflict = ledger.request(seoseoPeer, {
       ...baseRequest,
-      sourceIssueUrl: "https://github.com/jinwon-int/a2a/issues/999",
+      sourceIssueUrl: "https://github.com/jinwon-int/a2a-plane/issues/999",
     });
     assert.equal(conflict.status, "conflict");
     assert.match(conflict.reason, /different logical handoff/);
@@ -90,7 +90,7 @@ describe("broker handoff protocol contract", () => {
     const relayPeer: BrokerPeerIdentity = { ...seoseoPeer, permissions: ["handoff:evidence"] };
     const result = ledger.relayTerminalEvidence(relayPeer, baseRequest.idempotencyKey, {
       kind: "block",
-      url: "https://github.com/jinwon-int/a2a/issues/23#issuecomment-1",
+      url: "https://github.com/jinwon-int/a2a-plane/issues/23#issuecomment-1",
       summary: "Block from /work/private/repo with token=ghp_do_not_leak and no terminal-outbox ACK.",
     });
 
@@ -98,7 +98,7 @@ describe("broker handoff protocol contract", () => {
     assert.equal(result.record.state, "blocked");
     assert.deepEqual(result.record.terminalEvidence, {
       kind: "block",
-      url: "https://github.com/jinwon-int/a2a/issues/23#issuecomment-1",
+      url: "https://github.com/jinwon-int/a2a-plane/issues/23#issuecomment-1",
       summary: "Block from [path] with [redacted] and no terminal-outbox ACK.",
       redacted: true,
     });

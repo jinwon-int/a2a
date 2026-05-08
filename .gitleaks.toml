@@ -1,4 +1,4 @@
-title = "a2a gitleaks configuration"
+title = "a2a-plane gitleaks configuration"
 
 [extend]
 useDefault = true

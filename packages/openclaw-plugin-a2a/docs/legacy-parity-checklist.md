@@ -5,7 +5,7 @@
 > Scope: a2a-broker + openclaw-plugin-a2a only (no archived repo access).
 
 This document captures which lifecycle/status behaviors from the original
-A2A system must be preserved before the archived `jinwon-int/a2a` repo can be
+A2A system must be preserved before the archived legacy monorepo can be
 safely deleted. It is derived by cross-referencing the broker's current
 state machine, the plugin's type mappings, and the regression matrix
 (`docs/regression-matrix.md`).

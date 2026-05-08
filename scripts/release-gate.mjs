@@ -4,6 +4,7 @@ const steps = [
   ['layout', 'npm', ['run', 'check:layout']],
   ['packages', 'npm', ['run', 'check:packages']],
   ['runner-import-smoke', 'npm', ['run', 'check:runner-import-smoke']],
+  ['terminal-brief-routing', 'npm', ['run', 'check:terminal-brief-routing']],
   ['public-readiness', 'npm', ['run', 'scan:public-readiness']],
   ['compatibility-baselines', 'node', ['scripts/check-compatibility-baselines.mjs']],
 ];

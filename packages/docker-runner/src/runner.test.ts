@@ -124,7 +124,7 @@ test("collects artifacts from workDir/artifacts", async () => {
   const task: RunnerTask = {
     id: "artifact-test",
     intent: "propose_patch",
-    commands: ["printf ok"],
+    commands: ["printf ok\nchmod -R a+rwx /work"],
   };
   const config = { ...baseConfig, rootDir: dir, defaultTimeoutMs: 2000 };
 

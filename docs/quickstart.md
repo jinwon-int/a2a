@@ -1,12 +1,18 @@
 # Five-minute local quickstart
 
-This guide is for a disposable local A2A broker plus a dummy/echo worker. It must not be pointed at production brokers, production databases, live provider transports, Telegram accounts, or terminal outboxes.
+This guide is the external-reader smoke path for a disposable local A2A broker plus a dummy/echo worker. It must not be pointed at production brokers, production databases, live provider transports, Telegram accounts, or terminal outboxes.
+
+## What this quickstart proves
+
+- The public monorepo layout, package metadata, and readiness checks are usable from a fresh checkout.
+- A reader can identify the local broker, worker, plugin, contract, and known-limitation entry points without private context.
+- Missing local-only broker or worker commands are blockers to document, not reasons to use production substitutes.
 
 ## Prerequisites
 
 - Node.js 22 or newer
 - npm matching the lockfile
-- a private checkout of this repository
+- a local checkout of this repository
 
 Install dependencies without lifecycle scripts:
 
@@ -80,6 +86,12 @@ Return to the repository root:
 ```bash
 npm run check
 ```
+
+Then review the docs that bound external claims:
+
+- [`contracts/compatibility/matrix.md`](../contracts/compatibility/matrix.md) for supported baseline evidence
+- [`docs/known-limitations.md`](./known-limitations.md) for alpha limits and NO-GO assumptions
+- [`docs/public-readiness.md`](./public-readiness.md) for the current visibility decision gate
 
 The public-readiness scan must remain clean before any PR is opened.
 

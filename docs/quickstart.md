@@ -1,12 +1,12 @@
 # Five-minute local quickstart
 
-This guide is for a disposable local A2A broker plus a dummy/echo worker. It must not be pointed at production brokers, production databases, live provider transports, Telegram accounts, or terminal outboxes.
+This guide is the external-reader path for a disposable local A2A Plane broker plus a dummy/echo worker. A2A Plane is the independent broker/worker project; OpenClaw is used here as the first/reference integration only. Do not point this path at production brokers, production databases, live provider transports, Telegram accounts, or terminal outboxes.
 
 ## Prerequisites
 
 - Node.js 22 or newer
 - npm matching the lockfile
-- a private checkout of this repository
+- a local checkout of this repository
 
 Install dependencies without lifecycle scripts:
 
@@ -14,7 +14,7 @@ Install dependencies without lifecycle scripts:
 npm ci --ignore-scripts --include=dev
 ```
 
-## 1. Run the local broker
+## 1. Run the local A2A Plane broker
 
 From the broker workspace, use the package's documented local start command when available:
 
@@ -40,9 +40,9 @@ npm run worker:echo
 
 If the echo-worker command is absent, the current blocker is: **no public-safe dummy worker entrypoint is documented in this monorepo yet**. That should be fixed before public release rather than using a live worker as a workaround.
 
-## 3. Connect the OpenClaw plugin locally
+## 3. Connect the reference OpenClaw plugin locally
 
-Use placeholder-only configuration for local development:
+Use placeholder-only configuration for local development. This verifies the reference integration path; it does not make OpenClaw a required runtime for A2A Plane itself:
 
 ```json
 {
@@ -90,3 +90,4 @@ Before sharing evidence, confirm:
 - repository visibility remains private
 - no production deploy, Gateway/broker/worker restart, database mutation, provider send, Telegram send, terminal-outbox ACK, secret rotation, history rewrite, or force push occurred
 - evidence is redacted and does not include raw session dumps, private paths, hostnames, tokens, provider IDs, Telegram IDs, or OpenClaw runtime/bootstrap files
+- docs and issue/PR evidence introduce the project as A2A Plane, with OpenClaw described only as the first/reference integration

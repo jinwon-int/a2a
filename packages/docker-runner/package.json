@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": false,
   "type": "module",
-  "description": "Docker/Podman task runner for OpenClaw A2A workers",
+  "description": "Docker/Podman task runner for A2A Plane workers",
   "bin": {
     "a2a-docker-runner": "./dist/cli.js"
   },

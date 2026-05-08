@@ -46,9 +46,16 @@ export type A2AOperatorNotificationDeliveryReceipt = {
   dryRun?: boolean;
 };
 
+export type A2AOperatorNotificationDeliveryFailure = {
+  dedupeKey: string;
+  code: "runtime_adapter_unavailable" | "receipt_runtime_unsupported" | "receipt_confirmation_missing";
+  reason: string;
+};
+
 export type A2AOperatorNotificationAdapter = {
   notify(envelope: A2AOperatorTerminalNotificationEnvelope): Promise<A2AOperatorNotificationDeliveryReceipt | undefined>;
   listReceipts(): A2AOperatorNotificationDeliveryReceipt[];
+  getLastFailure(dedupeKey: string): A2AOperatorNotificationDeliveryFailure | undefined;
 };
 
 export type A2AOperatorNotificationPreflightCheck = {
@@ -94,7 +101,20 @@ export function createA2AOperatorNotificationAdapter(
 
   const safeRuntime = runtime as OperatorNotificationRuntime | undefined;
   const delivered = new Map<string, A2AOperatorNotificationDeliveryReceipt>();
+  const failures = new Map<string, A2AOperatorNotificationDeliveryFailure>();
   const now = deps.now ?? Date.now;
+  const recordFailure = (
+    envelope: A2AOperatorTerminalNotificationEnvelope,
+    code: A2AOperatorNotificationDeliveryFailure["code"],
+    reason: string,
+  ): undefined => {
+    failures.set(envelope.dedupeKey, { dedupeKey: envelope.dedupeKey, code, reason });
+    if (failures.size > MAX_RECEIPTS) {
+      const oldest = failures.keys().next().value;
+      if (oldest) failures.delete(oldest);
+    }
+    return undefined;
+  };
 
   return {
     async notify(envelope) {
@@ -110,10 +130,18 @@ export function createA2AOperatorNotificationAdapter(
       } else {
         const outbound = await safeRuntime?.channel?.outbound?.loadAdapter?.(target.channel as never);
         if (!outbound?.sendText) {
-          return undefined;
+          return recordFailure(
+            envelope,
+            "runtime_adapter_unavailable",
+            `runtime_adapter_unavailable: Gateway runtime ${target.channel} adapter does not expose sendText; terminal ACK remains receipt-gated`,
+          );
         }
         if (!await adapterSupportsCurrentSessionVisibleReceipt(outbound)) {
-          return undefined;
+          return recordFailure(
+            envelope,
+            "receipt_runtime_unsupported",
+            `receipt_runtime_unsupported: Gateway runtime ${target.channel} adapter does not advertise current-session-visible receipt support; live provider send skipped and terminal ACK remains receipt-gated`,
+          );
         }
         const providerResult = await outbound.sendText({
           cfg: config as never,
@@ -134,7 +162,11 @@ export function createA2AOperatorNotificationAdapter(
         });
         const confirmed = readReceiptConfirmationSource(providerResult, target);
         if (!confirmed) {
-          return undefined;
+          return recordFailure(
+            envelope,
+            "receipt_confirmation_missing",
+            "receipt_confirmation_missing: provider send returned without current-session/manual receipt confirmation; terminal ACK remains receipt-gated",
+          );
         }
         confirmationSource = confirmed;
       }
@@ -148,6 +180,7 @@ export function createA2AOperatorNotificationAdapter(
         ...(envelope.dryRun ? { dryRun: true } : {}),
       };
 
+      failures.delete(envelope.dedupeKey);
       delivered.set(envelope.dedupeKey, receipt);
       if (delivered.size > MAX_RECEIPTS) {
         const oldest = delivered.keys().next().value;
@@ -157,6 +190,10 @@ export function createA2AOperatorNotificationAdapter(
     },
     listReceipts() {
       return [...delivered.values()].map((receipt) => ({ ...receipt }));
+    },
+    getLastFailure(dedupeKey) {
+      const failure = failures.get(dedupeKey);
+      return failure ? { ...failure } : undefined;
     },
   };
 }

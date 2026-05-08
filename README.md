@@ -51,6 +51,10 @@ Start with the local-only quickstart:
 
 The quickstart is designed for a disposable local broker and dummy/echo worker. If your checkout does not yet include the runnable broker or worker scripts described there, treat that as a documented blocker rather than substituting production services.
 
+## Promotion-ready copy
+
+Draft announcement text and repository metadata recommendations live in [`docs/promotion-announcement.md`](docs/promotion-announcement.md). Keep that copy alpha/feedback-welcome and do not post it until public-readiness gates are closed and an operator explicitly approves repository visibility.
+
 ## OpenClaw plugin connection example
 
 Use safe placeholders only. Do not paste real broker URLs, tokens, node IDs, Telegram/provider IDs, or host paths into public docs or issue evidence.

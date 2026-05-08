@@ -11,6 +11,7 @@ A2A Plane is an alpha integration candidate, not a production-ready public servi
 - Terminal evidence distinguishes provider acceptance from operator-visible receipt; provider-send success is not terminal ACK.
 - Terminal Brief OpenClaw routing remains activation-blocked until the [R6 no-bypass gates](./r6-terminal-brief-openclaw-routing-synthesis.md) are satisfied after upstream OpenClaw receipt proof.
 - Compatibility claims must name exact broker/plugin/runner/OpenClaw baselines.
+- The OpenClaw Gateway canary adapter is not containerized by this monorepo; it runs inside the selected OpenClaw Gateway runtime. Docker coverage applies to the broker and Docker runner unless a separate Gateway canary container is explicitly prepared.
 
 ## Alpha support policy
 

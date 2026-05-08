@@ -47,12 +47,28 @@ Use placeholder-only configuration for local development. This verifies the refe
 ```json
 {
   "plugins": {
-    "a2a-broker-adapter": {
-      "enabled": true,
-      "brokerUrl": "http://127.0.0.1:8787",
-      "authToken": "<local-dev-token>",
-      "requesterId": "<local-openclaw-node>",
-      "defaultTargetWorker": "<local-echo-worker>"
+    "entries": {
+      "a2a-broker-adapter": {
+        "enabled": true,
+        "config": {
+          "baseUrl": "http://127.0.0.1:8787",
+          "edgeSecret": "${A2A_EDGE_SECRET}",
+          "requester": {
+            "id": "local-openclaw-node",
+            "kind": "node",
+            "role": "operator"
+          },
+          "operatorEvents": {
+            "enabled": false,
+            "notification": {
+              "enabled": false
+            }
+          },
+          "wakeOnTask": {
+            "enabled": false
+          }
+        }
+      }
     }
   }
 }

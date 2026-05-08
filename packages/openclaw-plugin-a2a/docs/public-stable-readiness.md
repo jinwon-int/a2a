@@ -2,6 +2,8 @@
 
 This note documents the public-safe configuration boundary for the OpenClaw A2A plugin adapter. It is intended for operators wiring a private/local `a2a-broker` to OpenClaw without copying host-specific values into docs, examples, or issues.
 
+The adapter is a Gateway plugin canary: it runs in the OpenClaw Gateway plugin runtime to validate OpenClaw-specific method, hook, wake, and operator-monitoring seams. It is not the broker Docker container and it should not manage Docker Compose or systemd ownership for the broker. Use a separate staging/canary Gateway runtime when production-like isolation is required.
+
 ## Public-safe plugin configuration
 
 Use placeholders in shared docs and issue evidence. Do not paste real broker URLs, edge secrets, node IDs, Telegram targets, bot tokens, cookies, or raw runtime dumps.

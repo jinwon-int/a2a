@@ -31,6 +31,24 @@ Current production shape as of 2026-04-30:
 OpenClaw/plugin request → a2a-broker task lifecycle → worker handler → a2a-docker-runner for GitHub patch execution
 ```
 
+## Gateway canary adapter boundary
+
+`a2a-broker-adapter` is a Gateway-side OpenClaw plugin canary, not a Dockerized broker workload.
+It is loaded inside the OpenClaw Gateway plugin runtime so it can verify the OpenClaw-specific seams that cannot be proven by the standalone broker container alone:
+
+- `a2a.task.*`, `a2a.peer.status`, `a2a.alerts.list`, and `a2a.monitor.status` Gateway method ownership;
+- `sessions_send` interception and remote handoff policy before broker dispatch;
+- Wake-on-Task acceptance/coalescing through OpenClaw runtime adapters;
+- operator-event and terminal-outbox projections with receipt-gated notification behavior.
+
+Docker ownership stays with the independent runtime components:
+
+- `packages/broker` / `a2a-broker` owns the broker process and may run under Docker Compose.
+- `packages/docker-runner` owns isolated GitHub patch execution for workers.
+- `packages/openclaw-plugin-a2a` owns only the Gateway adapter boundary and must not start, stop, or manage broker Docker Compose/systemd units.
+
+For production-like validation, prefer a separate staging/canary OpenClaw Gateway process or container with this plugin mounted and isolated state. If only a host-native Gateway is available, enabling this plugin is the canary activation; disabling it must leave the broker container and worker fleet running.
+
 This repo remains the plugin home and compatibility boundary, not the home for all A2A runtime code.
 ## Current scope
 

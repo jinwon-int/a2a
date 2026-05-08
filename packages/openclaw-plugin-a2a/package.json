@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Standalone A2A broker adapter plugin for OpenClaw",
+  "description": "A2A Plane broker adapter plugin for OpenClaw hosts",
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "npm run build && node --test test/*.test.mjs tests/*.test.ts",

@@ -1,19 +1,19 @@
-# A2A Monorepo Candidate
+# A2A Plane
 
-A2A is the private monorepo candidate for the broker, OpenClaw plugin, Docker runner, shared contracts, and public-safe examples used by the OpenClaw A2A task flow.
+A2A Plane is the private monorepo candidate for the broker, OpenClaw plugin, Docker runner, shared contracts, and public-safe examples used by the OpenClaw A2A task flow.
 
 > **Status:** private/public-readiness candidate. Do not make this repository public until every gate in [`docs/public-readiness.md`](docs/public-readiness.md) is closed and an operator explicitly approves the visibility change.
 
-## What A2A does
+## What A2A Plane does
 
-A2A lets an OpenClaw operator hand a task to a broker, route it to a worker, and collect terminal evidence such as `Done`, `Block`, or a pull request link. The stack is intentionally split so each component has a narrow safety boundary:
+A2A Plane lets an OpenClaw operator hand a task to a broker, route it to a worker, and collect terminal evidence such as `Done`, `Block`, or a pull request link. The stack is intentionally split so each component has a narrow safety boundary:
 
 - OpenClaw remains the operator-facing runtime.
 - The A2A broker owns task lifecycle, worker registration, status, and terminal evidence.
 - Workers execute assigned tasks and report evidence back through the broker.
 - The Docker runner provides isolated GitHub patch execution for repository work.
 
-This repository is a consolidation workspace for those components. It is not a production deployment target and it is not public-ready yet.
+This repository is a consolidation workspace for those components. A2A Plane is not a production deployment target and it is not public-ready yet.
 
 ## Component map
 
@@ -30,7 +30,7 @@ docs/                            # public-readiness gates, quickstart, release n
 
 ## Alpha and safety boundary
 
-This monorepo is an alpha private candidate. Treat every example as local-only unless a document says otherwise.
+This A2A Plane monorepo is an alpha private candidate. Treat every example as local-only unless a document says otherwise.
 
 **NO-GO without explicit operator approval:**
 
@@ -50,6 +50,10 @@ Start with the local-only quickstart:
 - [`docs/quickstart.md`](docs/quickstart.md)
 
 The quickstart is designed for a disposable local broker and dummy/echo worker. If your checkout does not yet include the runnable broker or worker scripts described there, treat that as a documented blocker rather than substituting production services.
+
+## Promotion-ready copy
+
+Draft A2A Plane announcement text and repository metadata recommendations live in [`docs/promotion-announcement.md`](docs/promotion-announcement.md). Keep that copy alpha/feedback-welcome and do not post it until public-readiness gates are closed and an operator explicitly approves repository visibility.
 
 ## OpenClaw plugin connection example
 

@@ -4,6 +4,8 @@ The broker projects terminal task lifecycle events into a compact `task.terminal
 
 The broker does **not** call Telegram, OpenClaw main-session delivery, or any other operator transport directly. It only exposes replayable, operator-safe records; the notifier owns polling/SSE consumption, dedupe, acknowledgement, and Telegram/main-session push.
 
+For Terminal Brief operator notices, any prepared best-effort transport must be OpenClaw-routed through outbound lifecycle/notifier surfaces (or terminal-outbox replay). Direct Telegram Bot API, direct provider send, or `curl`-to-Telegram paths are invalid Terminal Brief routes. The broker-side routing contract is deliberately pure/no-live: it can classify a prepared route, but it does not dispatch a provider message.
+
 ## Record shape
 
 Each outbox record contains only:
@@ -50,6 +52,8 @@ Recommended adapter contract from OpenClaw/plugin-notifier to this broker:
 - Manual operator confirmation: `POST /a2a/tasks/terminal-outbox/ack` with `receipt.evidence: "operator_confirmed"` or `"operator_visible"`, which maps to `receipt.status: "operator_visible"`.
 
 Negative test case: a Telegram provider send result shaped like `deliveryState: "provider_accepted"`, `providerAccepted: true`, `operatorVisible: false`, `ackRequired: false`, or any equivalent send-success-only response must remain `receipt.status: "provider_sent"` and must not call the terminal-outbox ACK route.
+
+Until OpenClaw has current-session-visible receipt proof for Terminal Brief notices (openclaw/openclaw#78261), provider accepted/send success is a non-ACK even when the prepared route is OpenClaw outbound lifecycle. A live notification or terminal ACK remains blocked unless the terminal outbox receives explicit current-session/operator-visible receipt evidence.
 
 Safe pre-deploy commands:
 

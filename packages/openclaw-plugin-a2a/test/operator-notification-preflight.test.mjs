@@ -232,6 +232,11 @@ test("operator notification adapter refuses live send without current-session re
     dedupeKey: "no-receipt-runtime",
     code: "receipt_runtime_unsupported",
     reason: "receipt_runtime_unsupported: Gateway runtime telegram adapter does not advertise current-session-visible receipt support; live provider send skipped and terminal ACK remains receipt-gated",
+    outboundLifecycle: {
+      state: "not_attempted",
+      terminalAckEligible: false,
+      reason: "outbound_lifecycle: live Gateway/provider send was not attempted; terminal ACK remains receipt-gated",
+    },
   });
 });
 
@@ -329,4 +334,9 @@ test("operator notification adapter treats provider send success as non-ACK", as
   assert.equal(sends[0].userVisibleReceiptRequired, true);
   assert.equal(receipt, undefined, "provider accepted/sent is not operator-visible ACK evidence");
   assert.deepEqual(adapter.listReceipts(), []);
+  assert.deepEqual(adapter.getLastFailure("provider-only")?.outboundLifecycle, {
+    state: "accepted_non_ack",
+    terminalAckEligible: false,
+    reason: "outbound_lifecycle: Gateway/provider accepted the best-effort Terminal Brief notice; this is non-ACK evidence until current-session-visible receipt proof is available",
+  });
 });

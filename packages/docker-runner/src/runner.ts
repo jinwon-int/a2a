@@ -282,6 +282,8 @@ ${checkoutReposScript(task)}
 cat /work/task.json > /work/artifacts/task.json
 ${runCommandsScript(task)}
 printf 'status=completed\n' | tee -a /work/artifacts/summary.txt
+# Keep host-side cleanup and artifact indexing reliable when the container runs as root.
+chmod -R a+rwX /work/artifacts || true
 `;
 }
 

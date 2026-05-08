@@ -212,7 +212,7 @@ test("loadConfig rejects writable OpenClaw runtime/session mounts", async () => 
     () => loadConfig({
       ...baseEnv,
       A2A_DOCKER_RUNNER_EXTRA_MOUNTS_JSON: JSON.stringify([
-        { source: "<host-openclaw-sessions>", target: "/host-sessions", readOnly: false },
+        { source: "/root/.openclaw/agents/main/sessions", target: "/host-sessions", readOnly: false },
       ]),
     }),
     /writable OpenClaw runtime\/session paths are forbidden/,

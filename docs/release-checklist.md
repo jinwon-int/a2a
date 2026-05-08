@@ -13,6 +13,7 @@ This checklist prepares evidence for an initial `v0.1.0-alpha` or `v0.1.0` opera
 - [ ] GitHub Actions `ci` passes for the exact candidate commit: `https://github.com/jinwon-int/a2a-plane/actions/workflows/ci.yml`.
 - [ ] Fresh local install passes: `npm ci --ignore-scripts --include=dev`.
 - [ ] Root release gate passes: `npm run check`.
+- [ ] Release-gate regression tests pass: `npm run test:release-gate`.
 - [ ] Public-readiness scan passes: `npm run scan:public-readiness`.
 - [ ] External secret/history scan passes: `npm run scan:external-secrets`, or the operator records explicit fail-closed Block evidence if no supported scanner is available.
 

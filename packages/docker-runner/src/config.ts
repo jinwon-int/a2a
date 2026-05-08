@@ -61,6 +61,7 @@ function looksSensitiveOrHostSpecific(value: string): boolean {
   if (/gh[pousr]_[A-Za-z0-9_]{20,}|github_pat_[A-Za-z0-9_]{20,}|sk-[A-Za-z0-9_-]{32,}/i.test(value)) return true;
   if (/(token|password|secret|api[_-]?key)\s*[:=]/i.test(value)) return true;
   if (/^[a-z][a-z0-9+.-]*:\/\/[^/\s]+@/i.test(value)) return true;
+  if (/^<[^>]*(?:private|host|checkout|path|secret)[^>]*>$/i.test(value)) return true;
   if (/^\/(?:home|root|Users|var|opt|srv|tmp)\b/.test(value)) return true;
   return false;
 }
@@ -283,8 +284,7 @@ fi
 # copied in-container config. This copy lives only inside the disposable runner
 # container and is never written to artifacts.
 if [ -n "\${GH_TOKEN:-}" ] && [ -f /root/.openclaw/openclaw.json ]; then
-  env_name=GITHUB_TOKEN
-  export "$env_name=\${GITHUB_TOKEN:-$GH_TOKEN}"
+  export GITHUB_TOKEN
   node <<'A2A_INJECT_GITHUB_TOKEN_FOR_OPENCLAW'
 const fs = require("node:fs");
 const path = "/root/.openclaw/openclaw.json";

@@ -1,5 +1,7 @@
 # A2A Monorepo Candidate
 
+[![ci](https://github.com/jinwon-int/a2a/actions/workflows/ci.yml/badge.svg)](https://github.com/jinwon-int/a2a/actions/workflows/ci.yml)
+
 A2A is the private monorepo candidate for the broker, OpenClaw plugin, Docker runner, shared contracts, and public-safe examples used by the OpenClaw A2A task flow.
 
 > **Status:** private/public-readiness candidate. Do not make this repository public until every gate in [`docs/public-readiness.md`](docs/public-readiness.md) is closed and an operator explicitly approves the visibility change.
@@ -48,6 +50,11 @@ Use redacted evidence in issues, pull requests, logs, and artifacts.
 Start with the local-only quickstart:
 
 - [`docs/quickstart.md`](docs/quickstart.md)
+
+Release decision prep:
+
+- [`docs/release-checklist.md`](docs/release-checklist.md)
+- [`CHANGELOG.md`](CHANGELOG.md)
 
 The quickstart is designed for a disposable local broker and dummy/echo worker. If your checkout does not yet include the runnable broker or worker scripts described there, treat that as a documented blocker rather than substituting production services.
 

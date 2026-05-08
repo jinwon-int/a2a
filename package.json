@@ -11,6 +11,7 @@
     "release-gate": "node scripts/release-gate.mjs",
     "check:layout": "node scripts/check-layout.mjs",
     "check:packages": "node scripts/check-packages.mjs",
+    "check:runner-import-smoke": "node scripts/check-runner-import-smoke.mjs",
     "check:compatibility-baselines": "node scripts/check-compatibility-baselines.mjs",
     "scan:public-readiness": "node scripts/public-readiness-scan.mjs",
     "scan:external-secrets": "node scripts/external-secret-scan.mjs",

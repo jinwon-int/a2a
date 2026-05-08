@@ -1,6 +1,6 @@
 # A2A Plane
 
-[![ci](https://github.com/jinwon-int/a2a/actions/workflows/ci.yml/badge.svg)](https://github.com/jinwon-int/a2a/actions/workflows/ci.yml)
+[![ci](https://github.com/jinwon-int/a2a-plane/actions/workflows/ci.yml/badge.svg)](https://github.com/jinwon-int/a2a-plane/actions/workflows/ci.yml)
 
 A2A Plane is the independent project name for this broker/worker task handoff plane. This private release candidate contains the broker, Docker runner, OpenClaw reference plugin, shared contracts, and public-safe examples used to evaluate A2A Plane from a fresh checkout.
 

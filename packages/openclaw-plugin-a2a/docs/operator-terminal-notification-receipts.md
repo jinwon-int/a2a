@@ -17,6 +17,8 @@ Dry-run projection remains local and may advance dry-run state because it never 
 
 If OpenClaw/core channel receipts expose separate `accepted` and `acknowledged` fields, the plugin treats them as different states. `accepted: true`, `providerAccepted: true`, or `status: "accepted"`/`"sent"` only means the provider/Gateway accepted the send request, so it must not become a terminal-outbox ACK by itself. The same receipt must also carry an explicit operator-visible acknowledgement such as `acknowledged: true` plus `currentSessionVisible: true`, or one of the manual receipt shapes above.
 
+The plugin may retain Gateway/outbound lifecycle evidence for best-effort Terminal Brief notices as `accepted_non_ack`, `sent_non_ack`, or `unknown_non_ack`, but those states are diagnostic only. They are safe to surface in CLI/Gateway status as notice evidence and must not advance live notification cursors or ACK terminal outbox records until current-session-visible receipt proof is available after `openclaw/openclaw#78261`.
+
 ### Monitor/status projection states
 
 `a2a.monitor.status` projects receipt gaps into operator-safe states: `accepted`, `sent`, `provider-delivered-if-known`, `operator-visible`, `timed_out`, `stale`, and `failed`. Only `operator-visible` with current-session/manual confirmation is ACK-eligible. Provider `accepted`, `sent`, or delivery-if-known states remain visible as pending receipt gaps so transport success is never misreported as operator receipt.

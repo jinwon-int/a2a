@@ -46,10 +46,18 @@ export type A2AOperatorNotificationDeliveryReceipt = {
   dryRun?: boolean;
 };
 
+export type A2AOperatorNotificationOutboundLifecycleEvidence = {
+  /** Gateway/provider send state projected as notice evidence only; never terminal ACK evidence. */
+  state: "not_attempted" | "accepted_non_ack" | "sent_non_ack" | "unknown_non_ack";
+  terminalAckEligible: false;
+  reason: string;
+};
+
 export type A2AOperatorNotificationDeliveryFailure = {
   dedupeKey: string;
   code: "runtime_adapter_unavailable" | "receipt_runtime_unsupported" | "receipt_confirmation_missing";
   reason: string;
+  outboundLifecycle: A2AOperatorNotificationOutboundLifecycleEvidence;
 };
 
 export type A2AOperatorNotificationAdapter = {
@@ -107,8 +115,9 @@ export function createA2AOperatorNotificationAdapter(
     envelope: A2AOperatorTerminalNotificationEnvelope,
     code: A2AOperatorNotificationDeliveryFailure["code"],
     reason: string,
+    outboundLifecycle: A2AOperatorNotificationOutboundLifecycleEvidence = buildOutboundLifecycleEvidence(undefined, { attempted: false }),
   ): undefined => {
-    failures.set(envelope.dedupeKey, { dedupeKey: envelope.dedupeKey, code, reason });
+    failures.set(envelope.dedupeKey, { dedupeKey: envelope.dedupeKey, code, reason, outboundLifecycle });
     if (failures.size > MAX_RECEIPTS) {
       const oldest = failures.keys().next().value;
       if (oldest) failures.delete(oldest);
@@ -162,10 +171,12 @@ export function createA2AOperatorNotificationAdapter(
         });
         const confirmed = readReceiptConfirmationSource(providerResult, target);
         if (!confirmed) {
+          const outboundLifecycle = buildOutboundLifecycleEvidence(providerResult, { attempted: true });
           return recordFailure(
             envelope,
             "receipt_confirmation_missing",
-            "receipt_confirmation_missing: provider send returned without current-session/manual receipt confirmation; terminal ACK remains receipt-gated",
+            `${outboundLifecycle.reason}; receipt_confirmation_missing: provider send returned without current-session/manual receipt confirmation; terminal ACK remains receipt-gated`,
+            outboundLifecycle,
           );
         }
         confirmationSource = confirmed;
@@ -557,6 +568,66 @@ function readReceiptConfirmationSource(
   }
 
   return undefined;
+}
+
+export function buildOutboundLifecycleEvidence(
+  value: unknown,
+  options: { attempted: boolean },
+): A2AOperatorNotificationOutboundLifecycleEvidence {
+  if (!options.attempted) {
+    return {
+      state: "not_attempted",
+      terminalAckEligible: false,
+      reason: "outbound_lifecycle: live Gateway/provider send was not attempted; terminal ACK remains receipt-gated",
+    };
+  }
+
+  const status = collectProviderStatusValues(value);
+  const hasAccepted = status.some((item) => ["accepted", "provider_accepted", "queued"].includes(item));
+  const hasSent = status.some((item) => ["sent", "provider_sent", "delivered", "provider-delivered-if-known"].includes(item));
+  if (hasAccepted) {
+    return {
+      state: "accepted_non_ack",
+      terminalAckEligible: false,
+      reason: "outbound_lifecycle: Gateway/provider accepted the best-effort Terminal Brief notice; this is non-ACK evidence until current-session-visible receipt proof is available",
+    };
+  }
+  if (hasSent) {
+    return {
+      state: "sent_non_ack",
+      terminalAckEligible: false,
+      reason: "outbound_lifecycle: Gateway/provider reported the best-effort Terminal Brief notice as sent/delivered-if-known; this is non-ACK evidence until current-session-visible receipt proof is available",
+    };
+  }
+  return {
+    state: "unknown_non_ack",
+    terminalAckEligible: false,
+    reason: "outbound_lifecycle: Gateway/provider returned without current-session-visible receipt proof; terminal ACK remains receipt-gated",
+  };
+}
+
+function collectProviderStatusValues(value: unknown): string[] {
+  const record = asRecord(value);
+  if (!record) return [];
+  const delivery = asRecord(record.delivery);
+  const receipt = asRecord(record.receipt);
+  const confirmation = asRecord(record.confirmation) ?? asRecord(delivery?.confirmation) ?? asRecord(receipt?.confirmation);
+  const candidates = [record, delivery, receipt, confirmation].filter(Boolean) as UnknownRecord[];
+  const values: string[] = [];
+  for (const candidate of candidates) {
+    if (
+      readOptionalBoolean(candidate.accepted) === true ||
+      readOptionalBoolean(candidate.providerAccepted) === true ||
+      readOptionalBoolean(candidate.provider_accepted) === true ||
+      readOptionalBoolean(candidate.sendAccepted) === true ||
+      readOptionalBoolean(candidate.send_accepted) === true
+    ) {
+      values.push("accepted");
+    }
+    const status = readOptionalString(candidate.status) ?? readOptionalString(candidate.providerStatus) ?? readOptionalString(candidate.provider_status) ?? readOptionalString(candidate.lifecycle) ?? readOptionalString(candidate.state);
+    if (status) values.push(status.toLowerCase());
+  }
+  return values;
 }
 
 function normalizeReceiptConfirmationSource(value: string | undefined): A2AOperatorNotificationReceiptConfirmationSource | undefined {

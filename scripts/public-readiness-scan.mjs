@@ -7,6 +7,7 @@ const deny = [
   { kind: 'openclaw-state', re: /^\.openclaw\// },
   { kind: 'secret-assignment', re: /^\s*(?:export\s+)?[A-Z0-9_]*(?:TOKEN|SECRET|PASSWORD|API[_-]?KEY)[A-Z0-9_]*\s*=\s*['"]?(?!<|\$\{|YOUR_|\/path\/to\/)[^'"\s#]{12,}/ },
   { kind: 'github-token-shape', re: /\b(ghp|github_pat)_[A-Za-z0-9_]{20,}\b/ },
+  { kind: 'old-monorepo-surface', re: /(?:github\.com\/jinwon-int\/a2a(?:[\/#]|$)|\bjinwon-int\/a2a(?:[#\s`]|$)|@jinwon-int\/a2a-monorepo\b)/ },
 ];
 const skipDirs = new Set(['.git', 'node_modules', 'dist', 'coverage']);
 

@@ -2,7 +2,7 @@
 
 Status: **Ready for operator visibility review / Public visibility NO-GO**.
 
-This document records redacted closeout evidence for parent issue `jinwon-int/a2a#12` and Team1 libero issue `jinwon-int/a2a#19`. It does not authorize repository visibility changes, deploys, service restarts, production database mutations, live provider or Telegram sends, terminal-outbox ACK mutations, secret rotation, secret disclosure, history rewrites, or force-pushes.
+This document records redacted closeout evidence for parent issue `jinwon-int/a2a-plane#12` and Team1 libero issue `jinwon-int/a2a-plane#19`. It does not authorize repository visibility changes, deploys, service restarts, production database mutations, live provider or Telegram sends, terminal-outbox ACK mutations, secret rotation, secret disclosure, history rewrites, or force-pushes.
 
 ## Current final decision
 
@@ -16,11 +16,11 @@ Public repository visibility remains **NO-GO** until an operator explicitly appr
 
 | Area | Current evidence | Closeout decision | Required next action |
 |---|---|---|---|
-| Repository visibility | GitHub repository metadata reports `jinwon-int/a2a` is `private` with private visibility. | Pass for review | Keep private; do not change visibility without explicit operator approval. |
-| Integrated CI release gate | `jinwon-int/a2a#16` is closed; PR `#29` is merged. Local `npm run check` passed. | Pass for review | Link the runner-created PR/CI run for the final candidate commit when available. |
-| Public README, quickstart, security docs, and templates | `jinwon-int/a2a#17` is closed; PR `#27` is merged. Root public-readiness scan passed with no findings. | Pass for review | Operator review must confirm public wording before visibility change. |
-| Broker-to-broker handoff protocol | `jinwon-int/a2a#23` is closed; PR `#28` is merged. Contract and package checks passed through the release gate. | Pass for review | Preserve handoff evidence and do not enable live handoff exposure without operator approval. |
-| Team1 final closeout lane | `jinwon-int/a2a#19` is closed; PR `#26` is merged. This document refreshes the final closeout state after all child lanes merged. | Pass for review | Use this refreshed evidence in the operator visibility review. |
+| Repository visibility | GitHub repository metadata reports `jinwon-int/a2a-plane` is `private` with private visibility. | Pass for review | Keep private; do not change visibility without explicit operator approval. |
+| Integrated CI release gate | `jinwon-int/a2a-plane#16` is closed; PR `#29` is merged. Local `npm run check` passed. | Pass for review | Link the runner-created PR/CI run for the final candidate commit when available. |
+| Public README, quickstart, security docs, and templates | `jinwon-int/a2a-plane#17` is closed; PR `#27` is merged. Root public-readiness scan passed with no findings. | Pass for review | Operator review must confirm public wording before visibility change. |
+| Broker-to-broker handoff protocol | `jinwon-int/a2a-plane#23` is closed; PR `#28` is merged. Contract and package checks passed through the release gate. | Pass for review | Preserve handoff evidence and do not enable live handoff exposure without operator approval. |
+| Team1 final closeout lane | `jinwon-int/a2a-plane#19` is closed; PR `#26` is merged. This document refreshes the final closeout state after all child lanes merged. | Pass for review | Use this refreshed evidence in the operator visibility review. |
 | Secret/history and readiness inventory | `npm run scan:public-readiness` passed with no findings. `node scripts/redacted-readiness-inventory.mjs` produced redacted metadata only: total `1`, kind `absolute-private-path`, file `packages/openclaw-plugin-a2a/tests/broker-handoff-protocol.test.ts`. | Dispositioned for operator review | Keep root scanner enabled; operator may require an external secret scanner before visibility approval. |
 | Runtime/bootstrap context hygiene | Pre-PR hygiene check found no tracked or unignored runtime/bootstrap context paths entering the branch or evidence. Root public-readiness scan also passed with no runtime/bootstrap findings. | Pass for review | Continue to fail closed if runtime/bootstrap context paths appear in branch changes or public evidence. |
 | Compatibility/release gate | `scripts/check-compatibility-baselines.mjs` passed for Broker, OpenClaw plugin, Docker runner, Shared contracts, and OpenClaw core rows. `npm run test:release-gate` passed `3/3`. | Pass for review | Link final CI after the runner opens the PR. Stable public compatibility claims still require operator approval. |
@@ -29,10 +29,10 @@ Public repository visibility remains **NO-GO** until an operator explicitly appr
 
 | PR | Issue lane | Title | Merged at | Evidence |
 |---|---|---|---|---|
-| `#26` | `#19` | Team1 R3 final public-readiness validation and closeout table | `2026-05-07T14:51:38Z` | `https://github.com/jinwon-int/a2a/pull/26` |
-| `#27` | `#17` | Team1 R3 public README quickstart security docs and templates | `2026-05-07T14:51:42Z` | `https://github.com/jinwon-int/a2a/pull/27` |
-| `#28` | `#23` | A2A broker-to-broker handoff protocol | `2026-05-07T14:51:46Z` | `https://github.com/jinwon-int/a2a/pull/28` |
-| `#29` | `#16` | Team1 R3 integrated CI release gate and compatibility baselines | `2026-05-07T14:51:49Z` | `https://github.com/jinwon-int/a2a/pull/29` |
+| `#26` | `#19` | Team1 R3 final public-readiness validation and closeout table | `2026-05-07T14:51:38Z` | `https://github.com/jinwon-int/a2a-plane/pull/26` |
+| `#27` | `#17` | Team1 R3 public README quickstart security docs and templates | `2026-05-07T14:51:42Z` | `https://github.com/jinwon-int/a2a-plane/pull/27` |
+| `#28` | `#23` | A2A broker-to-broker handoff protocol | `2026-05-07T14:51:46Z` | `https://github.com/jinwon-int/a2a-plane/pull/28` |
+| `#29` | `#16` | Team1 R3 integrated CI release gate and compatibility baselines | `2026-05-07T14:51:49Z` | `https://github.com/jinwon-int/a2a-plane/pull/29` |
 
 ## Final validation commands
 

@@ -7,8 +7,8 @@
 - Import date: 2026-05-07
 - Import method: clean GitHub tarball copy of source `main` into `packages/broker`; private git history was not imported.
 - R1 evidence/blocker reference: https://github.com/jinwon-int/a2a-broker/issues/427
-- R2 monorepo import issue: https://github.com/jinwon-int/a2a/issues/2
-- Parent readiness issue: https://github.com/jinwon-int/a2a/issues/1
+- R2 monorepo import issue: https://github.com/jinwon-int/a2a-plane/issues/2
+- Parent readiness issue: https://github.com/jinwon-int/a2a-plane/issues/1
 
 ---
 

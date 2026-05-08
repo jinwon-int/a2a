@@ -1,6 +1,6 @@
 # Contributing
 
-A2A is currently a private public-readiness candidate. Public contribution flow will be finalized before any visibility change.
+A2A Plane is currently a private public-readiness candidate. Public contribution flow will be finalized before any visibility change.
 
 ## License
 

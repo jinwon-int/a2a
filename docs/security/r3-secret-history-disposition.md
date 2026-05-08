@@ -6,8 +6,8 @@ This document records redacted metadata only. Do not add secret values, private 
 
 ## Source and scope
 
-- Parent issue: `jinwon-int/a2a#12`
-- Team1 safety lane: `jinwon-int/a2a#13`
+- Parent issue: `jinwon-int/a2a-plane#12`
+- Team1 safety lane: `jinwon-int/a2a-plane#13`
 - Current monorepo checks after PRs `#20`, `#21`, and `#22`:
   - `npm ci --ignore-scripts --include=dev`
   - `npm run check`
@@ -17,7 +17,7 @@ Repos considered for R3 public-readiness:
 
 | Repo | Intended public exposure model | Disposition |
 |---|---|---|
-| `jinwon-int/a2a` | Candidate public repository after gates close | Current tree can be sanitized incrementally; visibility remains private. |
+| `jinwon-int/a2a-plane` | Candidate public repository after gates close | Current tree can be sanitized incrementally; visibility remains private. |
 | `jinwon-int/a2a-broker` | Source reference only | Original private history must not be made public as-is. Use sanitized/squash import content only. |
 | `jinwon-int/openclaw-plugin-a2a` | Source reference only | Original private history must not be made public as-is. Use sanitized/squash import content only. |
 | `jinwon-int/a2a-docker-runner` | Source reference only | Original private history must not be made public as-is. Use sanitized/squash import content only. |
@@ -48,7 +48,7 @@ Representative source-history blocker classes:
 
 ## Closeout checklist for `#13`
 
-- [ ] Keep `jinwon-int/a2a` private.
+- [ ] Keep `jinwon-int/a2a-plane` private.
 - [ ] Confirm source repos are **not** made public as-is.
 - [ ] Replace or disposition private topology strings in public-facing docs and examples.
 - [ ] Replace or disposition absolute private path fixtures.

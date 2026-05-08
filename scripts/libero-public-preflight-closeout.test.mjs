@@ -7,9 +7,9 @@ import {
 } from './libero-public-preflight-closeout.mjs';
 
 const URLS = {
-  bangtong: 'https://github.com/jinwon-int/a2a/issues/44#issuecomment-bangtong',
-  sogyo: 'https://github.com/jinwon-int/a2a/pull/45',
-  nosuk: 'https://github.com/jinwon-int/a2a/issues/44#issuecomment-nosuk',
+  bangtong: 'https://github.com/jinwon-int/a2a-plane/issues/44#issuecomment-bangtong',
+  sogyo: 'https://github.com/jinwon-int/a2a-plane/pull/45',
+  nosuk: 'https://github.com/jinwon-int/a2a-plane/issues/44#issuecomment-nosuk',
 };
 
 function cleanEvidence(overrides = {}) {

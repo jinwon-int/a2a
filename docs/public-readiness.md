@@ -36,7 +36,7 @@ Final local validation on the candidate tree passed at `2026-05-07T14:57:00Z`:
 - `npm run check`: passed; release gate completed layout, package checks, public-readiness scan, and compatibility-baseline validation.
 - `node scripts/redacted-readiness-inventory.mjs`: passed and printed redacted metadata only; total `1` finding class remained for operator disposition (`absolute-private-path` in a test fixture path, no matched value printed).
 - `npm run test:release-gate`: passed `3/3`.
-- GitHub repository metadata: `jinwon-int/a2a` remains private.
+- GitHub repository metadata: `jinwon-int/a2a-plane` remains private.
 - Runtime/bootstrap hygiene: no tracked or unignored runtime/bootstrap context paths are entering this branch or evidence; root public-readiness scan reported no findings.
 
 ## R4 final closeout state

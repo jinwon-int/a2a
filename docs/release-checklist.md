@@ -10,7 +10,7 @@ This checklist prepares evidence for an initial `v0.1.0-alpha` or `v0.1.0` opera
 
 ## CI and local gates
 
-- [ ] GitHub Actions `ci` passes for the exact candidate commit: `https://github.com/jinwon-int/a2a/actions/workflows/ci.yml`.
+- [ ] GitHub Actions `ci` passes for the exact candidate commit: `https://github.com/jinwon-int/a2a-plane/actions/workflows/ci.yml`.
 - [ ] Fresh local install passes: `npm ci --ignore-scripts --include=dev`.
 - [ ] Root release gate passes: `npm run check`.
 - [ ] Public-readiness scan passes: `npm run scan:public-readiness`.

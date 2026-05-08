@@ -203,6 +203,7 @@ export function createA2AMonitoringHandlers(
           ? {
               notifyOperator: async (envelope) => {
                 const receipt = await notificationAdapter.notify(envelope);
+                const failure = receipt ? undefined : notificationAdapter.getLastFailure(envelope.dedupeKey);
                 return {
                   ackTerminalEvent: Boolean(receipt && !receipt.dryRun),
                   ...(receipt?.confirmationSource === "current_session_visible" || receipt?.confirmationSource === "manual_operator_receipt"
@@ -210,7 +211,7 @@ export function createA2AMonitoringHandlers(
                     : {}),
                   reason: receipt
                     ? `operator notification receipt confirmed via ${receipt.confirmationSource}`
-                    : "operator notification sent without current-session/manual receipt confirmation",
+                    : failure?.reason ?? "operator notification sent without current-session/manual receipt confirmation",
                 };
               },
             }

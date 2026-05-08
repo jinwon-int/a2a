@@ -228,6 +228,11 @@ test("operator notification adapter refuses live send without current-session re
   assert.equal(sends.length, 0, "runtime without receipt capability must not send a live provider message");
   assert.equal(receipt, undefined);
   assert.deepEqual(adapter.listReceipts(), []);
+  assert.deepEqual(adapter.getLastFailure("no-receipt-runtime"), {
+    dedupeKey: "no-receipt-runtime",
+    code: "receipt_runtime_unsupported",
+    reason: "receipt_runtime_unsupported: Gateway runtime telegram adapter does not advertise current-session-visible receipt support; live provider send skipped and terminal ACK remains receipt-gated",
+  });
 });
 
 test("operator notification adapter maps Telegram-visible operator evidence to current-session receipt", async () => {

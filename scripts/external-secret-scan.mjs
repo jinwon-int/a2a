@@ -27,7 +27,7 @@ if (scanners.length === 0) {
     '  npm run scan:external-secrets',
     'This script intentionally fails closed instead of substituting the local public-readiness scanner for external evidence.',
   ].join('\n'));
-  process.exit(2);
+  process.exit(1);
 }
 
 for (const scanner of scanners) {

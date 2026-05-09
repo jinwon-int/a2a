@@ -29,6 +29,11 @@ test('canonical demo task example exists', () => {
   assert.ok(existsSync(join(repoRoot, 'examples', 'canonical-demo-task.json')));
 });
 
+test('local quickstart example and task fixture exist', () => {
+  assert.ok(existsSync(join(repoRoot, 'examples', 'local', 'README.md')));
+  assert.ok(existsSync(join(repoRoot, 'examples', 'local', 'local-quickstart-task.json')));
+});
+
 test('release gate script exists', () => {
   assert.ok(existsSync(join(repoRoot, 'scripts', 'release-gate.mjs')));
 });
@@ -108,6 +113,18 @@ test('root package.json check maps to release-gate', async () => {
 test('root package.json has quickstart-conformance script', async () => {
   const pkg = JSON.parse(await readFile(join(repoRoot, 'package.json'), 'utf8'));
   assert.ok(pkg.scripts?.['check:quickstart-conformance'], 'missing check:quickstart-conformance script');
+});
+
+test('broker package exposes local broker and echo worker scripts', async () => {
+  const pkg = JSON.parse(await readFile(join(repoRoot, 'packages', 'broker', 'package.json'), 'utf8'));
+  assert.match(pkg.scripts?.['start:local'] ?? '', /127\.0\.0\.1:8787/);
+  assert.match(pkg.scripts?.['worker:echo'] ?? '', /WORKER_HANDLER_BUILTIN=echo/);
+});
+
+test('local quickstart task fixture is no-live and targets echo worker', async () => {
+  const task = JSON.parse(await readFile(join(repoRoot, 'examples', 'local', 'local-quickstart-task.json'), 'utf8'));
+  assert.strictEqual(task.assignedWorkerId, 'local-echo-worker');
+  assert.strictEqual(task.payload?.noLive, true);
 });
 
 // ── Package CI workflow validation ──────────────────────────────────────────

@@ -90,6 +90,27 @@ if (demo) {
 
 const examplePath = 'examples/canonical-demo-task.json';
 expect(fileExists(examplePath), `missing ${examplePath}`);
+expect(fileExists('examples/local/README.md'), 'missing examples/local/README.md');
+expect(fileExists('examples/local/local-quickstart-task.json'), 'missing examples/local/local-quickstart-task.json');
+
+const localExample = readRel('examples/local/README.md');
+if (localExample) {
+  expect(/npm run start:local/.test(localExample), 'local example: missing start:local command');
+  expect(/npm run worker:echo/.test(localExample), 'local example: missing worker:echo command');
+  expect(/local-quickstart-task\.json/.test(localExample), 'local example: missing task fixture reference');
+  expect(/Do not use production brokers/i.test(localExample), 'local example: missing production safety boundary');
+}
+
+const localTask = readRel('examples/local/local-quickstart-task.json');
+if (localTask) {
+  try {
+    const parsed = JSON.parse(localTask);
+    expect(parsed.assignedWorkerId === 'local-echo-worker', 'local task: assignedWorkerId must be local-echo-worker');
+    expect(parsed.payload?.noLive === true, 'local task: payload.noLive must be true');
+  } catch (error) {
+    fail(`local task: invalid JSON: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
 
 // ── Quickstart references release-gate ─────────────────────────────────────
 
@@ -101,6 +122,11 @@ expect(fileExists('scripts/check-compatibility-baselines.mjs'), 'missing scripts
 const pkg = JSON.parse(readRel('package.json') || '{}');
 expect(pkg.scripts?.check === 'npm run release-gate', 'root package.json check script must point to release-gate');
 expect(typeof pkg.scripts?.['release-gate'] === 'string', 'root package.json missing release-gate script');
+const brokerPkg = JSON.parse(readRel('packages/broker/package.json') || '{}');
+expect(typeof brokerPkg.scripts?.['start:local'] === 'string', 'broker package.json missing start:local script');
+expect(typeof brokerPkg.scripts?.['worker:echo'] === 'string', 'broker package.json missing worker:echo script');
+expect(/127\.0\.0\.1:8787/.test(brokerPkg.scripts?.['start:local'] || ''), 'start:local must bind loopback broker URL');
+expect(/WORKER_HANDLER_BUILTIN=echo/.test(brokerPkg.scripts?.['worker:echo'] || ''), 'worker:echo must use built-in echo handler');
 
 // ── Release gate must include public-readiness scan ─────────────────────────
 

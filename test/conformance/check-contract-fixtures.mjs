@@ -13,6 +13,7 @@ const fixtureFiles = {
   crossBroker: 'gwakga-cross-broker-handoff.json',
   checkpointInterrupt: 'checkpoint-interrupt.json',
   publicPolicy: 'public-compatibility-policy.json',
+  replayTrace: 'second-worker-replay-trace.json',
 };
 
 const forbiddenRuntimePaths = [
@@ -67,7 +68,7 @@ for (const pattern of secretLikePatterns) {
   assert.ok(!pattern.test(allFixtureText), `fixture text matched forbidden pattern ${pattern}`);
 }
 
-const { lifecycle, workers, cancellation, evidence, crossBroker, checkpointInterrupt, publicPolicy } = fixtures;
+const { lifecycle, workers, cancellation, evidence, crossBroker, checkpointInterrupt, publicPolicy, replayTrace } = fixtures;
 
 assert.deepEqual(lifecycle.terminalStates.sort(), ['blocked', 'cancelled', 'done', 'pr']);
 for (const state of lifecycle.terminalStates) {
@@ -134,6 +135,7 @@ for (const worker of workers.workers) {
 }
 assert.equal(workers.readModelExpectations.providerSendIsNotTerminalEvidence, true);
 assert.equal(workers.readModelExpectations.secondWorkerProofIsPublicSafe, true);
+assert.equal(workers.readModelExpectations.secondReferenceReplayProofIsPublicSafe, true);
 
 const workerNames = new Set(workers.workers.map((worker) => worker.workerName));
 const secondWorkerProof = workers.compatibilityProofs?.find(
@@ -148,6 +150,20 @@ assert.equal(secondWorkerProof.validationCommand, 'node test/conformance/check-c
 assert.equal(secondWorkerProof.requiresPrivateTopology, false);
 assert.equal(secondWorkerProof.liveProviderSend, false);
 assert.equal(secondWorkerProof.terminalAckMutation, false);
+
+const soonwookReplayProof = workers.compatibilityProofs?.find(
+  (proof) => proof.proofId === 'second-worker-replay-trace-soonwook-20260509',
+);
+assert.ok(soonwookReplayProof, 'expected soonwook second-reference replay proof');
+assert.equal(soonwookReplayProof.issue, 'https://github.com/jinwon-int/a2a-plane/issues/168');
+assert.equal(soonwookReplayProof.parentIssue, 'https://github.com/jinwon-int/a2a-plane/issues/163');
+assert.equal(soonwookReplayProof.run, 'a2a-public-readiness-next-20260509T165108Z');
+assert.equal(soonwookReplayProof.brokerOfRecord, 'gwakga');
+assert.ok(workerNames.has(soonwookReplayProof.workerName), 'replay proof must reference a registered worker');
+assert.equal(soonwookReplayProof.validationCommand, 'node test/conformance/check-contract-fixtures.mjs');
+assert.equal(soonwookReplayProof.requiresPrivateTopology, false);
+assert.equal(soonwookReplayProof.liveProviderSend, false);
+assert.equal(soonwookReplayProof.terminalAckMutation, false);
 
 const scenarioByName = new Map(cancellation.scenarios.map((scenario) => [scenario.name, scenario]));
 assert.equal(scenarioByName.get('duplicate-create-returns-existing-task')?.then.newTaskCreated, false);
@@ -220,6 +236,7 @@ for (const [key, value] of Object.entries(crossBroker.safetyConfirmations)) {
   assert.equal(value, true, `cross-broker safety confirmation ${key} must be true`);
 }
 
+
 assert.equal(publicPolicy.sourceIssueUrl, 'https://github.com/jinwon-int/a2a-plane/issues/94');
 assert.equal(publicPolicy.reviewIssueUrl, 'https://github.com/jinwon-int/a2a-plane/issues/166');
 assert.equal(publicPolicy.round, 'a2a-public-readiness-next-20260509T165108Z');
@@ -256,6 +273,43 @@ assert.ok(
 );
 for (const [key, value] of Object.entries(publicPolicy.safetyConfirmations)) {
   assert.equal(value, true, `public compatibility policy safety confirmation ${key} must be true`);
+}
+
+assert.equal(replayTrace.childIssue, 'https://github.com/jinwon-int/a2a-plane/issues/168');
+assert.equal(replayTrace.parentIssue, 'https://github.com/jinwon-int/a2a-plane/issues/163');
+assert.equal(replayTrace.brokerOfRecord, 'gwakga');
+assert.ok(workerNames.has(replayTrace.workerName), 'replay fixture must reference a registered worker');
+assert.equal(replayTrace.replayProof.totals.terminalResultsCreated, 1);
+assert.equal(replayTrace.replayProof.totals.providerSendsProduced, 0);
+assert.equal(replayTrace.replayProof.totals.terminalOutboxAcksProduced, 0);
+assert.equal(replayTrace.replayProof.totals.duplicateSendsProduced, 0);
+assert.equal(replayTrace.replayProof.totals.duplicateAcksProduced, 0);
+assert.equal(replayTrace.replayProof.attempts.length, 2);
+assert.equal(replayTrace.replayProof.attempts[0].terminalResultCreated, true);
+for (const attempt of replayTrace.replayProof.attempts) {
+  assert.equal(attempt.providerSendProduced, false, `attempt ${attempt.attempt} must not produce provider send`);
+  assert.equal(attempt.terminalOutboxAckProduced, false, `attempt ${attempt.attempt} must not produce terminal ACK`);
+}
+assert.equal(replayTrace.replayProof.attempts[1].decision, 'suppress-duplicate-return-existing-result');
+assert.equal(replayTrace.replayProof.attempts[1].terminalResultCreated, false);
+assert.equal(replayTrace.replayProof.attempts[1].returnedExistingTerminalResult, true);
+assert.equal(replayTrace.tracePolicy.status, 'compact-redacted-sufficient');
+assert.ok(replayTrace.tracePolicy.sampleTrace.length <= replayTrace.tracePolicy.maxEvents);
+for (const traceEvent of replayTrace.tracePolicy.sampleTrace) {
+  assert.ok(
+    Object.keys(traceEvent).length <= replayTrace.tracePolicy.maxEventKeys,
+    'trace event must stay compact',
+  );
+  for (const forbiddenField of replayTrace.tracePolicy.forbiddenFields) {
+    assert.ok(!(forbiddenField in traceEvent), `trace event must not include ${forbiddenField}`);
+  }
+  assert.equal(traceEvent.safetyFlags.liveProviderSend ?? false, false);
+  assert.equal(traceEvent.safetyFlags.terminalOutboxAckMutation ?? false, false);
+}
+assert.equal(replayTrace.safetyConfirmations.requiresPrivateTopology, false);
+for (const [key, value] of Object.entries(replayTrace.safetyConfirmations)) {
+  if (key === 'requiresPrivateTopology') continue;
+  assert.equal(value, true, `replay trace safety confirmation ${key} must be true`);
 }
 
 const examplePath = path.join(root, 'examples', 'compatibility', 'cross-team-conformance.json');

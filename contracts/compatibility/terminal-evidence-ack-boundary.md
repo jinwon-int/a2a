@@ -1,0 +1,23 @@
+# Terminal Evidence ACK Boundary Compatibility
+
+This compatibility contract keeps terminal evidence separate from provider delivery acceptance.
+It is intentionally fixture-only: it does not perform live sends and does not mutate terminal-outbox ACK state.
+
+## Rules
+
+- `providerMessageId`, `providerAccepted`, `sendStatus: accepted`, and `sendStatus: sent` are accepted-send evidence only.
+- Accepted-send evidence may support a Done/PR/Block evidence trail, but it must not be promoted into terminal ACK evidence.
+- Terminal ACK eligibility requires one of the explicit ACK-safe receipt proofs:
+  - `manual_operator_receipt`
+  - `current_session_visible`
+- Even when a fixture says terminal ACK may be recorded, the fixture itself must keep `terminalOutboxAckMutated: false`.
+
+## Fixture
+
+The independent fixture lives at:
+
+- `fixtures/terminal-evidence/accepted-send-non-ack.json`
+
+The conformance check lives at:
+
+- `test/conformance/check-terminal-evidence-ack-boundary.mjs`

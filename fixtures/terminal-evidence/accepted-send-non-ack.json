@@ -1,0 +1,120 @@
+{
+  "fixtureId": "a2a-plane.terminal-evidence.accepted-send-non-ack.v1",
+  "contract": "contracts/compatibility/terminal-evidence-ack-boundary.md",
+  "description": "Independent compatibility fixture proving accepted-send and provider message-id evidence are non-ACK, while terminal ACK eligibility requires manual or proven user-visible receipt evidence.",
+  "nonAckSignals": [
+    "providerMessageId",
+    "providerAccepted",
+    "sendStatus:accepted",
+    "sendStatus:sent"
+  ],
+  "ackSafeReceiptTypes": [
+    "manual_operator_receipt",
+    "current_session_visible"
+  ],
+  "scenarios": [
+    {
+      "name": "provider-message-id-is-accepted-send-only",
+      "given": {
+        "terminalKind": "done",
+        "deliveryAttempt": {
+          "providerAccepted": true,
+          "sendStatus": "accepted",
+          "providerMessageId": "msg_fixture_accepted_001"
+        },
+        "receiptEvidence": null
+      },
+      "expect": {
+        "evidenceClass": "accepted-send",
+        "terminalAckMayBeRecorded": false,
+        "terminalOutboxAckMutated": false,
+        "reasonCodes": [
+          "provider-message-id-is-non-ack",
+          "manual-or-visible-receipt-required"
+        ]
+      }
+    },
+    {
+      "name": "sent-status-with-message-id-is-still-non-ack",
+      "given": {
+        "terminalKind": "pr",
+        "deliveryAttempt": {
+          "providerAccepted": true,
+          "sendStatus": "sent",
+          "providerMessageId": "msg_fixture_sent_002"
+        },
+        "receiptEvidence": null
+      },
+      "expect": {
+        "evidenceClass": "accepted-send",
+        "terminalAckMayBeRecorded": false,
+        "terminalOutboxAckMutated": false,
+        "reasonCodes": [
+          "provider-send-success-is-non-ack",
+          "manual-or-visible-receipt-required"
+        ]
+      }
+    },
+    {
+      "name": "manual-operator-receipt-is-ack-safe",
+      "given": {
+        "terminalKind": "blocked",
+        "deliveryAttempt": {
+          "providerAccepted": true,
+          "sendStatus": "accepted",
+          "providerMessageId": "msg_fixture_manual_003"
+        },
+        "receiptEvidence": {
+          "type": "manual_operator_receipt",
+          "receiptId": "receipt_fixture_manual_001",
+          "redacted": true,
+          "provenance": "operator-recorded"
+        }
+      },
+      "expect": {
+        "evidenceClass": "ack-safe-receipt",
+        "terminalAckMayBeRecorded": true,
+        "terminalOutboxAckMutated": false,
+        "requiredReceiptType": "manual_operator_receipt",
+        "reasonCodes": [
+          "manual-operator-receipt-proves-ack-safe"
+        ]
+      }
+    },
+    {
+      "name": "current-session-visible-receipt-is-ack-safe",
+      "given": {
+        "terminalKind": "done",
+        "deliveryAttempt": {
+          "providerAccepted": true,
+          "sendStatus": "sent",
+          "providerMessageId": "msg_fixture_visible_004"
+        },
+        "receiptEvidence": {
+          "type": "current_session_visible",
+          "receiptId": "receipt_fixture_visible_001",
+          "redacted": true,
+          "provenance": "runtime-user-visible-receipt"
+        }
+      },
+      "expect": {
+        "evidenceClass": "ack-safe-receipt",
+        "terminalAckMayBeRecorded": true,
+        "terminalOutboxAckMutated": false,
+        "requiredReceiptType": "current_session_visible",
+        "reasonCodes": [
+          "current-session-visible-receipt-proves-ack-safe"
+        ]
+      }
+    }
+  ],
+  "safetyConfirmations": {
+    "syntheticFixtureOnly": true,
+    "noLiveProviderSend": true,
+    "noTerminalOutboxAckMutation": true,
+    "noSecretRotationOrDisclosure": true,
+    "noRawSessionDump": true,
+    "noHostSpecificPrivatePath": true,
+    "noOpenClawRuntimeBootstrapArtifact": true
+  }
+}

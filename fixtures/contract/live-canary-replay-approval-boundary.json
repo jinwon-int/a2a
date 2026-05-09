@@ -1,0 +1,126 @@
+{
+  "fixtureId": "a2a-plane.contract.live-canary-replay-approval-boundary.v1",
+  "contracts": [
+    "contracts/a2a/cancellation-idempotency.md",
+    "contracts/a2a/terminal-semantics.md",
+    "contracts/compatibility/terminal-evidence-ack-boundary.md",
+    "docs/readiness/fail-closed-scanner-readiness.md"
+  ],
+  "description": "Public-safe Team2/Gwakga second-reference proof tying replay/no-duplicate live-canary readiness to the scanner and explicit-approval boundary.",
+  "v0Freeze": {
+    "frozenAt": "2026-05-09",
+    "round": "a2a-live-canary-readiness-20260509T173917Z",
+    "note": "No-duplicate replay readiness and scanner approval-boundary expectations are locked as independent redacted evidence."
+  },
+  "parentIssue": "https://github.com/jinwon-int/a2a-plane/issues/174",
+  "childIssue": "https://github.com/jinwon-int/a2a-plane/issues/177",
+  "sourceIssues": [
+    "https://github.com/jinwon-int/a2a-plane/issues/130",
+    "https://github.com/jinwon-int/a2a-plane/issues/94",
+    "https://github.com/jinwon-int/a2a-plane/issues/171",
+    "https://github.com/jinwon-int/a2a-plane/issues/172"
+  ],
+  "brokerOfRecord": "gwakga",
+  "team": "team2-gwakga",
+  "workerName": "worker-soonwook-second-reference",
+  "canaryMode": "no-live-redacted-replay",
+  "replayNoDuplicateProof": {
+    "terminalResultRef": "terminal-pr-or-done-evidence",
+    "dedupeKeyRef": "sha256:redacted-live-canary-readiness-task",
+    "attempts": [
+      {
+        "attempt": 1,
+        "eventId": "trace-public-177-001",
+        "decision": "record-terminal-result",
+        "terminalResultCreated": true,
+        "returnedExistingTerminalResult": false,
+        "liveProviderSendProduced": false,
+        "terminalOutboxAckMutated": false
+      },
+      {
+        "attempt": 2,
+        "eventId": "trace-public-177-002",
+        "replayOf": "trace-public-177-001",
+        "decision": "suppress-duplicate-return-existing-result",
+        "terminalResultCreated": false,
+        "returnedExistingTerminalResult": true,
+        "liveProviderSendProduced": false,
+        "terminalOutboxAckMutated": false
+      }
+    ],
+    "totals": {
+      "terminalResultsCreated": 1,
+      "liveProviderSendsProduced": 0,
+      "terminalOutboxAckMutations": 0,
+      "duplicateProviderSendsProduced": 0,
+      "duplicateTerminalAckMutations": 0
+    },
+    "assertions": [
+      "replay returns the existing terminal result instead of creating another result",
+      "replay produces zero live provider sends",
+      "replay performs zero terminal-outbox ACK mutations",
+      "duplicate replay cannot mint a false terminal ACK"
+    ]
+  },
+  "scannerApprovalBoundary": {
+    "readinessScannerResult": "pass-definition-only",
+    "externalSecretScannerEvidencePresent": false,
+    "scannerSuccessImpliesOperatorApproval": false,
+    "explicitOperatorApprovalPresent": false,
+    "operatorApprovalRequiredForVisibility": true,
+    "approvalEvidenceMustBeSeparate": true,
+    "aggregateDecision": "NO-GO/Waiting",
+    "assertions": [
+      "scanner/readiness success is a gate validation signal only",
+      "scanner/readiness success never authorizes repository visibility or publication",
+      "operator approval must explicitly name repository visibility or publication",
+      "operator approval must be separate from scanner, replay, and terminal evidence"
+    ]
+  },
+  "remainingLiveCanaryBlockers": [
+    {
+      "gate": "terminalEvidence",
+      "status": "WAITING",
+      "needed": "linked redacted requester-visible or operator-visible terminal receipt evidence for the candidate flow"
+    },
+    {
+      "gate": "externalScannerEvidence",
+      "status": "WAITING",
+      "needed": "supported external scanner output from the operator environment, with findings clean or redacted and dispositioned"
+    },
+    {
+      "gate": "operatorApproval",
+      "status": "WAITING",
+      "needed": "separate explicit operator approval naming repository visibility or publication before any visibility change"
+    }
+  ],
+  "tracePolicy": {
+    "status": "compact-redacted-sufficient",
+    "maxEvents": 2,
+    "maxEventKeys": 7,
+    "forbiddenClasses": [
+      "secret-values",
+      "provider-identifiers",
+      "terminal-outbox-rows",
+      "raw-session-dumps",
+      "host-private-paths",
+      "runtime-bootstrap-context"
+    ]
+  },
+  "validationCommands": [
+    "node test/conformance/check-contract-fixtures.mjs",
+    "npm run scan:readiness-gates"
+  ],
+  "safetyConfirmations": {
+    "requiresPrivateTopology": false,
+    "noProductionDeployOrRestart": true,
+    "noProductionDatabaseMutation": true,
+    "noLiveProviderSend": true,
+    "noTerminalOutboxAckMutation": true,
+    "noSecretRotationOrDisclosure": true,
+    "noRawSessionDump": true,
+    "redactedEvidenceOnly": true,
+    "noRepositoryVisibilityChange": true,
+    "scannerSuccessIsNotOperatorApproval": true
+  }
+}

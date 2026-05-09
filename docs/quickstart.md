@@ -14,16 +14,25 @@ Install dependencies without lifecycle scripts:
 npm ci --ignore-scripts --include=dev
 ```
 
+Run a deterministic pre-flight smoke check (no network, no live services):
+
+```bash
+npm run smoke:quickstart
+```
+
+This builds all workspace packages and validates quickstart conformance and release-gate tests.
+
 ## 1. Run the local A2A Plane broker
 
 From the broker workspace, use the package's documented local start command:
 
 ```bash
 cd packages/broker
-npm ci --ignore-scripts --include=dev
 npm run build
 npm run start:local
 ```
+
+(If you skipped the root-level `npm run smoke:quickstart` step above, first run `cd packages/broker && npm ci --ignore-scripts --include=dev`.)
 
 Use only loopback URLs such as `http://127.0.0.1:8787`. Do not substitute a production broker or restart a managed service.
 

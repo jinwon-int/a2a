@@ -67,8 +67,9 @@ test('quickstart uses deterministic local paths only', async () => {
   // Deterministic install command
   assert.match(content, /npm ci --ignore-scripts --include=dev/);
 
-  // References npm run check
+  // References npm run check and smoke:quickstart
   assert.match(content, /npm run check/);
+  assert.match(content, /npm run smoke:quickstart/);
 });
 
 test('quickstart contains safety constraints', async () => {
@@ -113,6 +114,15 @@ test('release gate includes public-readiness scan', async () => {
 test('root package.json check maps to release-gate', async () => {
   const pkg = JSON.parse(await readFile(join(repoRoot, 'package.json'), 'utf8'));
   assert.strictEqual(pkg.scripts?.check, 'npm run release-gate');
+});
+
+test('root package.json has workspace-scoped build and smoke:quickstart scripts', async () => {
+  const pkg = JSON.parse(await readFile(join(repoRoot, 'package.json'), 'utf8'));
+  assert.strictEqual(pkg.scripts?.build, 'npm run build -ws');
+  assert.ok(typeof pkg.scripts?.['smoke:quickstart'] === 'string', 'missing smoke:quickstart script');
+  assert.match(pkg.scripts?.['smoke:quickstart'] ?? '', /build/);
+  assert.match(pkg.scripts?.['smoke:quickstart'] ?? '', /check:quickstart-conformance/);
+  assert.match(pkg.scripts?.['smoke:quickstart'] ?? '', /test:release-gate/);
 });
 
 test('root package.json has quickstart-conformance script', async () => {

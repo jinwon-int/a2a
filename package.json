@@ -7,7 +7,9 @@
     "packages/*"
   ],
   "scripts": {
+    "build": "npm run build -ws",
     "check": "npm run release-gate",
+    "smoke:quickstart": "npm run build && npm run check:quickstart-conformance && npm run test:release-gate",
     "release-gate": "node scripts/release-gate.mjs",
     "check:layout": "node scripts/check-layout.mjs",
     "check:packages": "node scripts/check-packages.mjs",

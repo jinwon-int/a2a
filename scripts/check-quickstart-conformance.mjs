@@ -55,6 +55,7 @@ if (quickstart) {
   expect(/127\.0\.0\.1:8787/.test(quickstart), 'quickstart: must use loopback broker URL');
   expect(/npm ci --ignore-scripts --include=dev/.test(quickstart), 'quickstart: must reference deterministic install command');
   expect(/npm run check/.test(quickstart), 'quickstart: must reference npm run check for verification');
+  expect(/npm run smoke:quickstart/.test(quickstart), 'quickstart: must reference npm run smoke:quickstart pre-flight');
   expect(/npm run (build|check)/.test(quickstart), 'quickstart: must reference build/check commands');
 
   // No live provider assumptions
@@ -131,6 +132,11 @@ expect(fileExists('scripts/check-compatibility-baselines.mjs'), 'missing scripts
 // Quickstart says run "npm run check" which maps to release-gate
 const pkg = JSON.parse(readRel('package.json') || '{}');
 expect(pkg.scripts?.check === 'npm run release-gate', 'root package.json check script must point to release-gate');
+expect(pkg.scripts?.build === 'npm run build -ws', 'root package.json must have workspace-scoped build script');
+expect(typeof pkg.scripts?.['smoke:quickstart'] === 'string', 'root package.json missing smoke:quickstart script');
+expect(/build/.test(pkg.scripts?.['smoke:quickstart'] || ''), 'smoke:quickstart must include build step');
+expect(/check:quickstart-conformance/.test(pkg.scripts?.['smoke:quickstart'] || ''), 'smoke:quickstart must include quickstart conformance check');
+expect(/test:release-gate/.test(pkg.scripts?.['smoke:quickstart'] || ''), 'smoke:quickstart must include release-gate tests');
 expect(typeof pkg.scripts?.['release-gate'] === 'string', 'root package.json missing release-gate script');
 const brokerPkg = JSON.parse(readRel('packages/broker/package.json') || '{}');
 expect(typeof brokerPkg.scripts?.['start:local'] === 'string', 'broker package.json missing start:local script');

@@ -1,0 +1,414 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "fixtures/contract/checkpoint-interrupt.json",
+  "fixtureId": "a2a-plane.contract.checkpoint-interrupt.v1",
+  "contract": "contracts/a2a/checkpoint-interrupt.md",
+  "description": "Public-safe durable checkpoint and human-interrupt conformance fixture. Defines checkpoint states, interrupt scenarios, pause/resume transitions, replay safety assertions, audit trace export schema, and artifact version lineage. Frozen at Contract v0 (2026-05-09). No production DB mutation implied.",
+  "v0Freeze": {
+    "frozenAt": "2026-05-09",
+    "round": "a2a-public-readiness-next-20260509T165108Z",
+    "note": "No new checkpoint states, interrupt decision types, or replay guarantees may be added without a v0→v1 compatibility plan."
+  },
+  "checkpointStates": {
+    "paused": {
+      "description": "Task execution safely suspended at a checkpoint. Worker released.",
+      "terminal": false,
+      "allowedTransitions": ["running", "blocked", "cancelled"]
+    },
+    "awaiting_operator": {
+      "description": "Task cannot proceed without operator input (human interrupt).",
+      "terminal": false,
+      "allowedTransitions": ["running", "blocked", "cancelled"]
+    }
+  },
+  "interruptDecisionTypes": [
+    {
+      "type": "safety_gate",
+      "description": "Operator must confirm a safety-sensitive operation is acceptable.",
+      "validOperatorActions": ["approved", "refused"]
+    },
+    {
+      "type": "ambiguous_scope",
+      "description": "Task instructions are unclear or contradictory.",
+      "validOperatorActions": ["approved", "refused", "clarified"]
+    },
+    {
+      "type": "approval_required",
+      "description": "Task requires permission the worker cannot self-grant.",
+      "validOperatorActions": ["approved", "refused"]
+    },
+    {
+      "type": "conflict_detected",
+      "description": "Worker detected a conflict (branch, lock, concurrent task).",
+      "validOperatorActions": ["approved", "refused"]
+    }
+  ],
+  "scenarios": [
+    {
+      "name": "worker-checkpoints-during-safe-file-operation",
+      "description": "Worker reaches a natural pause point after completing a file write and checkpoints before proceeding.",
+      "given": {
+        "state": "running",
+        "taskId": "task-checkpoint-001",
+        "workerId": "worker-checkpoint-fixtures",
+        "completedOperations": ["write-file", "run-checks"],
+        "pendingOperations": ["commit-changes"]
+      },
+      "when": {
+        "type": "worker.checkpoint",
+        "checkpointId": "ckpt-safe-pause-001",
+        "reason": "safe pause after core contract write and validation",
+        "artifactRefs": [
+          {
+            "artifactPath": "contracts/a2a/checkpoint-interrupt.md",
+            "versionRef": "draft-pre-commit",
+            "checkpointHash": "sha256-REDACTED-EXAMPLE"
+          }
+        ]
+      },
+      "then": {
+        "state": "paused",
+        "terminal": false,
+        "checkpointId": "ckpt-safe-pause-001",
+        "workerAssigned": false,
+        "terminalOutboxAckMutated": false,
+        "liveProviderSend": false
+      }
+    },
+    {
+      "name": "worker-resumes-from-checkpoint",
+      "description": "Operator or automation triggers resume; worker reclaims task and continues.",
+      "given": {
+        "state": "paused",
+        "taskId": "task-checkpoint-001",
+        "checkpointId": "ckpt-safe-pause-001"
+      },
+      "when": {
+        "type": "task.resumed",
+        "brokerOfRecord": "gwakga",
+        "resumedBy": "operator",
+        "workerId": "worker-checkpoint-fixtures"
+      },
+      "then": {
+        "state": "running",
+        "terminal": false,
+        "checkpointContextProvided": true,
+        "preCheckpointOperationsNotReplayed": true,
+        "newOperationsAllowed": true,
+        "terminalOutboxAckMutated": false,
+        "liveProviderSend": false
+      }
+    },
+    {
+      "name": "pause-timeout-transitions-to-cancelled",
+      "description": "A paused task that exceeds the pause timeout is cancelled by the broker.",
+      "given": {
+        "state": "paused",
+        "taskId": "task-checkpoint-002",
+        "checkpointId": "ckpt-timeout-002",
+        "pausedAt": "2026-05-09T13:00:00Z",
+        "pauseTimeoutHours": 24
+      },
+      "when": {
+        "type": "task.pause-timeout",
+        "at": "2026-05-10T13:00:01Z"
+      },
+      "then": {
+        "state": "cancelled",
+        "terminal": true,
+        "cancelSource": "timeout",
+        "terminalOutboxAckMutated": false,
+        "liveProviderSend": false
+      }
+    },
+    {
+      "name": "human-interrupt-safety-gate-approved",
+      "description": "Worker encounters a safety gate, operator approves, task continues.",
+      "given": {
+        "state": "running",
+        "taskId": "task-interrupt-001",
+        "workerId": "worker-checkpoint-fixtures",
+        "pendingOperation": "modify-security-boundary-file",
+        "riskSummary": "Redacted: proposed change touches safety-sensitive contract area"
+      },
+      "when": {
+        "type": "worker.interrupt",
+        "interruptId": "int-safety-gate-001",
+        "decisionType": "safety_gate",
+        "summary": "Redacted summary of safety-sensitive operation for operator review"
+      },
+      "thenInterrupt": {
+        "state": "awaiting_operator",
+        "terminal": false,
+        "interruptId": "int-safety-gate-001",
+        "decisionType": "safety_gate",
+        "operatorNotified": true,
+        "terminalOutboxAckMutated": false,
+        "liveProviderSend": false
+      },
+      "operatorAction": {
+        "type": "operator.decide",
+        "action": "approved",
+        "comment": "Redacted operator comment confirming safety acceptance"
+      },
+      "thenResume": {
+        "state": "running",
+        "terminal": false,
+        "operatorContextProvided": true,
+        "terminalOutboxAckMutated": false,
+        "liveProviderSend": false
+      }
+    },
+    {
+      "name": "human-interrupt-ambiguous-scope-clarified",
+      "description": "Worker cannot interpret task; operator clarifies scope, task continues.",
+      "given": {
+        "state": "running",
+        "taskId": "task-interrupt-002",
+        "workerId": "worker-checkpoint-fixtures",
+        "ambiguity": "Task asks for 'contract update' without specifying which contract or what change"
+      },
+      "when": {
+        "type": "worker.interrupt",
+        "interruptId": "int-ambiguous-002",
+        "decisionType": "ambiguous_scope",
+        "summary": "Redacted summary of scope ambiguity presented to operator"
+      },
+      "thenInterrupt": {
+        "state": "awaiting_operator",
+        "terminal": false,
+        "decisionType": "ambiguous_scope",
+        "terminalOutboxAckMutated": false,
+        "liveProviderSend": false
+      },
+      "operatorAction": {
+        "type": "operator.decide",
+        "action": "clarified",
+        "comment": "Redacted operator clarification of intended scope"
+      },
+      "thenResume": {
+        "state": "running",
+        "terminal": false,
+        "operatorContextProvided": true,
+        "terminalOutboxAckMutated": false,
+        "liveProviderSend": false
+      }
+    },
+    {
+      "name": "human-interrupt-refused-becomes-block",
+      "description": "Operator refuses the interrupt; task transitions to blocked terminal state.",
+      "given": {
+        "state": "awaiting_operator",
+        "taskId": "task-interrupt-003",
+        "interruptId": "int-approval-003",
+        "decisionType": "approval_required",
+        "summary": "Redacted summary of required permission request"
+      },
+      "operatorAction": {
+        "type": "operator.decide",
+        "action": "refused",
+        "comment": "Redacted operator refusal reason"
+      },
+      "then": {
+        "state": "blocked",
+        "terminal": true,
+        "blockerCategory": "safety",
+        "reason": "Operator refused approval for requested operation.",
+        "terminalOutboxAckMutated": false,
+        "liveProviderSend": false
+      }
+    },
+    {
+      "name": "human-interrupt-conflict-detected-operator-chooses-resolution",
+      "description": "Worker detects a branch conflict; operator chooses to proceed with force option.",
+      "given": {
+        "state": "running",
+        "taskId": "task-interrupt-005",
+        "workerId": "worker-checkpoint-fixtures",
+        "conflict": "Target branch has diverged; worker cannot safely merge without direction"
+      },
+      "when": {
+        "type": "worker.interrupt",
+        "interruptId": "int-conflict-005",
+        "decisionType": "conflict_detected",
+        "summary": "Redacted summary of detected conflict and resolution options presented to operator"
+      },
+      "thenInterrupt": {
+        "state": "awaiting_operator",
+        "terminal": false,
+        "decisionType": "conflict_detected",
+        "terminalOutboxAckMutated": false,
+        "liveProviderSend": false
+      },
+      "operatorAction": {
+        "type": "operator.decide",
+        "action": "approved",
+        "comment": "Redacted operator decision on conflict resolution path"
+      },
+      "thenResume": {
+        "state": "running",
+        "terminal": false,
+        "operatorContextProvided": true,
+        "terminalOutboxAckMutated": false,
+        "liveProviderSend": false
+      }
+    },
+    {
+      "name": "interrupt-timeout-transitions-to-cancelled",
+      "description": "An awaiting_operator task that exceeds the interrupt timeout is cancelled.",
+      "given": {
+        "state": "awaiting_operator",
+        "taskId": "task-interrupt-004",
+        "interruptId": "int-timeout-004",
+        "interruptTimeoutHours": 24
+      },
+      "when": {
+        "type": "task.interrupt-timeout"
+      },
+      "then": {
+        "state": "cancelled",
+        "terminal": true,
+        "cancelSource": "timeout",
+        "terminalOutboxAckMutated": false,
+        "liveProviderSend": false
+      }
+    },
+    {
+      "name": "replay-completed-task-is-idempotent-noop",
+      "description": "Replaying a completed task returns the terminal state without side effects.",
+      "given": {
+        "state": "done",
+        "taskId": "task-replay-001",
+        "idempotencyKey": "issue-NNN:teamN:checkpoint-contract-v0"
+      },
+      "when": {
+        "type": "task.replay-request",
+        "idempotencyKey": "issue-NNN:teamN:checkpoint-contract-v0"
+      },
+      "then": {
+        "state": "done",
+        "newSideEffects": false,
+        "newEvidencePosted": false,
+        "terminalOutboxAckMutated": false,
+        "liveProviderSend": false
+      }
+    },
+    {
+      "name": "replay-checkpoint-resume-does-not-re-execute-pre-checkpoint-ops",
+      "description": "Resuming from a checkpoint must not replay already-completed pre-checkpoint operations.",
+      "given": {
+        "state": "paused",
+        "taskId": "task-replay-002",
+        "checkpointId": "ckpt-replay-002",
+        "completedOperations": ["write-contract-file", "run-validation"],
+        "checkpointHash": "sha256-REDACTED-EXAMPLE"
+      },
+      "when": {
+        "type": "task.resumed",
+        "workerId": "worker-checkpoint-fixtures-replay"
+      },
+      "then": {
+        "state": "running",
+        "completedOperationsReplayed": false,
+        "checkpointContextMatches": true,
+        "terminalOutboxAckMutated": false,
+        "liveProviderSend": false
+      }
+    }
+  ],
+  "replayGuarantees": [
+    {
+      "guarantee": "idempotent-operation-replay",
+      "scope": "per-task, per-worker",
+      "enforcedBy": "idempotency-key-deduplication",
+      "violationTerminal": true
+    },
+    {
+      "guarantee": "checkpoint-resume-replay",
+      "scope": "per-task, per-checkpoint",
+      "enforcedBy": "checkpoint-id-deduplication",
+      "violationTerminal": false
+    },
+    {
+      "guarantee": "terminal-state-immutability",
+      "scope": "per-task",
+      "enforcedBy": "terminal-state-guard",
+      "violationTerminal": true
+    },
+    {
+      "guarantee": "evidence-immutability",
+      "scope": "per-task terminal evidence",
+      "enforcedBy": "evidence-write-once",
+      "violationTerminal": true
+    }
+  ],
+  "auditTraceExport": {
+    "description": "Redacted deterministic JSON event sequence for a task's full lifecycle including checkpoint and interrupt events.",
+    "schema": {
+      "taskId": "task-redacted-example-export",
+      "brokerOfRecord": "gwakga",
+      "events": [
+        { "sequence": 1, "type": "task.accepted", "state": "queued" },
+        { "sequence": 2, "type": "task.claimed", "state": "claimed" },
+        { "sequence": 3, "type": "task.started", "state": "running" },
+        { "sequence": 4, "type": "task.paused", "state": "paused", "checkpointId": "ckpt-redacted", "reason": "Redacted checkpoint reason" },
+        { "sequence": 5, "type": "task.resumed", "state": "running", "checkpointId": "ckpt-redacted" },
+        { "sequence": 6, "type": "task.interrupted", "state": "awaiting_operator", "interruptId": "int-redacted", "decisionType": "safety_gate" },
+        { "sequence": 7, "type": "operator.decide", "state": "running", "action": "approved" },
+        { "sequence": 8, "type": "task.completed", "state": "done" }
+      ],
+      "redacted": true
+    },
+    "exportSafety": {
+      "noSecretsOrPrivatePaths": true,
+      "noProviderMessageIdsAboveAcceptedSend": true,
+      "noTerminalOutboxAckValues": true,
+      "deterministicEventSequence": true,
+      "redacted": true
+    }
+  },
+  "artifactVersionLineage": {
+    "description": "Example redacted artifact version lineage for checkpoint-interrupt contract v0.",
+    "example": {
+      "artifactPath": "contracts/a2a/checkpoint-interrupt.md",
+      "versionRef": "commit-REDACTED-EXAMPLE-SHA",
+      "parentVersionRef": "issue-93-evaluation",
+      "producingTaskId": "task-redacted-example-lineage",
+      "producingRunId": "run-redacted-example-lineage"
+    },
+    "lineageSafety": {
+      "pathsAreRepoRelative": true,
+      "versionRefsAreDeterministic": true,
+      "noHostSpecificPaths": true,
+      "noArtifactContentInline": true,
+      "noProviderCredentials": true
+    }
+  },
+  "safetyConfirmations": {
+    "noProductionDeployOrRestart": true,
+    "noDatabaseMutation": true,
+    "noLiveProviderSend": true,
+    "noTerminalOutboxAckMutation": true,
+    "noSecretRotationOrDisclosure": true,
+    "noRepositoryVisibilityChange": true,
+    "examplesAreRedactedAndDeterministic": true,
+    "checkpointDoesNotImplyProductionPersistenceRollout": true,
+    "interruptSummariesAreRedacted": true,
+    "auditTraceExportDoesNotContainSecrets": true
+  },
+  "assertions": [
+    "paused and awaiting_operator are non-terminal transitory states",
+    "checkpoint records are redacted: no secrets, private endpoints, provider identifiers, runtime dumps, or host-specific paths",
+    "resume from checkpoint does not replay completed pre-checkpoint operations",
+    "human interrupt requires operator.decide before task can proceed to running or blocked",
+    "refused interrupt produces blocked terminal evidence satisfying the Block contract",
+    "interrupt timeout transitions to cancelled",
+    "pause timeout transitions to cancelled",
+    "replay of terminal task produces no new side effects",
+    "audit trace export is deterministic, redacted, and contains no provider message ids above accepted-send",
+    "artifact version lineage uses repo-relative paths and deterministic version refs only",
+    "all scenarios confirm terminalOutboxAckMutated: false and liveProviderSend: false",
+    "checkpoint and interrupt contracts do not imply production DB mutation or persistence rollout",
+    "all v0 assertions are consistent with existing task-lifecycle, cancellation-idempotency, and terminal-semantics contracts"
+  ]
+}

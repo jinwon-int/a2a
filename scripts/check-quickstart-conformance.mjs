@@ -70,6 +70,15 @@ if (quickstart) {
   expect(/Do not point this path at production/i.test(quickstart), 'quickstart: must warn against production use');
   expect(/no production deploy/i.test(quickstart), 'quickstart: must mention no production deploy');
   expect(/Never include real tokens/i.test(quickstart), 'quickstart: must warn against tokens in examples');
+
+  // Post-78261: accepted-send non-ACK
+  expect(/accepted-send evidence only/i.test(quickstart), 'quickstart: must state accepted-send is non-ACK evidence');
+  expect(/not requester-visible receipt/i.test(quickstart), 'quickstart: must clarify accepted-send is not requester-visible receipt');
+  expect(/(is not|not).*terminal ACK/i.test(quickstart), 'quickstart: must clarify accepted-send is not terminal ACK');
+
+  // Post-78261: replay-safe expectations
+  expect(/replay-safe/i.test(quickstart), 'quickstart: must mention replay-safe expectations');
+  expect(/idempotent/i.test(quickstart), 'quickstart: must reference idempotent replay');
 }
 
 // ── Canonical demo doc ──────────────────────────────────────────────────────
@@ -107,6 +116,7 @@ if (localTask) {
     const parsed = JSON.parse(localTask);
     expect(parsed.assignedWorkerId === 'local-echo-worker', 'local task: assignedWorkerId must be local-echo-worker');
     expect(parsed.payload?.noLive === true, 'local task: payload.noLive must be true');
+    expect(parsed.payload?.replaySafe === true, 'local task: payload.replaySafe must be true');
   } catch (error) {
     fail(`local task: invalid JSON: ${error instanceof Error ? error.message : String(error)}`);
   }

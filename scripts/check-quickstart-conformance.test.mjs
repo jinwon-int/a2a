@@ -78,6 +78,11 @@ test('quickstart contains safety constraints', async () => {
   assert.match(content, /no production deploy/i);
   assert.match(content, /Never include real tokens/i);
   assert.match(content, /public-readiness scan must remain clean/i);
+  assert.match(content, /accepted-send evidence only/i);
+  assert.match(content, /not requester-visible receipt/i);
+  assert.match(content, /(is not|not).*terminal ACK/i);
+  assert.match(content, /replay-safe/i);
+  assert.match(content, /idempotent/i);
 });
 
 // ── Canonical demo validation ───────────────────────────────────────────────
@@ -125,6 +130,7 @@ test('local quickstart task fixture is no-live and targets echo worker', async (
   const task = JSON.parse(await readFile(join(repoRoot, 'examples', 'local', 'local-quickstart-task.json'), 'utf8'));
   assert.strictEqual(task.assignedWorkerId, 'local-echo-worker');
   assert.strictEqual(task.payload?.noLive, true);
+  assert.strictEqual(task.payload?.replaySafe, true);
 });
 
 // ── Package CI workflow validation ──────────────────────────────────────────

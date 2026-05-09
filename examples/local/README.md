@@ -45,3 +45,11 @@ curl -s http://127.0.0.1:8787/tasks/local-smoke-1 \
 ```
 
 Expected result: the task reaches `succeeded` with echo-style Done evidence. If it returns `Block`, keep the blocker local and do not substitute production infrastructure.
+
+## Accepted-send is non-ACK
+
+Provider-send success (a returned message id) is accepted-send evidence only. It is not requester-visible receipt, operator-visible receipt, human-seen proof, or terminal ACK. Only PR, Done, or Block evidence from the A2A worker qualifies as terminal evidence.
+
+## Replay-safe
+
+This task fixture is replay-safe: submitting the same task id (`local-smoke-1`) a second time must produce the same terminal result without duplicate side effects. Workers must treat replayed task ids as idempotent. Do not submit duplicate tasks expecting different behavior.

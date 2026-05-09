@@ -94,6 +94,8 @@ Expected terminal evidence is one of:
 - `Done` with a short echoed result
 - `Block` with a clear local setup blocker
 
+Provider-send success (message id returned by a provider) is accepted-send evidence only — it is not requester-visible receipt, operator-visible receipt, human-seen proof, or terminal ACK. Do not treat a provider message id as Done or PR evidence.
+
 ## 5. Verify public-readiness checks
 
 Return to the repository root:
@@ -104,6 +106,12 @@ npm run check
 
 The public-readiness scan must remain clean before any PR is opened.
 
+Also run the quickstart conformance check directly:
+
+```bash
+npm run check:quickstart-conformance
+```
+
 ## Safety checklist
 
 Before sharing evidence, confirm:
@@ -112,3 +120,5 @@ Before sharing evidence, confirm:
 - no production deploy, Gateway/broker/worker restart, database mutation, provider send, Telegram send, terminal-outbox ACK, secret rotation, history rewrite, or force push occurred
 - evidence is redacted and does not include raw session dumps, private paths, hostnames, tokens, provider IDs, Telegram IDs, or OpenClaw runtime/bootstrap files
 - docs and issue/PR evidence introduce the project as A2A Plane, with OpenClaw described only as the first/reference integration
+- provider message id / send success is accepted-send evidence only — it is not requester-visible receipt, operator-visible receipt, human-seen proof, or terminal ACK
+- task submissions are replay-safe: a duplicate task id must produce the same terminal result without re-execution; workers must treat replayed task ids as idempotent

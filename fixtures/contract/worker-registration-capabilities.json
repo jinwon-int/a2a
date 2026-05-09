@@ -21,13 +21,35 @@
       "policyVersion": "a2a-plane-safety-v1",
       "lastSeenAt": "2026-05-09T13:10:00Z",
       "currentTaskId": null
+    },
+    {
+      "workerName": "worker-jingun-second-worker",
+      "capabilities": ["contracts", "compatibility-proof", "repo-inspection", "tests"],
+      "policyVersion": "a2a-plane-safety-v1",
+      "lastSeenAt": "2026-05-10T00:00:00Z",
+      "currentTaskId": "task-second-worker-compatibility-152"
+    }
+  ],
+  "compatibilityProofs": [
+    {
+      "proofId": "second-worker-compatibility-jingun-20260510",
+      "issue": "https://github.com/jinwon-int/a2a-plane/issues/152",
+      "round": "a2a-vnext-contract-smoke-crossbroker-20260510",
+      "brokerOfRecord": "gwakga",
+      "workerName": "worker-jingun-second-worker",
+      "proofType": "worker-registration-fixture",
+      "validationCommand": "node test/conformance/check-contract-fixtures.mjs",
+      "requiresPrivateTopology": false,
+      "liveProviderSend": false,
+      "terminalAckMutation": false
     }
   ],
   "readModelExpectations": {
     "publishableFields": ["workerName", "capabilities", "policyVersion", "lastSeenAt", "currentTaskId"],
     "capabilitiesAreCoarseLabels": true,
     "lastSeenAtIsLivenessOnly": true,
-    "providerSendIsNotTerminalEvidence": true
+    "providerSendIsNotTerminalEvidence": true,
+    "secondWorkerProofIsPublicSafe": true
   },
   "forbiddenFields": ["hostPath", "hostname", "secret", "providerToken", "rawSessionDump"]
 }

@@ -77,27 +77,56 @@ Parent: [#75](https://github.com/jinwon-int/a2a-plane/issues/75).
 
 R5 lanes [#76](https://github.com/jinwon-int/a2a-plane/issues/76), [#77](https://github.com/jinwon-int/a2a-plane/issues/77), [#78](https://github.com/jinwon-int/a2a-plane/issues/78), and [#79](https://github.com/jinwon-int/a2a-plane/issues/79) are closed and merged via PRs [#80](https://github.com/jinwon-int/a2a-plane/pull/80), [#81](https://github.com/jinwon-int/a2a-plane/pull/81), and [#82](https://github.com/jinwon-int/a2a-plane/pull/82).
 
-A follow-on A2A dispatch round cross-repo synthesis:
+a2a-plane R4 follow-on PRs [#92](https://github.com/jinwon-int/a2a-plane/pull/92) and [#95](https://github.com/jinwon-int/a2a-plane/pull/95) are merged.
+
+A follow-on A2A dispatch round cross-repo synthesis (post-merge state after `openclaw-plugin-a2a#235` and `a2a-broker#433/#434`):
 
 | Lane | Repo | Issue | PR | Status |
 |---|---|---|---|---|
-| Sogyo (A2A Inspector conformance gate) | `jinwon-int/openclaw-plugin-a2a` | [#234](https://github.com/jinwon-int/openclaw-plugin-a2a/issues/234) | [#235](https://github.com/jinwon-int/openclaw-plugin-a2a/pull/235) (open) | PR exists but unmerged |
-| Nosuk (broker lifecycle → A2A 1.0 task mapping) | `jinwon-int/a2a-broker` | [#431](https://github.com/jinwon-int/a2a-broker/issues/431) | none | **Unresolved** — no PR |
-| Yukson (Worker Capability/AgentCard registry) | `jinwon-int/a2a-broker` | [#432](https://github.com/jinwon-int/a2a-broker/issues/432) | [#433](https://github.com/jinwon-int/a2a-broker/pull/433) (open) | PR exists but unmerged |
+| Sogyo (A2A Inspector conformance gate) | `jinwon-int/openclaw-plugin-a2a` | [#234](https://github.com/jinwon-int/openclaw-plugin-a2a/issues/234) | [#235](https://github.com/jinwon-int/openclaw-plugin-a2a/pull/235) | Merged |
+| Nosuk (broker lifecycle → A2A 1.0 task mapping) | `jinwon-int/a2a-broker` | [#431](https://github.com/jinwon-int/a2a-broker/issues/431) | [#434](https://github.com/jinwon-int/a2a-broker/pull/434) | Merged |
+| Yukson (Worker Capability/AgentCard registry) | `jinwon-int/a2a-broker` | [#432](https://github.com/jinwon-int/a2a-broker/issues/432) | [#433](https://github.com/jinwon-int/a2a-broker/pull/433) | Merged |
 
 **Synthesis decision: NO-GO / Waiting.**
 
-- Two of three sibling lanes have open PRs but are not merged.
-- One sibling lane ([a2a-broker#431](https://github.com/jinwon-int/a2a-broker/issues/431)) is unresolved with no PR.
+- All three sibling cross-repo lanes are now merged (`openclaw-plugin-a2a#235`, `a2a-broker#433`, `a2a-broker#434`). This clears the sibling-lane blocker.
 - Upstream gate [openclaw/openclaw#78261](https://github.com/openclaw/openclaw/pull/78261) remains open and blocks Terminal Brief/source closeout activation.
 - External secret scanner unavailable (fail-closed).
-- Repository visibility remains **NO-GO** until all sibling lanes close, upstream receipt proof is available, scanner evidence is clean, and operator explicitly approves.
+- Explicit operator approval for public repository visibility is still required.
+- Repository visibility remains **NO-GO** until upstream receipt proof is available, scanner evidence is clean, and operator explicitly approves.
+- Issue [#75](https://github.com/jinwon-int/a2a-plane/issues/75) remains open: all public-readiness gates are not yet met.
 
 Relevant cross-repo guardrail docs:
 - `contracts/a2a/task-lifecycle.md` — A2A task-state mapping reference.
 - `contracts/a2a/worker-registration.md` — Worker registration and capability assumptions.
 - `contracts/a2a/terminal-semantics.md` — Terminal ACK boundary.
 - `docs/r6-terminal-brief-openclaw-routing-synthesis.md` — R6 upstream gate and no-bypass rules.
+
+## R7 public-readiness closeout refresh (post-merge)
+
+Bangtong lane closeout refresh after merged round `a2a-plane#92/#95`, `openclaw-plugin-a2a#235`, `a2a-broker#433/#434`.
+
+Parent: [#75](https://github.com/jinwon-int/a2a-plane/issues/75).
+Roadmap: [#294](https://github.com/jinwon-int/a2a-broker/issues/294).
+
+Local validation on this closeout refresh:
+
+- `npm ci --ignore-scripts --include=dev`: passed.
+- `npm run scan:public-readiness`: passed with no findings.
+- `npm run check`: release gate passed (layout, package checks, public-readiness scan, compatibility-baseline validation).
+- `npm run test:release-gate`: passed (3/3).
+- `npm run scan:external-secrets`: blocked — no supported external scanner (`gitleaks` or `trufflehog`) installed in this runner; remains fail-closed.
+- Runtime/bootstrap hygiene: no tracked or unignored `AGENTS.md`, `SOUL.md`, `USER.md`, `TOOLS.md`, `HEARTBEAT.md`, `IDENTITY.md`, or `.openclaw/**` paths enter this branch or evidence.
+
+Decision: **NO-GO / Waiting.**
+
+- Sibling cross-repo lanes are now merged, clearing that blocker.
+- `openclaw/openclaw#78261` remains the upstream Terminal Brief gate; do not claim it is rolled out.
+- External secret scanner evidence remains unavailable (fail-closed).
+- Explicit operator approval for repository visibility is still required.
+- Issue [#75](https://github.com/jinwon-int/a2a-plane/issues/75) remains open.
+
+This closeout refresh performed redacted documentation evidence updates and local validation only. It did **not** perform any repository visibility change, release, deploy, Gateway/broker/worker restart, production database mutation, live provider/Telegram send, terminal-outbox ACK, secret rotation, secret disclosure, history rewrite, or force-push.
 
 ## NO-GO gates
 

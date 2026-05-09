@@ -28,6 +28,13 @@
       "policyVersion": "a2a-plane-safety-v1",
       "lastSeenAt": "2026-05-10T00:00:00Z",
       "currentTaskId": "task-second-worker-compatibility-152"
+    },
+    {
+      "workerName": "worker-soonwook-second-reference",
+      "capabilities": ["replay-safety", "no-duplicate-proof", "trace-redaction", "fixtures"],
+      "policyVersion": "a2a-plane-safety-v1",
+      "lastSeenAt": "2026-05-09T16:51:08Z",
+      "currentTaskId": "task-second-worker-replay-public-168"
     }
   ],
   "compatibilityProofs": [
@@ -42,6 +49,19 @@
       "requiresPrivateTopology": false,
       "liveProviderSend": false,
       "terminalAckMutation": false
+    },
+    {
+      "proofId": "second-worker-replay-trace-soonwook-20260509",
+      "issue": "https://github.com/jinwon-int/a2a-plane/issues/168",
+      "parentIssue": "https://github.com/jinwon-int/a2a-plane/issues/163",
+      "run": "a2a-public-readiness-next-20260509T165108Z",
+      "brokerOfRecord": "gwakga",
+      "workerName": "worker-soonwook-second-reference",
+      "proofType": "replay-no-duplicate-fixture",
+      "validationCommand": "node test/conformance/check-contract-fixtures.mjs",
+      "requiresPrivateTopology": false,
+      "liveProviderSend": false,
+      "terminalAckMutation": false
     }
   ],
   "readModelExpectations": {
@@ -49,7 +69,8 @@
     "capabilitiesAreCoarseLabels": true,
     "lastSeenAtIsLivenessOnly": true,
     "providerSendIsNotTerminalEvidence": true,
-    "secondWorkerProofIsPublicSafe": true
+    "secondWorkerProofIsPublicSafe": true,
+    "secondReferenceReplayProofIsPublicSafe": true
   },
   "forbiddenFields": ["hostPath", "hostname", "secret", "providerToken", "rawSessionDump"]
 }

@@ -9,5 +9,6 @@ Fixture set:
 - `cancellation-idempotency.json` — duplicate request, cancellation, and terminal replay behavior.
 - `terminal-evidence.json` — redacted PR, Done, and Block terminal evidence examples.
 - `gwakga-cross-broker-handoff.json` — synthetic Seoseo-to-Gwakga handoff proof for the Team2 lane; it records Gwakga as broker of record, shows that Seoseo does not directly dispatch Team2 workers, lists no-live validation commands, and calls out visibility gaps around accepted-send/non-ACK evidence.
+- `second-worker-replay-trace.json` — public-safe second-reference-worker replay proof showing a replay returns existing terminal evidence with zero duplicate sends, zero duplicate ACKs, and compact redacted trace fields.
 
 Do not add secrets, host-specific paths, OpenClaw runtime/bootstrap files, raw session dumps, live provider payloads, or terminal ACK mutation records to these fixtures.

@@ -1,0 +1,121 @@
+{
+  "fixtureId": "a2a-plane.contract.second-worker-replay-trace.v1",
+  "contracts": [
+    "contracts/a2a/cancellation-idempotency.md",
+    "contracts/a2a/terminal-semantics.md",
+    "contracts/compatibility/terminal-evidence-ack-boundary.md"
+  ],
+  "description": "Public-safe second-reference-worker replay fixture proving a replay returns the existing terminal result without duplicate sends or ACKs, with compact redacted trace evidence.",
+  "v0Freeze": {
+    "frozenAt": "2026-05-09",
+    "round": "a2a-public-readiness-next-20260509T165108Z",
+    "note": "Replay/no-duplicate and compact trace policy expectations are locked for public-readiness validation."
+  },
+  "parentIssue": "https://github.com/jinwon-int/a2a-plane/issues/163",
+  "childIssue": "https://github.com/jinwon-int/a2a-plane/issues/168",
+  "brokerOfRecord": "gwakga",
+  "team": "team2-gwakga",
+  "workerName": "worker-soonwook-second-reference",
+  "taskId": "task-second-worker-replay-public-168",
+  "dedupeKey": "task-second-worker-replay-public-168:worker-soonwook-second-reference:pr",
+  "replayProof": {
+    "terminalResultRef": "terminal-pr-evidence",
+    "attempts": [
+      {
+        "attempt": 1,
+        "eventId": "trace-public-168-001",
+        "replayOf": null,
+        "decision": "record-terminal-result",
+        "terminalResultCreated": true,
+        "returnedExistingTerminalResult": false,
+        "providerSendProduced": false,
+        "terminalOutboxAckProduced": false
+      },
+      {
+        "attempt": 2,
+        "eventId": "trace-public-168-002",
+        "replayOf": "trace-public-168-001",
+        "decision": "suppress-duplicate-return-existing-result",
+        "terminalResultCreated": false,
+        "returnedExistingTerminalResult": true,
+        "providerSendProduced": false,
+        "terminalOutboxAckProduced": false
+      }
+    ],
+    "totals": {
+      "terminalResultsCreated": 1,
+      "providerSendsProduced": 0,
+      "terminalOutboxAcksProduced": 0,
+      "duplicateSendsProduced": 0,
+      "duplicateAcksProduced": 0
+    },
+    "assertions": [
+      "replay returns the existing terminal result instead of creating a second result",
+      "replay produces zero provider sends",
+      "replay produces zero terminal-outbox ACKs",
+      "terminal evidence remains PR/Done/Block metadata, not provider delivery evidence"
+    ]
+  },
+  "tracePolicy": {
+    "status": "compact-redacted-sufficient",
+    "maxEvents": 2,
+    "maxEventKeys": 7,
+    "allowedFields": [
+      "seq",
+      "taskRef",
+      "workerName",
+      "eventClass",
+      "decision",
+      "resultRef",
+      "safetyFlags"
+    ],
+    "forbiddenFields": [
+      "secret",
+      "providerToken",
+      "providerMessageId",
+      "terminalOutboxRow",
+      "rawSessionDump",
+      "hostPath",
+      "privateUrl"
+    ],
+    "sampleTrace": [
+      {
+        "seq": 1,
+        "taskRef": "sha256:public-task-168",
+        "workerName": "worker-soonwook-second-reference",
+        "eventClass": "terminal-result-created",
+        "decision": "record-terminal-result",
+        "resultRef": "terminal-pr-evidence",
+        "safetyFlags": {
+          "liveProviderSend": false,
+          "terminalOutboxAckMutation": false
+        }
+      },
+      {
+        "seq": 2,
+        "taskRef": "sha256:public-task-168",
+        "workerName": "worker-soonwook-second-reference",
+        "eventClass": "replay-suppressed",
+        "decision": "return-existing-terminal-result",
+        "resultRef": "terminal-pr-evidence",
+        "safetyFlags": {
+          "duplicateProviderSend": false,
+          "duplicateTerminalAck": false
+        }
+      }
+    ]
+  },
+  "validationCommands": [
+    "node test/conformance/check-contract-fixtures.mjs"
+  ],
+  "safetyConfirmations": {
+    "requiresPrivateTopology": false,
+    "noProductionDeployOrRestart": true,
+    "noProductionDatabaseMutation": true,
+    "noLiveProviderSend": true,
+    "noTerminalOutboxAckMutation": true,
+    "noSecretRotationOrDisclosure": true,
+    "noRawSessionDump": true,
+    "redactedEvidenceOnly": true
+  }
+}

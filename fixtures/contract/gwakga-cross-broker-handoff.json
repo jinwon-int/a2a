@@ -1,0 +1,145 @@
+{
+  "fixtureId": "a2a-plane.contract.gwakga-cross-broker-handoff.v1",
+  "contract": "contracts/a2a/broker-handoff-protocol.md",
+  "description": "Public-safe cross-broker proof fixture showing Seoseo can request a Team2 handoff while Gwakga remains broker of record and owns worker assignment.",
+  "round": "a2a-vnext-contract-smoke-crossbroker-20260510",
+  "team": "team2",
+  "worker": "dungae",
+  "sourceBrokerId": "seoseo",
+  "destinationBrokerId": "gwakga",
+  "brokerOfRecord": "gwakga",
+  "sourceIssueUrl": "https://github.com/jinwon-int/a2a-plane/issues/151",
+  "handoffEnvelope": {
+    "idempotencyKey": "issue-151:team2-dungae:gwakga-cross-broker-proof",
+    "sourceBrokerId": "seoseo",
+    "destinationBrokerId": "gwakga",
+    "brokerOfRecord": "gwakga",
+    "requestedTeamId": "team1",
+    "destinationTeamId": "team2",
+    "summary": "Validate Gwakga-owned Team2 handoff semantics with synthetic fixture evidence only"
+  },
+  "policyInvariants": {
+    "destinationBrokerIsBrokerOfRecord": true,
+    "sourceBrokerMayCreateHandoffOnly": true,
+    "sourceBrokerDoesNotDispatchDestinationWorkers": true,
+    "destinationBrokerOwnsWorkerAssignment": true,
+    "peerCredentialsAreScopedToHandoff": true,
+    "providerSendIsAcceptedSendOnly": true
+  },
+  "peerScopes": {
+    "create": "handoff:create",
+    "status": "handoff:status",
+    "evidence": "handoff:evidence"
+  },
+  "scenarios": [
+    {
+      "name": "gwakga-accepts-handoff-and-assigns-team2-worker",
+      "given": {
+        "authenticatedPeer": "seoseo",
+        "grantedScopes": ["handoff:create", "handoff:status", "handoff:evidence"],
+        "envelopeRef": "handoffEnvelope"
+      },
+      "when": {
+        "operation": "handoff.create"
+      },
+      "then": {
+        "state": "accepted",
+        "destinationTaskId": "task-gwakga-crossbroker-001",
+        "brokerOfRecord": "gwakga",
+        "workerPool": "team2",
+        "assignedWorkerId": "worker-team2-dungae-fixture",
+        "assignedByBroker": "gwakga",
+        "sourceBrokerDispatchedWorker": false,
+        "terminalOutboxAckMutated": false,
+        "liveProviderSend": false
+      }
+    },
+    {
+      "name": "duplicate-handoff-returns-existing-gwakga-task",
+      "given": {
+        "existingDestinationTaskId": "task-gwakga-crossbroker-001",
+        "existingEnvelopeHash": "sha256:gwakga-crossbroker-public-fixture"
+      },
+      "when": {
+        "operation": "handoff.create",
+        "idempotencyKey": "issue-151:team2-dungae:gwakga-cross-broker-proof",
+        "envelopeHash": "sha256:gwakga-crossbroker-public-fixture"
+      },
+      "then": {
+        "status": "deduplicated",
+        "destinationTaskId": "task-gwakga-crossbroker-001",
+        "newTaskCreated": false,
+        "brokerOfRecord": "gwakga"
+      }
+    },
+    {
+      "name": "missing-create-scope-refuses-before-task-creation",
+      "given": {
+        "authenticatedPeer": "seoseo",
+        "grantedScopes": ["handoff:status"]
+      },
+      "when": {
+        "operation": "handoff.create"
+      },
+      "then": {
+        "status": "refused",
+        "reason": "missing handoff:create scope",
+        "destinationTaskCreated": false,
+        "workerDispatched": false
+      }
+    },
+    {
+      "name": "terminal-evidence-relay-is-redacted-metadata-only",
+      "given": {
+        "authenticatedPeer": "seoseo",
+        "grantedScopes": ["handoff:evidence"],
+        "destinationTaskId": "task-gwakga-crossbroker-001",
+        "terminalEvidence": {
+          "kind": "pr",
+          "url": "https://github.com/jinwon-int/a2a-plane/pull/0000",
+          "summary": "Fixture PR evidence prepared by Gwakga-owned Team2 task",
+          "redacted": true
+        }
+      },
+      "when": {
+        "operation": "handoff.evidence.relay"
+      },
+      "then": {
+        "evidenceRelayed": true,
+        "evidenceClass": "redacted-terminal-metadata",
+        "providerSendEvidenceClass": "accepted-send",
+        "terminalAckMayBeRecorded": false,
+        "terminalOutboxAckMutated": false,
+        "liveProviderSend": false
+      }
+    }
+  ],
+  "noLiveFixtureCommands": [
+    "node test/conformance/check-contract-fixtures.mjs",
+    "npm run test:conformance"
+  ],
+  "visibilityGaps": [
+    {
+      "gap": "provider-send-acceptance-does-not-prove-requester-visible-receipt",
+      "mitigation": "record provider send only as accepted-send evidence and require redacted terminal evidence links for handoff status"
+    },
+    {
+      "gap": "source-broker-status-read-does-not-grant-worker-log-access",
+      "mitigation": "return destination task state and redacted terminal evidence only"
+    },
+    {
+      "gap": "missing-handoff-evidence-scope-prevents-terminal-relay",
+      "mitigation": "fail closed without mutating the destination task evidence trail"
+    }
+  ],
+  "safetyConfirmations": {
+    "syntheticFixtureOnly": true,
+    "noProductionDeployOrRestart": true,
+    "noProductionDatabaseMutation": true,
+    "noLiveProviderSend": true,
+    "noTerminalOutboxAckMutation": true,
+    "noSecretRotationOrDisclosure": true,
+    "noHostSpecificPrivatePath": true,
+    "noSourceBrokerDirectWorkerDispatch": true
+  }
+}

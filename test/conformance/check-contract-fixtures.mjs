@@ -10,6 +10,7 @@ const fixtureFiles = {
   workers: 'worker-registration-capabilities.json',
   cancellation: 'cancellation-idempotency.json',
   evidence: 'terminal-evidence.json',
+  crossBroker: 'gwakga-cross-broker-handoff.json',
 };
 
 const forbiddenRuntimePaths = [
@@ -64,7 +65,7 @@ for (const pattern of secretLikePatterns) {
   assert.ok(!pattern.test(allFixtureText), `fixture text matched forbidden pattern ${pattern}`);
 }
 
-const { lifecycle, workers, cancellation, evidence } = fixtures;
+const { lifecycle, workers, cancellation, evidence, crossBroker } = fixtures;
 
 assert.deepEqual(lifecycle.terminalStates.sort(), ['blocked', 'cancelled', 'done', 'pr']);
 for (const state of lifecycle.terminalStates) {
@@ -149,6 +150,57 @@ for (const item of evidence.evidence) {
 }
 for (const [key, value] of Object.entries(evidence.safetyConfirmations)) {
   assert.equal(value, true, `safety confirmation ${key} must be true`);
+}
+
+assert.equal(crossBroker.contract, 'contracts/a2a/broker-handoff-protocol.md');
+assert.equal(crossBroker.round, 'a2a-vnext-contract-smoke-crossbroker-20260510');
+assert.equal(crossBroker.team, 'team2');
+assert.equal(crossBroker.worker, 'dungae');
+assert.equal(crossBroker.sourceBrokerId, 'seoseo');
+assert.equal(crossBroker.destinationBrokerId, 'gwakga');
+assert.equal(crossBroker.brokerOfRecord, 'gwakga');
+assert.equal(crossBroker.handoffEnvelope.brokerOfRecord, 'gwakga');
+assert.equal(crossBroker.handoffEnvelope.destinationBrokerId, 'gwakga');
+assert.equal(crossBroker.policyInvariants.sourceBrokerDoesNotDispatchDestinationWorkers, true);
+assert.equal(crossBroker.policyInvariants.destinationBrokerOwnsWorkerAssignment, true);
+assert.equal(crossBroker.policyInvariants.providerSendIsAcceptedSendOnly, true);
+
+const crossBrokerScenarioByName = new Map(
+  crossBroker.scenarios.map((scenario) => [scenario.name, scenario]),
+);
+const acceptedHandoff = crossBrokerScenarioByName.get('gwakga-accepts-handoff-and-assigns-team2-worker');
+assert.equal(acceptedHandoff?.then.state, 'accepted');
+assert.equal(acceptedHandoff?.then.brokerOfRecord, 'gwakga');
+assert.equal(acceptedHandoff?.then.workerPool, 'team2');
+assert.equal(acceptedHandoff?.then.assignedByBroker, 'gwakga');
+assert.equal(acceptedHandoff?.then.sourceBrokerDispatchedWorker, false);
+assert.equal(acceptedHandoff?.then.terminalOutboxAckMutated, false);
+assert.equal(acceptedHandoff?.then.liveProviderSend, false);
+
+const duplicateHandoff = crossBrokerScenarioByName.get('duplicate-handoff-returns-existing-gwakga-task');
+assert.equal(duplicateHandoff?.then.status, 'deduplicated');
+assert.equal(duplicateHandoff?.then.newTaskCreated, false);
+assert.equal(duplicateHandoff?.then.brokerOfRecord, 'gwakga');
+
+const refusedHandoff = crossBrokerScenarioByName.get('missing-create-scope-refuses-before-task-creation');
+assert.equal(refusedHandoff?.then.status, 'refused');
+assert.equal(refusedHandoff?.then.destinationTaskCreated, false);
+assert.equal(refusedHandoff?.then.workerDispatched, false);
+
+const evidenceRelay = crossBrokerScenarioByName.get('terminal-evidence-relay-is-redacted-metadata-only');
+assert.equal(evidenceRelay?.given.terminalEvidence.redacted, true);
+assert.equal(evidenceRelay?.then.evidenceRelayed, true);
+assert.equal(evidenceRelay?.then.providerSendEvidenceClass, 'accepted-send');
+assert.equal(evidenceRelay?.then.terminalAckMayBeRecorded, false);
+assert.equal(evidenceRelay?.then.terminalOutboxAckMutated, false);
+assert.equal(evidenceRelay?.then.liveProviderSend, false);
+
+assert.ok(
+  crossBroker.noLiveFixtureCommands.includes('node test/conformance/check-contract-fixtures.mjs'),
+);
+assert.ok(crossBroker.visibilityGaps.length >= 1);
+for (const [key, value] of Object.entries(crossBroker.safetyConfirmations)) {
+  assert.equal(value, true, `cross-broker safety confirmation ${key} must be true`);
 }
 
 const examplePath = path.join(root, 'examples', 'compatibility', 'cross-team-conformance.json');

@@ -8,6 +8,15 @@ This checklist prepares evidence for an initial `v0.1.0-alpha` or `v0.1.0` opera
 - [ ] Confirm the branch/PR contains no OpenClaw runtime/bootstrap files: `AGENTS.md`, `SOUL.md`, `USER.md`, `TOOLS.md`, `HEARTBEAT.md`, `IDENTITY.md`, or `.openclaw/**`.
 - [ ] Confirm evidence is redacted and contains no secrets, private endpoints, provider IDs, Telegram IDs, raw session dumps, production data, or host-specific private paths.
 
+## Multi-PR round merge preflight
+
+Before merging a round with more than one PR, build the exact intended merge train locally and run the integrated gate. This catches cross-PR fixture/contract drift that individual PR CI cannot see.
+
+- [ ] List the intended PR merge order and confirm every PR is individually green.
+- [ ] Run `npm run round:merge-preflight -- <pr> [<pr> ...]` using that exact order, or add `--run "npm run check && npm run test:release-gate"` when the round changes release-gate tests.
+- [ ] Record the successful preflight command and output in the parent issue before merging the first PR.
+- [ ] If the preflight fails, stop the merge train and fix the integration gap in a PR before any round PR is merged.
+
 ## CI and local gates
 
 - [ ] GitHub Actions `ci` passes for the exact candidate commit: `https://github.com/jinwon-int/a2a-plane/actions/workflows/ci.yml`.

@@ -128,7 +128,68 @@ Decision: **NO-GO / Waiting.**
 
 This closeout refresh performed redacted documentation evidence updates and local validation only. It did **not** perform any repository visibility change, release, deploy, Gateway/broker/worker restart, production database mutation, live provider/Telegram send, terminal-outbox ACK, secret rotation, secret disclosure, history rewrite, or force-push.
 
-## R8 Operator Decision Packet: Public-Readiness GO/NO-GO Matrix (Bangtong lane)
+## R9 Preflight Refresh: Upstream Conflict Gate (Bangtong lane)
+
+Parent: [#75](https://github.com/jinwon-int/a2a-plane/issues/75).
+Roadmap: [#294](https://github.com/jinwon-int/a2a-broker/issues/294).
+
+Live preflight at dispatch (`team1-a2a-public-p0-next-round`): `openclaw/openclaw#78261` is OPEN and now `mergeable=CONFLICTING`, `mergeStateStatus=DIRTY`. No failed or in-progress checks were reported at the exact poll snapshot. This is an **external blocker only** — no upstream maintainer action is authorized from this repository.
+
+This refines the G1 gate shape from "open and unmerged" to "CONFLICTING/DIRTY merge gate." The upstream PR has a merge conflict that must be resolved by the openclaw/openclaw maintainers before it can land. The conflict is not actionable from A2A Plane and does not change the NO-GO decision; it hardens the upstream-merge gate.
+
+### G1 Gate Refinement: Upstream Conflict State
+
+| Field | Previous State (R8) | Current State (R9 preflight) |
+|---|---|---|
+| PR status | Open, unmerged | Open, unmerged |
+| Mergeability | `mergeable=MERGEABLE` (assumed) | `mergeable=CONFLICTING` |
+| Merge state | Clean (assumed) | `mergeStateStatus=DIRTY` |
+| Required action | Wait for merge + rollout + receipt proof | Wait for **upstream conflict resolution** → merge → rollout → receipt proof |
+
+The conflict adds a prerequisite: even if rollout and receipt proof were ready, the PR cannot merge until the conflict is resolved upstream. This does not relax or bypass any existing gate.
+
+### Aggregate Decision
+
+**NO-GO / Waiting.** All three gates remain NO-GO. G1 is now gated on upstream conflict resolution in addition to merge + runtime rollout + receipt proof. G2 requires external scanner tooling and clean output. G3 requires explicit operator approval separated from execution. Until all three gates are GO, `#75` must remain open.
+
+### Seoseo Evidence Collection Checklist (updated for conflict gate)
+
+Seoseo is responsible for collecting and linking the following evidence before requesting `#75` closeout. Items marked **(new)** are added for the CONFLICTING/DIRTY preflight state.
+
+1. **G1 evidence (upstream gate):**
+   - [ ] **(new)** Confirm `openclaw/openclaw#78261` shows `mergeable=MERGEABLE` and `mergeStateStatus=CLEAN` (conflict resolved upstream).
+   - [ ] **(new)** Link to the upstream commit or force-push that resolved the conflict (the PR must show a clean diff against its base).
+   - [ ] Link to merged `openclaw/openclaw#78261`.
+   - [ ] Link to the OpenClaw runtime build/release tag that includes the merged change.
+   - [ ] Link to a follow-up proof (issue/PR comment or CI log) showing **current-session-visible receipt** for the Terminal Brief route. Provider acceptance or `messageId` alone is insufficient.
+   - [ ] Confirmation that the proof was produced with the rolled-out runtime, not a pre-merge snapshot.
+
+2. **G2 evidence:**
+   - [ ] Install `gitleaks` and/or `trufflehog` in the operator environment.
+   - [ ] Run `npm run scan:external-secrets` and link the output (redacted).
+   - [ ] If findings exist, document operator disposition for each finding class.
+   - [ ] Confirm the scanner evidence postdates the last commit touching secrets-adjacent paths.
+
+3. **G3 evidence:**
+   - [ ] Link to an explicit operator (진원님) approval comment in the `#75` issue or a linked decision issue.
+   - [ ] The approval text must reference repository visibility/publication explicitly (not just "docs look good" or "checks passed").
+   - [ ] Approval must be separate from any automation that would execute the visibility change.
+
+4. **Cross-check evidence (all lanes):**
+   - [ ] All sibling cross-repo lanes remain merged and unregressed (`openclaw-plugin-a2a#235`, `a2a-broker#433`, `a2a-broker#434`).
+   - [ ] `npm run check` passes on the tip of the candidate branch.
+   - [ ] `npm run test:release-gate` passes `3/3`.
+   - [ ] `npm run scan:public-readiness` reports no new findings.
+   - [ ] Runtime/bootstrap hygiene confirmed: `AGENTS.md`, `SOUL.md`, `USER.md`, `TOOLS.md`, `HEARTBEAT.md`, `IDENTITY.md`, and `.openclaw/**` are not entering the branch or evidence.
+   - [ ] Repository visibility remains private up to the decision point.
+
+Seoseo must link each piece of evidence in a comment on `#75`. Only when all checkboxes in this checklist are satisfied and the three GO/NO-GO gates are all GO may `#75` be considered for closeout.
+
+This preflight refresh performed redacted documentation evidence updates and local validation only. It did **not** perform any repository visibility change, release, deploy, Gateway/broker/worker restart, production database mutation, live provider/Telegram send, terminal-outbox ACK, secret rotation, secret disclosure, history rewrite, force-push, or upstream maintainer action.
+
+---
+
+## R8 Operator Decision Packet: Public-Readiness GO/NO-GO Matrix (Bangtong lane) [SUPERSEDED by R9 above]
 
 Parent: [#75](https://github.com/jinwon-int/a2a-plane/issues/75).
 Roadmap: [#294](https://github.com/jinwon-int/a2a-broker/issues/294).

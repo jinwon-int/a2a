@@ -1,0 +1,66 @@
+{
+  "fixtureId": "a2a-plane.contract.terminal-evidence.v1",
+  "contract": "contracts/a2a/terminal-semantics.md",
+  "description": "Redacted terminal evidence examples for PR, Done, and Block results.",
+  "evidence": [
+    {
+      "evidenceId": "terminal-pr-evidence",
+      "kind": "pr",
+      "taskId": "task-conformance-lifecycle-001",
+      "summary": "Prepared independent conformance fixtures for lifecycle, workers, cancellation/idempotency, and terminal evidence.",
+      "url": "https://github.com/jinwon-int/a2a-plane/pull/0000",
+      "changedFiles": [
+        "fixtures/contract/task-lifecycle.json",
+        "fixtures/contract/worker-registration-capabilities.json",
+        "fixtures/contract/cancellation-idempotency.json",
+        "fixtures/contract/terminal-evidence.json",
+        "test/conformance/check-contract-fixtures.mjs"
+      ],
+      "checks": [
+        {
+          "command": "node test/conformance/check-contract-fixtures.mjs",
+          "result": "pass"
+        }
+      ],
+      "redacted": true,
+      "terminalOutboxAckMutated": false,
+      "liveProviderSend": false
+    },
+    {
+      "evidenceId": "terminal-done-evidence",
+      "kind": "done",
+      "taskId": "task-conformance-docs-001",
+      "summary": "Completed a non-PR fixture validation task with no repository mutation required.",
+      "changedFiles": [],
+      "checks": [
+        {
+          "command": "node test/conformance/check-contract-fixtures.mjs",
+          "result": "pass"
+        }
+      ],
+      "redacted": true,
+      "terminalOutboxAckMutated": false,
+      "liveProviderSend": false
+    },
+    {
+      "evidenceId": "terminal-block-evidence",
+      "kind": "blocked",
+      "taskId": "task-conformance-cancelled-001",
+      "blockerCategory": "operator-cancelled",
+      "reason": "Task was cancelled before any worker began execution.",
+      "safeEvidence": "queued task moved to blocked terminal state without provider send or ACK mutation",
+      "redacted": true,
+      "terminalOutboxAckMutated": false,
+      "liveProviderSend": false
+    }
+  ],
+  "safetyConfirmations": {
+    "noPublicVisibilityChange": true,
+    "noProductionDeployOrRestart": true,
+    "noProductionDatabaseMutation": true,
+    "noLiveProviderSend": true,
+    "noTerminalOutboxAckMutation": true,
+    "noSecretRotationOrDisclosure": true,
+    "noRawSessionDump": true
+  }
+}

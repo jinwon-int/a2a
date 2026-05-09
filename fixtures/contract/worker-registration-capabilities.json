@@ -1,0 +1,28 @@
+{
+  "fixtureId": "a2a-plane.contract.worker-registration-capabilities.v1",
+  "contract": "contracts/a2a/worker-registration.md",
+  "description": "Public-safe worker registration and capability fixture for read-model conformance.",
+  "workers": [
+    {
+      "workerName": "worker-conformance-fixtures",
+      "capabilities": ["contracts", "fixtures", "repo-inspection", "tests"],
+      "policyVersion": "a2a-plane-safety-v1",
+      "lastSeenAt": "2026-05-09T13:10:00Z",
+      "currentTaskId": "task-conformance-lifecycle-001"
+    },
+    {
+      "workerName": "worker-terminal-evidence-review",
+      "capabilities": ["terminal-evidence", "redaction-review"],
+      "policyVersion": "a2a-plane-safety-v1",
+      "lastSeenAt": "2026-05-09T13:10:00Z",
+      "currentTaskId": null
+    }
+  ],
+  "readModelExpectations": {
+    "publishableFields": ["workerName", "capabilities", "policyVersion", "lastSeenAt", "currentTaskId"],
+    "capabilitiesAreCoarseLabels": true,
+    "lastSeenAtIsLivenessOnly": true,
+    "providerSendIsNotTerminalEvidence": true
+  },
+  "forbiddenFields": ["hostPath", "hostname", "secret", "providerToken", "rawSessionDump"]
+}

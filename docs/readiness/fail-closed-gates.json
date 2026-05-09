@@ -1,11 +1,13 @@
 {
   "schemaVersion": 1,
   "lane": "team2-gwakga",
-  "run": "a2a-plane-roadmap-cross-team-20260509T131000Z",
+  "run": "a2a-plane-post78261-next-20260509T142546Z",
   "defaultDecision": "NO-GO",
   "failClosed": true,
   "goDecisionRequires": [
     "publicPrivateBoundary",
+    "terminalEvidence",
+    "replaySafety",
     "externalScannerEvidence",
     "runtimeBootstrapHygiene",
     "goNoGoMatrix",
@@ -26,8 +28,32 @@
       ]
     },
     {
+      "id": "terminalEvidence",
+      "title": "Terminal evidence",
+      "failClosed": true,
+      "requiredForGo": true,
+      "blockedWhenMissing": "Terminal requester/operator-visible evidence is missing or only shows accepted-send/provider message IDs; public transition is NO-GO.",
+      "evidence": [
+        "A linked, redacted terminal evidence packet proves requester-visible or operator-visible terminal receipt for the candidate flow.",
+        "Provider message IDs, send-result success, queued/accepted states, or delivery attempts are labeled accepted-send evidence only and are not treated as terminal ACK.",
+        "Evidence postdates the last commit that changes terminal-evidence or receipt-routing behavior."
+      ]
+    },
+    {
+      "id": "replaySafety",
+      "title": "Replay-safety proof",
+      "failClosed": true,
+      "requiredForGo": true,
+      "blockedWhenMissing": "Replay-safety proof for terminal evidence is missing, stale, or disputed; public transition is NO-GO.",
+      "evidence": [
+        "A linked, redacted replay/canary run shows duplicate sends or retries cannot mint a false terminal ACK.",
+        "Idempotency keys, receipt correlation, or equivalent replay controls are identified without exposing secrets or provider identifiers.",
+        "Replay-safety evidence postdates the last commit touching terminal evidence, receipt routing, or retry behavior."
+      ]
+    },
+    {
       "id": "externalScannerEvidence",
-      "title": "Secret/history scanner readiness",
+      "title": "Scanner output evidence (secret/history)",
       "failClosed": true,
       "requiredForGo": true,
       "blockedWhenMissing": "External scanner evidence is absent or unavailable; public transition is NO-GO.",

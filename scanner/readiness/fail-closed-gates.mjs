@@ -22,6 +22,17 @@ function hasEvidence(value) {
   return Array.isArray(value?.evidence) && value.evidence.some((entry) => typeof entry === 'string' && entry.trim());
 }
 
+const mandatoryGoGates = [
+  'publicPrivateBoundary',
+  'terminalEvidence',
+  'replaySafety',
+  'externalScannerEvidence',
+  'runtimeBootstrapHygiene',
+  'goNoGoMatrix',
+  'redactedEvidencePolicy',
+  'operatorApproval',
+];
+
 function validateSpec(spec) {
   const failures = [];
   if (spec.failClosed !== true) failures.push('spec.failClosed must be true');
@@ -30,6 +41,11 @@ function validateSpec(spec) {
     failures.push('spec.goDecisionRequires must list required GO gates');
   }
   if (!Array.isArray(spec.gates) || spec.gates.length === 0) failures.push('spec.gates must be non-empty');
+
+  const goDecisionRequires = new Set(spec.goDecisionRequires || []);
+  for (const id of mandatoryGoGates) {
+    if (!goDecisionRequires.has(id)) failures.push(`spec.goDecisionRequires missing mandatory gate: ${id}`);
+  }
 
   const gates = new Map((spec.gates || []).map((gate) => [gate.id, gate]));
   for (const id of spec.goDecisionRequires || []) {

@@ -2,7 +2,7 @@
 
 This lane defines the Team2/Gwakga handoff for public/private boundary readiness. It is intentionally conservative: missing or ambiguous evidence is a **NO-GO**, not a warning.
 
-Scope: `jinwon-int/a2a-plane#120`, parent `#114`, run `a2a-plane-roadmap-cross-team-20260509T131000Z`.
+Scope: `jinwon-int/a2a-plane#136`, parent `#130`, run `a2a-plane-post78261-next-20260509T142546Z`.
 
 ## Readiness rule
 
@@ -11,11 +11,13 @@ The aggregate public-readiness decision is **GO** only when every required gate 
 Required gates:
 
 1. **Public/private boundary** — the repository remains private until an explicit visibility decision is recorded. Public docs and examples must not expose private endpoints, provider IDs, Telegram IDs, host-specific paths, raw session dumps, or OpenClaw runtime/bootstrap context.
-2. **External scanner evidence** — `npm run scan:external-secrets` or an equivalent supported external scanner must run in the operator environment. If no supported scanner is installed, the lane must post Block evidence and remain NO-GO.
-3. **Runtime/bootstrap hygiene** — `AGENTS.md`, `SOUL.md`, `USER.md`, `TOOLS.md`, `HEARTBEAT.md`, `IDENTITY.md`, and `.openclaw/**` must not enter the branch diff, artifacts, issue comments, or PR body.
-4. **GO/NO-GO matrix** — every required gate needs a status, owner, timestamp, and redacted evidence link. The matrix must not collapse partial readiness into GO.
-5. **Redacted evidence policy** — evidence may include commands, exit statuses, counts/classes, commit SHAs, and links. It must not include matched secret values, raw private paths, raw session dumps, or provider-specific identifiers.
-6. **Explicit operator approval** — public repository visibility requires a separate operator comment that explicitly names repository visibility/publication. It must not be inferred from passing tests, merged PRs, or general approval of docs.
+2. **Terminal evidence** — linked, redacted terminal requester/operator-visible evidence must prove the candidate flow reached terminal receipt. Provider message IDs, accepted-send results, queued states, or delivery attempts are not terminal ACK evidence.
+3. **Replay-safety proof** — linked, redacted replay/canary evidence must show duplicate sends or retries cannot mint a false terminal ACK.
+4. **Scanner output evidence** — `npm run scan:external-secrets` or an equivalent supported external scanner must run in the operator environment. If no supported scanner is installed, the lane must post Block evidence and remain NO-GO.
+5. **Runtime/bootstrap hygiene** — `AGENTS.md`, `SOUL.md`, `USER.md`, `TOOLS.md`, `HEARTBEAT.md`, `IDENTITY.md`, and `.openclaw/**` must not enter the branch diff, artifacts, issue comments, or PR body.
+6. **GO/NO-GO matrix** — every required gate needs a status, owner, timestamp, and redacted evidence link. The matrix must not collapse partial readiness into GO.
+7. **Redacted evidence policy** — evidence may include commands, exit statuses, counts/classes, commit SHAs, and links. It must not include matched secret values, raw private paths, raw session dumps, or provider-specific identifiers.
+8. **Explicit operator approval** — public repository visibility requires a separate operator comment that explicitly names repository visibility/publication. It must not be inferred from passing tests, merged PRs, or general approval of docs.
 
 ## Scanner/readiness script
 
@@ -40,6 +42,8 @@ The input packet is intentionally simple:
   "decision": "GO",
   "gates": {
     "publicPrivateBoundary": { "status": "GO", "evidence": ["issue or PR URL"] },
+    "terminalEvidence": { "status": "GO", "evidence": ["redacted terminal evidence URL"] },
+    "replaySafety": { "status": "GO", "evidence": ["redacted replay-safety URL"] },
     "externalScannerEvidence": { "status": "GO", "evidence": ["redacted scanner URL"] },
     "runtimeBootstrapHygiene": { "status": "GO", "evidence": ["diff check URL"] },
     "goNoGoMatrix": { "status": "GO", "evidence": ["matrix URL"] },
@@ -62,6 +66,9 @@ Commands:
 - npm run scan:readiness-gates — pass
 - npm run scan:public-readiness — pass/fail with finding count only
 - npm run scan:external-secrets — pass, or blocked because no supported scanner is installed
+
+Terminal/replay gates:
+- Terminal evidence and replay-safety proof are linked as redacted evidence, or the decision remains NO-GO / Waiting.
 
 Runtime/bootstrap hygiene:
 - Branch/artifacts exclude AGENTS.md, SOUL.md, USER.md, TOOLS.md, HEARTBEAT.md, IDENTITY.md, and .openclaw/**.

@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "contracts/a2a/fixtures/terminal-evidence-examples.json",
+  "title": "A2A Terminal Evidence Examples (v0)",
+  "description": "Redacted example payloads for each terminal result kind. These are structural references only; replace placeholder URLs and summaries with actual redacted evidence in production.",
+  "examples": {
+    "done": {
+      "kind": "done",
+      "summary": "Contract v0 cancellation-idempotency skeleton created.",
+      "changedFiles": [
+        "contracts/a2a/cancellation-idempotency.md",
+        "contracts/a2a/fixtures/task-lifecycle-states.json",
+        "contracts/a2a/fixtures/terminal-evidence-examples.json",
+        "contracts/a2a/README.md",
+        "contracts/a2a/task-lifecycle.md"
+      ],
+      "checksRun": ["git diff --stat", "cat contracts/a2a/fixtures/task-lifecycle-states.json | python3 -m json.tool > /dev/null"],
+      "safetyConfirmed": true,
+      "redacted": true
+    },
+    "pr": {
+      "kind": "pr",
+      "prUrl": "https://github.com/jinwon-int/a2a-plane/pull/redacted",
+      "summary": "Contract v0 skeleton with cancellation, idempotency, and fixtures.",
+      "changedFiles": [
+        "contracts/a2a/cancellation-idempotency.md",
+        "contracts/a2a/fixtures/task-lifecycle-states.json",
+        "contracts/a2a/fixtures/terminal-evidence-examples.json",
+        "contracts/a2a/README.md",
+        "contracts/a2a/task-lifecycle.md"
+      ],
+      "rootCheck": "No OpenClaw runtime/bootstrap files (AGENTS.md, SOUL.md, USER.md, TOOLS.md, HEARTBEAT.md, IDENTITY.md, .openclaw/**) in branch diff.",
+      "safetyConfirmed": true,
+      "redacted": true
+    },
+    "blocked": {
+      "kind": "blocked",
+      "blockerCategory": "safety",
+      "reason": "Cannot proceed: [redacted] requires [redacted] access which is not available in this environment.",
+      "redactedEvidence": "Worker attempted [redacted operation] and received [redacted error]. No secrets disclosed.",
+      "safetyConfirmed": true,
+      "redacted": true
+    }
+  }
+}

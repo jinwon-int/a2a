@@ -1,0 +1,71 @@
+{
+  "fixtureId": "a2a-plane.contract.cancellation-idempotency.v1",
+  "contract": "contracts/a2a/task-lifecycle.md",
+  "description": "Cancellation and idempotency scenarios for independent broker/worker conformance.",
+  "idempotencyKey": "issue-119:team2-gwakga:contract-fixtures",
+  "scenarios": [
+    {
+      "name": "duplicate-create-returns-existing-task",
+      "given": {
+        "existingTaskId": "task-conformance-lifecycle-001",
+        "existingEnvelopeHash": "sha256:public-fixture-envelope"
+      },
+      "when": {
+        "requestIdempotencyKey": "issue-119:team2-gwakga:contract-fixtures",
+        "requestEnvelopeHash": "sha256:public-fixture-envelope"
+      },
+      "then": {
+        "status": "deduplicated",
+        "taskId": "task-conformance-lifecycle-001",
+        "newTaskCreated": false
+      }
+    },
+    {
+      "name": "same-key-different-envelope-conflicts",
+      "given": {
+        "existingTaskId": "task-conformance-lifecycle-001",
+        "existingEnvelopeHash": "sha256:public-fixture-envelope"
+      },
+      "when": {
+        "requestIdempotencyKey": "issue-119:team2-gwakga:contract-fixtures",
+        "requestEnvelopeHash": "sha256:different-public-fixture-envelope"
+      },
+      "then": {
+        "status": "conflict",
+        "newTaskCreated": false,
+        "reason": "idempotency key is already bound to a different logical envelope"
+      }
+    },
+    {
+      "name": "cancel-before-running-blocks-task",
+      "given": {
+        "state": "queued"
+      },
+      "when": {
+        "event": "task.cancel-requested",
+        "reason": "operator requested cancellation before claim"
+      },
+      "then": {
+        "state": "blocked",
+        "terminal": true,
+        "evidenceRef": "terminal-block-evidence"
+      }
+    },
+    {
+      "name": "cancel-after-terminal-is-idempotent-noop",
+      "given": {
+        "state": "pr",
+        "evidenceRef": "terminal-pr-evidence"
+      },
+      "when": {
+        "event": "task.cancel-requested"
+      },
+      "then": {
+        "state": "pr",
+        "terminal": true,
+        "changed": false,
+        "evidenceRef": "terminal-pr-evidence"
+      }
+    }
+  ]
+}

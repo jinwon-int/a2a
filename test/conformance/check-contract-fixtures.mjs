@@ -95,6 +95,21 @@ for (const worker of workers.workers) {
   }
 }
 assert.equal(workers.readModelExpectations.providerSendIsNotTerminalEvidence, true);
+assert.equal(workers.readModelExpectations.secondWorkerProofIsPublicSafe, true);
+
+const workerNames = new Set(workers.workers.map((worker) => worker.workerName));
+const secondWorkerProof = workers.compatibilityProofs?.find(
+  (proof) => proof.proofId === 'second-worker-compatibility-jingun-20260510',
+);
+assert.ok(secondWorkerProof, 'expected jingun second-worker compatibility proof');
+assert.equal(secondWorkerProof.issue, 'https://github.com/jinwon-int/a2a-plane/issues/152');
+assert.equal(secondWorkerProof.round, 'a2a-vnext-contract-smoke-crossbroker-20260510');
+assert.equal(secondWorkerProof.brokerOfRecord, 'gwakga');
+assert.ok(workerNames.has(secondWorkerProof.workerName), 'second-worker proof must reference a registered worker');
+assert.equal(secondWorkerProof.validationCommand, 'node test/conformance/check-contract-fixtures.mjs');
+assert.equal(secondWorkerProof.requiresPrivateTopology, false);
+assert.equal(secondWorkerProof.liveProviderSend, false);
+assert.equal(secondWorkerProof.terminalAckMutation, false);
 
 const scenarioByName = new Map(cancellation.scenarios.map((scenario) => [scenario.name, scenario]));
 assert.equal(scenarioByName.get('duplicate-create-returns-existing-task')?.then.newTaskCreated, false);

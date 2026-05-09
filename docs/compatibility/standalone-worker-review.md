@@ -25,6 +25,8 @@ A2A Plane is compatible with a standalone worker that only implements the broker
 
 The example card in `examples/workers/standalone-http-worker/worker-card.json` follows this lane. It models a generic HTTP worker with documentation and repository-inspection capabilities and no OpenClaw-specific fields.
 
+For the `a2a-vnext-contract-smoke-crossbroker-20260510` round, `fixtures/contract/worker-registration-capabilities.json` adds `worker-jingun-second-worker` as a public-safe Team2/Gwakga compatibility proof. The fixture binds the worker to issue #152, declares only coarse capabilities, and records that validation is local conformance only: no private topology, live provider send, or terminal ack mutation is required.
+
 ## Second reference worker shape
 
 The standalone lane is intentionally smaller than an operator integration. A compatible worker only needs to speak the broker worker contract: advertise a public-safe card, claim a queued task, report running state, and close with one terminal result. Its terminal evidence can be a redacted Done summary, a PR URL with validation, or a Block reason. It must not rely on OpenClaw bootstrap files, Gateway configuration, provider delivery receipts, or terminal-outbox ACK mutation to prove completion.

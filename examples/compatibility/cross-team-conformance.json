@@ -1,11 +1,12 @@
 {
   "exampleId": "a2a-plane.compatibility.cross-team-conformance.v1",
-  "description": "Compatibility example binding Team2/Gwakga handoff fixtures to public-safe contract checks.",
-  "parentIssue": "https://github.com/jinwon-int/a2a-plane/issues/114",
-  "childIssue": "https://github.com/jinwon-int/a2a-plane/issues/119",
-  "runId": "a2a-plane-roadmap-cross-team-20260509T131000Z",
+  "description": "Compatibility example binding Team2/Gwakga second-worker handoff fixtures to public-safe contract checks.",
+  "parentIssue": "https://github.com/jinwon-int/a2a-plane/issues/146",
+  "childIssue": "https://github.com/jinwon-int/a2a-plane/issues/152",
+  "runId": "a2a-vnext-contract-smoke-crossbroker-20260510",
   "brokerOfRecord": "gwakga",
   "team": "team2-gwakga",
+  "worker": "worker-jingun-second-worker",
   "fixtures": [
     "fixtures/contract/task-lifecycle.json",
     "fixtures/contract/worker-registration-capabilities.json",

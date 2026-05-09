@@ -22,7 +22,7 @@
     "libero:public-preflight-closeout": "node scripts/libero-public-preflight-closeout.mjs",
     "test": "npm run check",
     "test:release-gate": "node --test scripts/check-compatibility-baselines.test.mjs scripts/libero-public-preflight-closeout.test.mjs scripts/check-no-diff-closeout-guidance.test.mjs scripts/check-quickstart-conformance.test.mjs",
-    "test:conformance": "node test/conformance/check-contract-fixtures.mjs"
+    "test:conformance": "node test/conformance/check-contract-fixtures.mjs && node test/conformance/check-terminal-evidence-ack-boundary.mjs"
   },
   "license": "MIT"
 }

@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "contracts/a2a/fixtures/task-lifecycle-states.json",
+  "title": "A2A Task Lifecycle State Transitions (v0)",
+  "description": "Allowed state transitions for A2A task lifecycle. This fixture is a machine-readable reference for broker/plugin/runner validation.",
+  "states": {
+    "queued": {
+      "description": "Task accepted but not assigned to a worker.",
+      "allowedTransitions": ["claimed", "blocked", "cancelled"]
+    },
+    "claimed": {
+      "description": "A worker has reserved the task.",
+      "allowedTransitions": ["running", "blocked", "cancelled"]
+    },
+    "running": {
+      "description": "Worker is inspecting or changing repository content.",
+      "allowedTransitions": ["done", "pr", "blocked", "cancelling"]
+    },
+    "cancelling": {
+      "description": "Cancellation requested; worker notified to stop safely.",
+      "allowedTransitions": ["cancelled"]
+    },
+    "done": {
+      "description": "Work completed without a PR requirement, with redacted evidence.",
+      "allowedTransitions": [],
+      "terminal": true
+    },
+    "pr": {
+      "description": "Work completed with a PR URL and required check evidence.",
+      "allowedTransitions": [],
+      "terminal": true
+    },
+    "blocked": {
+      "description": "Worker cannot safely or correctly complete the task.",
+      "allowedTransitions": [],
+      "terminal": true
+    },
+    "cancelled": {
+      "description": "Task cancelled by operator, timeout, or block escalation.",
+      "allowedTransitions": [],
+      "terminal": true
+    }
+  },
+  "terminalStates": ["done", "pr", "blocked", "cancelled"]
+}

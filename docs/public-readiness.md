@@ -71,6 +71,34 @@ Issue `#44` uses the read-only `npm run libero:public-preflight-closeout -- --in
 
 A public visibility **GO** must not be declared unless both local public-readiness and external secret/history scanner evidence are clean, the repository remains private up to the decision point, and operator approval is explicitly separated from any visibility execution step. Without explicit visibility approval from 진원님, the aggregate decision remains **NO-GO** even when all lanes and scanners are clean.
 
+## Post-R5 A2A dispatch synthesis (Bangtong lane)
+
+Parent: [#75](https://github.com/jinwon-int/a2a-plane/issues/75).
+
+R5 lanes [#76](https://github.com/jinwon-int/a2a-plane/issues/76), [#77](https://github.com/jinwon-int/a2a-plane/issues/77), [#78](https://github.com/jinwon-int/a2a-plane/issues/78), and [#79](https://github.com/jinwon-int/a2a-plane/issues/79) are closed and merged via PRs [#80](https://github.com/jinwon-int/a2a-plane/pull/80), [#81](https://github.com/jinwon-int/a2a-plane/pull/81), and [#82](https://github.com/jinwon-int/a2a-plane/pull/82).
+
+A follow-on A2A dispatch round cross-repo synthesis:
+
+| Lane | Repo | Issue | PR | Status |
+|---|---|---|---|---|
+| Sogyo (A2A Inspector conformance gate) | `jinwon-int/openclaw-plugin-a2a` | [#234](https://github.com/jinwon-int/openclaw-plugin-a2a/issues/234) | [#235](https://github.com/jinwon-int/openclaw-plugin-a2a/pull/235) (open) | PR exists but unmerged |
+| Nosuk (broker lifecycle → A2A 1.0 task mapping) | `jinwon-int/a2a-broker` | [#431](https://github.com/jinwon-int/a2a-broker/issues/431) | none | **Unresolved** — no PR |
+| Yukson (Worker Capability/AgentCard registry) | `jinwon-int/a2a-broker` | [#432](https://github.com/jinwon-int/a2a-broker/issues/432) | [#433](https://github.com/jinwon-int/a2a-broker/pull/433) (open) | PR exists but unmerged |
+
+**Synthesis decision: NO-GO / Waiting.**
+
+- Two of three sibling lanes have open PRs but are not merged.
+- One sibling lane ([a2a-broker#431](https://github.com/jinwon-int/a2a-broker/issues/431)) is unresolved with no PR.
+- Upstream gate [openclaw/openclaw#78261](https://github.com/openclaw/openclaw/pull/78261) remains open and blocks Terminal Brief/source closeout activation.
+- External secret scanner unavailable (fail-closed).
+- Repository visibility remains **NO-GO** until all sibling lanes close, upstream receipt proof is available, scanner evidence is clean, and operator explicitly approves.
+
+Relevant cross-repo guardrail docs:
+- `contracts/a2a/task-lifecycle.md` — A2A task-state mapping reference.
+- `contracts/a2a/worker-registration.md` — Worker registration and capability assumptions.
+- `contracts/a2a/terminal-semantics.md` — Terminal ACK boundary.
+- `docs/r6-terminal-brief-openclaw-routing-synthesis.md` — R6 upstream gate and no-bypass rules.
+
 ## NO-GO gates
 
 - [x] License decision approved and committed: MIT. NOTICE is not required for MIT unless future third-party notices require it.

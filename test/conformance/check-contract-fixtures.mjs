@@ -273,6 +273,7 @@ assert.ok(
 );
 for (const [key, value] of Object.entries(publicPolicy.safetyConfirmations)) {
   assert.equal(value, true, `public compatibility policy safety confirmation ${key} must be true`);
+}
 
 assert.equal(replayTrace.childIssue, 'https://github.com/jinwon-int/a2a-plane/issues/168');
 assert.equal(replayTrace.parentIssue, 'https://github.com/jinwon-int/a2a-plane/issues/163');

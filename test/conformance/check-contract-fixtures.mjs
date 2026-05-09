@@ -14,6 +14,7 @@ const fixtureFiles = {
   checkpointInterrupt: 'checkpoint-interrupt.json',
   publicPolicy: 'public-compatibility-policy.json',
   replayTrace: 'second-worker-replay-trace.json',
+  liveCanaryApprovalBoundary: 'live-canary-replay-approval-boundary.json',
 };
 
 const forbiddenRuntimePaths = [
@@ -68,7 +69,17 @@ for (const pattern of secretLikePatterns) {
   assert.ok(!pattern.test(allFixtureText), `fixture text matched forbidden pattern ${pattern}`);
 }
 
-const { lifecycle, workers, cancellation, evidence, crossBroker, checkpointInterrupt, publicPolicy, replayTrace } = fixtures;
+const {
+  lifecycle,
+  workers,
+  cancellation,
+  evidence,
+  crossBroker,
+  checkpointInterrupt,
+  publicPolicy,
+  replayTrace,
+  liveCanaryApprovalBoundary,
+} = fixtures;
 
 assert.deepEqual(lifecycle.terminalStates.sort(), ['blocked', 'cancelled', 'done', 'pr']);
 for (const state of lifecycle.terminalStates) {
@@ -310,6 +321,43 @@ assert.equal(replayTrace.safetyConfirmations.requiresPrivateTopology, false);
 for (const [key, value] of Object.entries(replayTrace.safetyConfirmations)) {
   if (key === 'requiresPrivateTopology') continue;
   assert.equal(value, true, `replay trace safety confirmation ${key} must be true`);
+}
+
+assert.equal(liveCanaryApprovalBoundary.parentIssue, 'https://github.com/jinwon-int/a2a-plane/issues/174');
+assert.equal(liveCanaryApprovalBoundary.childIssue, 'https://github.com/jinwon-int/a2a-plane/issues/177');
+assert.equal(liveCanaryApprovalBoundary.v0Freeze.round, 'a2a-live-canary-readiness-20260509T173917Z');
+assert.equal(liveCanaryApprovalBoundary.brokerOfRecord, 'gwakga');
+assert.ok(workerNames.has(liveCanaryApprovalBoundary.workerName), 'live-canary proof must reference a registered worker');
+assert.equal(liveCanaryApprovalBoundary.canaryMode, 'no-live-redacted-replay');
+assert.equal(liveCanaryApprovalBoundary.replayNoDuplicateProof.totals.terminalResultsCreated, 1);
+assert.equal(liveCanaryApprovalBoundary.replayNoDuplicateProof.totals.liveProviderSendsProduced, 0);
+assert.equal(liveCanaryApprovalBoundary.replayNoDuplicateProof.totals.terminalOutboxAckMutations, 0);
+assert.equal(liveCanaryApprovalBoundary.replayNoDuplicateProof.totals.duplicateProviderSendsProduced, 0);
+assert.equal(liveCanaryApprovalBoundary.replayNoDuplicateProof.totals.duplicateTerminalAckMutations, 0);
+assert.equal(liveCanaryApprovalBoundary.replayNoDuplicateProof.attempts.length, 2);
+assert.equal(liveCanaryApprovalBoundary.replayNoDuplicateProof.attempts[1].decision, 'suppress-duplicate-return-existing-result');
+assert.equal(liveCanaryApprovalBoundary.replayNoDuplicateProof.attempts[1].returnedExistingTerminalResult, true);
+for (const attempt of liveCanaryApprovalBoundary.replayNoDuplicateProof.attempts) {
+  assert.equal(attempt.liveProviderSendProduced, false, `live-canary attempt ${attempt.attempt} must not produce live sends`);
+  assert.equal(attempt.terminalOutboxAckMutated, false, `live-canary attempt ${attempt.attempt} must not mutate terminal outbox ACKs`);
+}
+assert.equal(liveCanaryApprovalBoundary.scannerApprovalBoundary.scannerSuccessImpliesOperatorApproval, false);
+assert.equal(liveCanaryApprovalBoundary.scannerApprovalBoundary.explicitOperatorApprovalPresent, false);
+assert.equal(liveCanaryApprovalBoundary.scannerApprovalBoundary.operatorApprovalRequiredForVisibility, true);
+assert.equal(liveCanaryApprovalBoundary.scannerApprovalBoundary.approvalEvidenceMustBeSeparate, true);
+assert.equal(liveCanaryApprovalBoundary.scannerApprovalBoundary.aggregateDecision, 'NO-GO/Waiting');
+const liveCanaryBlockers = new Set(liveCanaryApprovalBoundary.remainingLiveCanaryBlockers.map((blocker) => blocker.gate));
+assert.deepEqual(
+  [...liveCanaryBlockers].sort(),
+  ['externalScannerEvidence', 'operatorApproval', 'terminalEvidence'],
+  'remaining live-canary blockers must stay explicit',
+);
+assert.ok(liveCanaryApprovalBoundary.validationCommands.includes('node test/conformance/check-contract-fixtures.mjs'));
+assert.ok(liveCanaryApprovalBoundary.validationCommands.includes('npm run scan:readiness-gates'));
+assert.equal(liveCanaryApprovalBoundary.safetyConfirmations.requiresPrivateTopology, false);
+for (const [key, value] of Object.entries(liveCanaryApprovalBoundary.safetyConfirmations)) {
+  if (key === 'requiresPrivateTopology') continue;
+  assert.equal(value, true, `live-canary safety confirmation ${key} must be true`);
 }
 
 const examplePath = path.join(root, 'examples', 'compatibility', 'cross-team-conformance.json');

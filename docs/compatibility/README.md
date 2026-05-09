@@ -1,0 +1,5 @@
+# Compatibility reviews
+
+This directory holds public-safe compatibility reviews for A2A Plane lanes that should not depend on private infrastructure.
+
+- [Standalone worker compatibility review](./standalone-worker-review.md) — records a second, non-OpenClaw worker lane using the generic worker registration and terminal evidence contracts.

@@ -1,0 +1,37 @@
+{
+  "workerName": "standalone-http-reference-worker",
+  "kind": "http-worker",
+  "runtime": "generic",
+  "brokerUrl": "http://127.0.0.1:8787",
+  "capabilities": [
+    "docs",
+    "repo-inspection",
+    "tests"
+  ],
+  "policyVersion": "public-safe-local-v1",
+  "terminalResults": [
+    "done",
+    "pr",
+    "blocked"
+  ],
+  "evidenceRules": {
+    "redactedOnly": true,
+    "allowed": [
+      "summary",
+      "changedFiles",
+      "validationCommands",
+      "pullRequestUrl",
+      "blockReason"
+    ],
+    "forbidden": [
+      "rawSessionDump",
+      "secretValue",
+      "privateHostPath",
+      "providerDeliveryAsAck",
+      "terminalOutboxAckMutation"
+    ]
+  },
+  "openClawRequired": false,
+  "liveProviderSendRequired": false,
+  "productionInfrastructureRequired": false
+}

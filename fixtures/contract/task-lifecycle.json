@@ -1,0 +1,60 @@
+{
+  "fixtureId": "a2a-plane.contract.task-lifecycle.v1",
+  "contract": "contracts/a2a/task-lifecycle.md",
+  "description": "Public-safe task lifecycle conformance fixture for a PR-producing task.",
+  "states": ["queued", "claimed", "running", "done", "pr", "blocked"],
+  "terminalStates": ["done", "pr", "blocked"],
+  "allowedTransitions": {
+    "queued": ["claimed", "blocked"],
+    "claimed": ["running", "blocked"],
+    "running": ["done", "pr", "blocked"],
+    "done": [],
+    "pr": [],
+    "blocked": []
+  },
+  "task": {
+    "runId": "run-conformance-001",
+    "taskId": "task-conformance-lifecycle-001",
+    "brokerOfRecord": "gwakga",
+    "assignedWorkerId": "worker-conformance-fixtures",
+    "idempotencyKey": "issue-119:team2-gwakga:contract-fixtures",
+    "safetyProfile": "public-safe-fixture-only"
+  },
+  "events": [
+    {
+      "sequence": 1,
+      "type": "task.accepted",
+      "state": "queued",
+      "at": "2026-05-09T13:10:00Z"
+    },
+    {
+      "sequence": 2,
+      "type": "task.claimed",
+      "from": "queued",
+      "state": "claimed",
+      "workerId": "worker-conformance-fixtures",
+      "at": "2026-05-09T13:11:00Z"
+    },
+    {
+      "sequence": 3,
+      "type": "task.started",
+      "from": "claimed",
+      "state": "running",
+      "at": "2026-05-09T13:12:00Z"
+    },
+    {
+      "sequence": 4,
+      "type": "task.pr-prepared",
+      "from": "running",
+      "state": "pr",
+      "evidenceRef": "terminal-pr-evidence",
+      "at": "2026-05-09T13:25:00Z"
+    }
+  ],
+  "assertions": [
+    "events advance only through allowedTransitions",
+    "terminal states have no allowed next states",
+    "brokerOfRecord remains gwakga for the task",
+    "terminal evidence is referenced by id and does not imply provider delivery or ACK mutation"
+  ]
+}

@@ -18,7 +18,8 @@
     "scan:external-secrets": "node scripts/external-secret-scan.mjs",
     "libero:public-preflight-closeout": "node scripts/libero-public-preflight-closeout.mjs",
     "test": "npm run check",
-    "test:release-gate": "node --test scripts/check-compatibility-baselines.test.mjs scripts/libero-public-preflight-closeout.test.mjs"
+    "test:release-gate": "node --test scripts/check-compatibility-baselines.test.mjs scripts/libero-public-preflight-closeout.test.mjs",
+    "test:conformance": "node test/conformance/check-contract-fixtures.mjs"
   },
   "license": "MIT"
 }

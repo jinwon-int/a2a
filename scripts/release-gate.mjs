@@ -2,6 +2,7 @@ import { spawnSync } from 'node:child_process';
 
 const steps = [
   ['layout', 'npm', ['run', 'check:layout']],
+  ['contract-conformance-fixtures', 'npm', ['run', 'test:conformance']],
   ['packages', 'npm', ['run', 'check:packages']],
   ['runner-import-smoke', 'npm', ['run', 'check:runner-import-smoke']],
   ['terminal-brief-routing', 'npm', ['run', 'check:terminal-brief-routing']],

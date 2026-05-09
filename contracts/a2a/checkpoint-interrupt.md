@@ -323,3 +323,46 @@ evaluation of durable checkpoint, human interrupt, and trace policy.
 These blockers are implementation concerns, not contract gaps. The contract semantics defined in this
 document are complete for v0. Issue #93 can advance to "implementation tracking" with these blockers
 recorded as separate implementation issues.
+
+## 10. Decision Record: Issue #130 — Post-78261 Terminal Evidence & Replay Safety
+
+This contract records the decisions from [issue #130](https://github.com/jinwon-int/a2a-plane/issues/130)
+post-78261 terminal evidence, replay safety, and readiness gate mapping.
+
+### Accepted
+
+| Item | Decision | Location / Rationale |
+|---|---|---|
+| Provider accepted-send as non-ACK evidence | Accepted. Provider-returned message id and send success are accepted-send evidence only — not requester-visible receipt, operator-visible receipt, terminal ACK, human-seen proof, or terminal-outbox ACK. | §3 (Safe Replay), [terminal-semantics.md](./terminal-semantics.md) |
+| No-duplicate replay proof | Accepted. Idempotency-key deduplication and checkpoint-id deduplication together guarantee at-most-once PR/artifact creation per task. | §3.2, §3.3 |
+| NO-GO public readiness | Accepted. Public-readiness remains NO-GO until A2A-owned terminal evidence conformance, replay-safe/no-duplicate proof, scanner/readiness evidence, and explicit operator approval are complete. | This contract §7 |
+| Scanner evidence fitness | Accepted. Scanner/readiness conformance must validate terminal evidence format, non-ACK semantics, and no-duplicate replay guarantees. | [terminal-semantics.md](./terminal-semantics.md) fixture conformance |
+| Safety gate encoding | Accepted. All safety gates (no deploy/restart/live send/terminal ACK/DB mutation/secret/visibility change) are encoded in contract documents and validated by conformance fixtures. | §7, fixture validation |
+
+### Rejected / Deferred
+
+| Item | Decision | Rationale |
+|---|---|---|
+| Live canary delivery test | Rejected for v0. Requires live provider send, which violates the deploy/restart/live-send safety gate. | Canary readiness is validated through contract conformance and scanner fixtures, not live delivery. |
+| Operator-facing terminal ACK | Deferred. Terminal ACK requires separate operator infrastructure and approval path. Accepted-send is sufficient for v0 evidence. | Operator ACK infrastructure is a separate implementation phase, not a contract gap. |
+| Production persistence rollout | Deferred — same as #93 disposition. | Tracked separately per [durable-persistence-path.md](../../packages/broker/docs/durable-persistence-path.md). |
+
+### Remaining blockers for issue #130 closure
+
+- [ ] Scanner conformance fixtures for non-ACK evidence validation.
+- [ ] No-duplicate replay canary harness (broker-level, tracked in broker issues).
+- [ ] Explicit operator approval path for public-readiness GO transition.
+
+These blockers are implementation concerns, not contract gaps. The contract semantics defined in this
+document are complete for v0. Issue #130 can advance to "implementation tracking" with these blockers
+recorded as separate implementation issues.
+
+## 11. Cross-Reference: Issue #93 / #130 Contract-Level Closure
+
+| Issue | Scope | Contract Status | Remaining Implementation Work |
+|---|---|---|---|
+| [#93](https://github.com/jinwon-int/a2a-plane/issues/93) | Durable checkpoint, human interrupt, trace policy | Closed at contract level (§9) | SQLite persistence, worker capability gating, operator notification path |
+| [#130](https://github.com/jinwon-int/a2a-plane/issues/130) | Post-78261 terminal evidence, replay safety, readiness gates | Closed at contract level (§10) | Scanner conformance, replay canary harness, operator approval path |
+
+Both issues are contract-complete for v0. All remaining work is implementation-phase tracking under
+separate broker/plugin/runner issues. No new contract states or interrupt decision types are required.

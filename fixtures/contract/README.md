@@ -9,5 +9,6 @@ Fixture set:
 - `cancellation-idempotency.json` — duplicate request, cancellation, and terminal replay behavior.
 - `terminal-evidence.json` — redacted PR, Done, and Block terminal evidence examples.
 - `gwakga-cross-broker-handoff.json` — synthetic Seoseo-to-Gwakga handoff proof for the Team2 lane; it records Gwakga as broker of record, shows that Seoseo does not directly dispatch Team2 workers, lists no-live validation commands, and calls out visibility gaps around accepted-send/non-ACK evidence.
+- `public-compatibility-policy.json` — issue #94/#166 policy proof that public compatibility claims are validated from contracts, synthetic fixtures, and the compatibility matrix rather than private Seoseo-only assumptions.
 
 Do not add secrets, host-specific paths, OpenClaw runtime/bootstrap files, raw session dumps, live provider payloads, or terminal ACK mutation records to these fixtures.

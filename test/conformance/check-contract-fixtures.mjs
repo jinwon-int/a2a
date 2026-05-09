@@ -11,6 +11,7 @@ const fixtureFiles = {
   cancellation: 'cancellation-idempotency.json',
   evidence: 'terminal-evidence.json',
   crossBroker: 'gwakga-cross-broker-handoff.json',
+  publicPolicy: 'public-compatibility-policy.json',
 };
 
 const forbiddenRuntimePaths = [
@@ -65,7 +66,7 @@ for (const pattern of secretLikePatterns) {
   assert.ok(!pattern.test(allFixtureText), `fixture text matched forbidden pattern ${pattern}`);
 }
 
-const { lifecycle, workers, cancellation, evidence, crossBroker } = fixtures;
+const { lifecycle, workers, cancellation, evidence, crossBroker, publicPolicy } = fixtures;
 
 assert.deepEqual(lifecycle.terminalStates.sort(), ['blocked', 'cancelled', 'done', 'pr']);
 for (const state of lifecycle.terminalStates) {
@@ -218,9 +219,49 @@ for (const [key, value] of Object.entries(crossBroker.safetyConfirmations)) {
   assert.equal(value, true, `cross-broker safety confirmation ${key} must be true`);
 }
 
+assert.equal(publicPolicy.sourceIssueUrl, 'https://github.com/jinwon-int/a2a-plane/issues/94');
+assert.equal(publicPolicy.reviewIssueUrl, 'https://github.com/jinwon-int/a2a-plane/issues/166');
+assert.equal(publicPolicy.round, 'a2a-public-readiness-next-20260509T165108Z');
+assert.equal(publicPolicy.policyInvariants.referenceIntegrationIsNotExclusive, true);
+assert.equal(publicPolicy.policyInvariants.sourceBrokerIdsAreExamplesNotRequirements, true);
+assert.equal(publicPolicy.policyInvariants.compatibilityEvidenceUsesPublicContractsOnly, true);
+assert.equal(publicPolicy.policyInvariants.providerSendIsAcceptedSendOnly, true);
+assert.ok(
+  publicPolicy.requiredPublicEvidence.includes('contracts/compatibility/matrix.md'),
+  'issue #94 public follow-up proof must reference the compatibility matrix',
+);
+assert.ok(
+  publicPolicy.requiredPublicEvidence.includes('fixtures/contract/gwakga-cross-broker-handoff.json'),
+  'issue #94 public follow-up proof must reference Gwakga-owned handoff evidence',
+);
+const portableBrokerIds = new Set(
+  publicPolicy.portableBrokerExamples.map((example) => example.brokerId),
+);
+assert.ok(portableBrokerIds.has('gwakga'), 'policy proof must include a non-Seoseo broker example');
+assert.ok(
+  portableBrokerIds.has('generic-public-broker'),
+  'policy proof must include a generic public broker example',
+);
+assert.ok(
+  publicPolicy.forbiddenAssumptions.includes('requires-seoseo-as-broker-of-record'),
+  'policy proof must forbid Seoseo-only broker-of-record assumptions',
+);
+assert.ok(
+  publicPolicy.forbiddenAssumptions.includes('requires-provider-message-id-as-terminal-ack'),
+  'policy proof must forbid provider message ids as terminal ACK evidence',
+);
+assert.ok(
+  publicPolicy.validationCommands.includes('node test/conformance/check-contract-fixtures.mjs'),
+);
+for (const [key, value] of Object.entries(publicPolicy.safetyConfirmations)) {
+  assert.equal(value, true, `public compatibility policy safety confirmation ${key} must be true`);
+}
+
 const examplePath = path.join(root, 'examples', 'compatibility', 'cross-team-conformance.json');
 const example = JSON.parse(fs.readFileSync(examplePath, 'utf8'));
 assert.equal(example.brokerOfRecord, 'gwakga');
+assert.equal(example.publicFollowupIssue, 'https://github.com/jinwon-int/a2a-plane/issues/94');
+assert.equal(example.independentReviewIssue, 'https://github.com/jinwon-int/a2a-plane/issues/166');
 assert.ok(!example.fixtures.some((fixture) => fixture.startsWith('examples/local/')));
 for (const fixture of Object.values(fixtureFiles).map((file) => `fixtures/contract/${file}`)) {
   assert.ok(example.fixtures.includes(fixture), `compatibility example must reference ${fixture}`);

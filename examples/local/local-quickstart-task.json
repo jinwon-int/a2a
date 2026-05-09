@@ -16,6 +16,7 @@
   "payload": {
     "mode": "local-echo-smoke",
     "noLive": true,
+    "replaySafe": true,
     "expectedTerminalEvidence": "Done"
   },
   "taskOrigin": "operator"

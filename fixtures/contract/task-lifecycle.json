@@ -1,16 +1,23 @@
 {
   "fixtureId": "a2a-plane.contract.task-lifecycle.v1",
   "contract": "contracts/a2a/task-lifecycle.md",
-  "description": "Public-safe task lifecycle conformance fixture for a PR-producing task.",
-  "states": ["queued", "claimed", "running", "done", "pr", "blocked"],
-  "terminalStates": ["done", "pr", "blocked"],
+  "description": "Public-safe task lifecycle conformance fixture for a PR-producing task, including cancellation paths. Frozen at Contract v0 (2026-05-09).",
+  "v0Freeze": {
+    "frozenAt": "2026-05-09",
+    "round": "a2a-vnext-contract-smoke-crossbroker-20260510",
+    "note": "No new states, transitions, or result types may be added without a v0→v1 compatibility plan."
+  },
+  "states": ["queued", "claimed", "running", "cancelling", "done", "pr", "blocked", "cancelled"],
+  "terminalStates": ["done", "pr", "blocked", "cancelled"],
   "allowedTransitions": {
-    "queued": ["claimed", "blocked"],
-    "claimed": ["running", "blocked"],
-    "running": ["done", "pr", "blocked"],
+    "queued": ["claimed", "blocked", "cancelled"],
+    "claimed": ["running", "blocked", "cancelled"],
+    "running": ["done", "pr", "blocked", "cancelling"],
+    "cancelling": ["cancelled"],
     "done": [],
     "pr": [],
-    "blocked": []
+    "blocked": [],
+    "cancelled": []
   },
   "task": {
     "runId": "run-conformance-001",
@@ -51,10 +58,31 @@
       "at": "2026-05-09T13:25:00Z"
     }
   ],
+  "cancellationEvents": [
+    {
+      "sequence": 1,
+      "type": "task.accepted",
+      "state": "queued",
+      "at": "2026-05-09T13:10:00Z"
+    },
+    {
+      "sequence": 2,
+      "type": "task.cancel-requested",
+      "from": "queued",
+      "state": "cancelled",
+      "source": "operator",
+      "reason": "operator requested cancellation before claim",
+      "at": "2026-05-09T13:10:30Z"
+    }
+  ],
   "assertions": [
     "events advance only through allowedTransitions",
     "terminal states have no allowed next states",
     "brokerOfRecord remains gwakga for the task",
-    "terminal evidence is referenced by id and does not imply provider delivery or ACK mutation"
+    "terminal evidence is referenced by id and does not imply provider delivery or ACK mutation",
+    "cancelling is a non-terminal transitory state; only cancelled is terminal",
+    "cancellation from queued or claimed goes directly to cancelled (no cancelling intermediary)",
+    "cancellation from running goes through cancelling first (worker notified to stop safely)",
+    "all terminal states (done, pr, blocked, cancelled) have empty allowedTransitions"
   ]
 }

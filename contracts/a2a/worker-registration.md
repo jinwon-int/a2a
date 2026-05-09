@@ -1,4 +1,7 @@
-# Worker Registration and Read-Model Assumptions
+# Worker Registration and Read-Model Assumptions (v0 Freeze)
+
+> **v0 Freeze (2026-05-09):** Publishable fields, capability labels, and read-model assumptions are frozen.
+> New registration fields or capability semantics require a v0→v1 compatibility plan.
 
 Worker registration data must remain stable and public-safe across the monorepo import. This file names the assumptions expected by broker read models and worker-facing tooling.
 

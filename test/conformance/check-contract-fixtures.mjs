@@ -66,7 +66,7 @@ for (const pattern of secretLikePatterns) {
 
 const { lifecycle, workers, cancellation, evidence } = fixtures;
 
-assert.deepEqual(lifecycle.terminalStates.sort(), ['blocked', 'done', 'pr']);
+assert.deepEqual(lifecycle.terminalStates.sort(), ['blocked', 'cancelled', 'done', 'pr']);
 for (const state of lifecycle.terminalStates) {
   assert.deepEqual(lifecycle.allowedTransitions[state], [], `${state} must be terminal`);
 }
@@ -81,6 +81,41 @@ for (const event of lifecycle.events) {
 }
 assert.equal(lifecycle.task.brokerOfRecord, 'gwakga');
 assert.ok(lifecycle.events.some((event) => event.state === 'pr' && event.evidenceRef === 'terminal-pr-evidence'));
+
+// Contract v0: cancellation states must not be terminal (cancelling) and terminal (cancelled)
+assert.ok(lifecycle.states.includes('cancelling'), 'cancelling must be in states');
+assert.ok(lifecycle.states.includes('cancelled'), 'cancelled must be in states');
+assert.ok(!lifecycle.terminalStates.includes('cancelling'), 'cancelling must not be terminal');
+assert.ok(lifecycle.terminalStates.includes('cancelled'), 'cancelled must be terminal');
+
+// Cancellation transitions
+assert.deepEqual(lifecycle.allowedTransitions.queued.sort(), ['blocked', 'cancelled', 'claimed']);
+assert.deepEqual(lifecycle.allowedTransitions.claimed.sort(), ['blocked', 'cancelled', 'running']);
+assert.ok(lifecycle.allowedTransitions.running.includes('cancelling'), 'running must allow cancelling');
+assert.deepEqual(lifecycle.allowedTransitions.cancelling, ['cancelled']);
+assert.deepEqual(lifecycle.allowedTransitions.cancelled, []);
+
+// Cancellation event trace
+assert.ok(Array.isArray(lifecycle.cancellationEvents) && lifecycle.cancellationEvents.length >= 2);
+const cancelEvents = lifecycle.cancellationEvents;
+assert.equal(cancelEvents[0].state, 'queued');
+assert.equal(cancelEvents[1].type, 'task.cancel-requested');
+assert.equal(cancelEvents[1].from, 'queued');
+assert.equal(cancelEvents[1].state, 'cancelled');
+assert.equal(cancelEvents[1].source, 'operator');
+
+// All fixtures must carry v0Freeze markers
+for (const [name, fixture] of Object.entries(fixtures)) {
+  assert.ok(fixture.v0Freeze, `${name} fixture must carry v0Freeze marker`);
+  assert.ok(fixture.v0Freeze.frozenAt, `${name} v0Freeze must include frozenAt`);
+  assert.ok(fixture.v0Freeze.round, `${name} v0Freeze must include round`);
+}
+
+// v0 assertions include cancellation semantics
+const v0Assertions = new Set(lifecycle.assertions);
+assert.ok(v0Assertions.has('cancelling is a non-terminal transitory state; only cancelled is terminal'));
+assert.ok(v0Assertions.has('cancellation from queued or claimed goes directly to cancelled (no cancelling intermediary)'));
+assert.ok(v0Assertions.has('all terminal states (done, pr, blocked, cancelled) have empty allowedTransitions'));
 
 const workerNamePattern = /^[a-z0-9][a-z0-9-]{2,63}$/;
 for (const worker of workers.workers) {

@@ -1,7 +1,12 @@
 {
   "fixtureId": "a2a-plane.contract.terminal-evidence.v1",
   "contract": "contracts/a2a/terminal-semantics.md",
-  "description": "Redacted terminal evidence examples for PR, Done, and Block results.",
+  "description": "Redacted terminal evidence examples for PR, Done, and Block results. Frozen at Contract v0 (2026-05-09).",
+  "v0Freeze": {
+    "frozenAt": "2026-05-09",
+    "round": "a2a-vnext-contract-smoke-crossbroker-20260510",
+    "note": "Result types and receipt levels are locked; accepted-send non-ACK boundary is frozen."
+  },
   "evidence": [
     {
       "evidenceId": "terminal-pr-evidence",

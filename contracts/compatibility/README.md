@@ -1,4 +1,7 @@
-# contracts/compatibility
+# contracts/compatibility (v0 Freeze)
+
+> **v0 Freeze (2026-05-09):** Compatibility contracts and fixtures in this directory are frozen
+> at Contract v0. The accepted-send non-ACK boundary and ACK-safe receipt types are locked.
 
 ## Terminal evidence ACK boundary
 

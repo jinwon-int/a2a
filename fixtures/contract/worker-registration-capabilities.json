@@ -1,7 +1,12 @@
 {
   "fixtureId": "a2a-plane.contract.worker-registration-capabilities.v1",
   "contract": "contracts/a2a/worker-registration.md",
-  "description": "Public-safe worker registration and capability fixture for read-model conformance.",
+  "description": "Public-safe worker registration and capability fixture for read-model conformance. Frozen at Contract v0 (2026-05-09).",
+  "v0Freeze": {
+    "frozenAt": "2026-05-09",
+    "round": "a2a-vnext-contract-smoke-crossbroker-20260510",
+    "note": "Publishable fields and capability assumptions are locked."
+  },
   "workers": [
     {
       "workerName": "worker-conformance-fixtures",

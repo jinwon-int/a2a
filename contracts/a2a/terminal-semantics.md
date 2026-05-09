@@ -1,4 +1,9 @@
-# Terminal Result Semantics
+# Terminal Result Semantics (v0 Freeze)
+
+> **v0 Freeze (2026-05-09):** Result types (Done, PR, Block) and the four receipt levels
+> (accepted-send, requester-visible, operator-visible, terminal ACK) are frozen.
+> The accepted-send non-ACK boundary is locked: provider message IDs and send-status
+> values must never be promoted to terminal ACK evidence without an explicit v0→v1 plan.
 
 A2A terminal results are operator-facing evidence, not provider delivery signals. These semantics are stable assumptions for broker, plugin, runner, and imported package behavior.
 

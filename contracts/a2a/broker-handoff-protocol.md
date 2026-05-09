@@ -1,4 +1,8 @@
-# Broker-to-broker handoff protocol (minimal slice)
+# Broker-to-broker handoff protocol (minimal slice, v0 Freeze)
+
+> **v0 Freeze (2026-05-09):** Handoff envelope shape, peer permissions, status relay,
+> and terminal evidence relay are frozen as the Contract v0 handoff baseline.
+> Changes to envelope fields or peer permission scopes require a v0→v1 plan.
 
 This contract defines the safe handoff boundary between the Seoseo/Team1 broker and the Gwakga/Team2 broker.
 

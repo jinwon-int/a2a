@@ -14,11 +14,13 @@
     "check:runner-import-smoke": "node scripts/check-runner-import-smoke.mjs",
     "check:terminal-brief-routing": "node scripts/check-terminal-brief-routing.mjs",
     "check:compatibility-baselines": "node scripts/check-compatibility-baselines.mjs",
+    "check:quickstart-conformance": "node scripts/check-quickstart-conformance.mjs",
+    "check:no-diff-closeout-guidance": "node --test scripts/check-no-diff-closeout-guidance.test.mjs",
     "scan:public-readiness": "node scripts/public-readiness-scan.mjs",
     "scan:external-secrets": "node scripts/external-secret-scan.mjs",
     "libero:public-preflight-closeout": "node scripts/libero-public-preflight-closeout.mjs",
     "test": "npm run check",
-    "test:release-gate": "node --test scripts/check-compatibility-baselines.test.mjs scripts/libero-public-preflight-closeout.test.mjs"
+    "test:release-gate": "node --test scripts/check-compatibility-baselines.test.mjs scripts/libero-public-preflight-closeout.test.mjs scripts/check-no-diff-closeout-guidance.test.mjs scripts/check-quickstart-conformance.test.mjs"
   },
   "license": "MIT"
 }

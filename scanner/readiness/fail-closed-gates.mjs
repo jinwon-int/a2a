@@ -22,6 +22,26 @@ function hasEvidence(value) {
   return Array.isArray(value?.evidence) && value.evidence.some((entry) => typeof entry === 'string' && entry.trim());
 }
 
+const unredactedEvidenceRules = [
+  {
+    kind: 'secret-assignment',
+    re: /\b[A-Z0-9_]*(?:TOKEN|SECRET|PASSWORD|API[_-]?KEY)[A-Z0-9_]*\s*=\s*['"]?(?!<|\$\{|YOUR_|redacted|REDACTED)[^'"\s#]{12,}/i,
+  },
+  { kind: 'github-token-shape', re: /\b(?:ghp|github_pat)_[A-Za-z0-9_]{20,}\b/ },
+  { kind: 'aws-access-key-shape', re: /\bAKIA[0-9A-Z]{16}\b/ },
+  { kind: 'absolute-private-path', re: /\/(?:home|Users)\/[^\s'")`]+|\/root\/private\/[^\s'")`]+/ },
+  { kind: 'raw-session-dump', re: /(?:^|\n)\s*(?:system|developer|assistant|user|tool)\s*<\|/i },
+];
+
+function evidenceEntries(gateStatuses) {
+  return Object.entries(gateStatuses).flatMap(([gateId, gate]) => {
+    if (!Array.isArray(gate?.evidence)) return [];
+    return gate.evidence
+      .filter((entry) => typeof entry === 'string' && entry.trim())
+      .map((entry) => ({ gateId, entry }));
+  });
+}
+
 const mandatoryGoGates = [
   'publicPrivateBoundary',
   'terminalEvidence',
@@ -81,6 +101,30 @@ function evaluateInput(spec, input) {
     const status = String(gate?.status || 'MISSING').toUpperCase();
     if (status !== 'GO') blockers.push(`${id}: status is ${status}`);
     if (!hasEvidence(gate)) blockers.push(`${id}: redacted evidence link is missing`);
+  }
+
+  if (decision === 'GO') {
+    for (const { gateId, entry } of evidenceEntries(gateStatuses)) {
+      for (const rule of unredactedEvidenceRules) {
+        if (rule.re.test(entry)) blockers.push(`${gateId}: evidence is not redacted (${rule.kind})`);
+      }
+    }
+
+    const operatorEvidence = new Set(
+      (gateStatuses.operatorApproval?.evidence || [])
+        .filter((entry) => typeof entry === 'string')
+        .map((entry) => entry.trim())
+        .filter(Boolean),
+    );
+    if (operatorEvidence.size === 0) {
+      blockers.push('operatorApproval: separate operator approval evidence is required');
+    } else {
+      for (const { gateId, entry } of evidenceEntries(gateStatuses)) {
+        if (gateId !== 'operatorApproval' && operatorEvidence.has(entry.trim())) {
+          blockers.push(`operatorApproval: approval evidence must be separate from ${gateId}`);
+        }
+      }
+    }
   }
 
   if (decision === 'GO' && blockers.length) {

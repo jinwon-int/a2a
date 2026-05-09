@@ -53,7 +53,11 @@ The input packet is intentionally simple:
 }
 ```
 
-If `decision` is `GO`, the script exits non-zero unless every required gate has `status: "GO"` and at least one redacted evidence link. For `NO-GO`, `WAITING`, or `BLOCK`, the script exits zero after reporting the blockers; those states are valid fail-closed outcomes.
+If `decision` is `GO`, the script exits non-zero unless every required gate has `status: "GO"` and at least one redacted evidence link. It also fails closed when evidence entries contain obvious unredacted material such as token-shaped strings, secret assignments, host-specific private paths, or raw session-dump markers.
+
+Operator approval is validated as its own final gate: `operatorApproval.evidence` must be present and must not reuse the same evidence link as scanner, terminal, replay, matrix, hygiene, or policy gates. Passing scanner/readiness checks never substitutes for explicit repository visibility/publication approval.
+
+For `NO-GO`, `WAITING`, or `BLOCK`, the script exits zero after reporting the blockers; those states are valid fail-closed outcomes.
 
 ## Safe evidence template
 

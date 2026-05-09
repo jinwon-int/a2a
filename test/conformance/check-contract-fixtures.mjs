@@ -11,6 +11,8 @@ const fixtureFiles = {
   cancellation: 'cancellation-idempotency.json',
   evidence: 'terminal-evidence.json',
   crossBroker: 'gwakga-cross-broker-handoff.json',
+  checkpointInterrupt: 'checkpoint-interrupt.json',
+  publicPolicy: 'public-compatibility-policy.json',
   replayTrace: 'second-worker-replay-trace.json',
 };
 
@@ -66,7 +68,7 @@ for (const pattern of secretLikePatterns) {
   assert.ok(!pattern.test(allFixtureText), `fixture text matched forbidden pattern ${pattern}`);
 }
 
-const { lifecycle, workers, cancellation, evidence, crossBroker, replayTrace } = fixtures;
+const { lifecycle, workers, cancellation, evidence, crossBroker, checkpointInterrupt, publicPolicy, replayTrace } = fixtures;
 
 assert.deepEqual(lifecycle.terminalStates.sort(), ['blocked', 'cancelled', 'done', 'pr']);
 for (const state of lifecycle.terminalStates) {
@@ -234,6 +236,44 @@ for (const [key, value] of Object.entries(crossBroker.safetyConfirmations)) {
   assert.equal(value, true, `cross-broker safety confirmation ${key} must be true`);
 }
 
+
+assert.equal(publicPolicy.sourceIssueUrl, 'https://github.com/jinwon-int/a2a-plane/issues/94');
+assert.equal(publicPolicy.reviewIssueUrl, 'https://github.com/jinwon-int/a2a-plane/issues/166');
+assert.equal(publicPolicy.round, 'a2a-public-readiness-next-20260509T165108Z');
+assert.equal(publicPolicy.policyInvariants.referenceIntegrationIsNotExclusive, true);
+assert.equal(publicPolicy.policyInvariants.sourceBrokerIdsAreExamplesNotRequirements, true);
+assert.equal(publicPolicy.policyInvariants.compatibilityEvidenceUsesPublicContractsOnly, true);
+assert.equal(publicPolicy.policyInvariants.providerSendIsAcceptedSendOnly, true);
+assert.ok(
+  publicPolicy.requiredPublicEvidence.includes('contracts/compatibility/matrix.md'),
+  'issue #94 public follow-up proof must reference the compatibility matrix',
+);
+assert.ok(
+  publicPolicy.requiredPublicEvidence.includes('fixtures/contract/gwakga-cross-broker-handoff.json'),
+  'issue #94 public follow-up proof must reference Gwakga-owned handoff evidence',
+);
+const portableBrokerIds = new Set(
+  publicPolicy.portableBrokerExamples.map((example) => example.brokerId),
+);
+assert.ok(portableBrokerIds.has('gwakga'), 'policy proof must include a non-Seoseo broker example');
+assert.ok(
+  portableBrokerIds.has('generic-public-broker'),
+  'policy proof must include a generic public broker example',
+);
+assert.ok(
+  publicPolicy.forbiddenAssumptions.includes('requires-seoseo-as-broker-of-record'),
+  'policy proof must forbid Seoseo-only broker-of-record assumptions',
+);
+assert.ok(
+  publicPolicy.forbiddenAssumptions.includes('requires-provider-message-id-as-terminal-ack'),
+  'policy proof must forbid provider message ids as terminal ACK evidence',
+);
+assert.ok(
+  publicPolicy.validationCommands.includes('node test/conformance/check-contract-fixtures.mjs'),
+);
+for (const [key, value] of Object.entries(publicPolicy.safetyConfirmations)) {
+  assert.equal(value, true, `public compatibility policy safety confirmation ${key} must be true`);
+
 assert.equal(replayTrace.childIssue, 'https://github.com/jinwon-int/a2a-plane/issues/168');
 assert.equal(replayTrace.parentIssue, 'https://github.com/jinwon-int/a2a-plane/issues/163');
 assert.equal(replayTrace.brokerOfRecord, 'gwakga');
@@ -274,6 +314,8 @@ for (const [key, value] of Object.entries(replayTrace.safetyConfirmations)) {
 const examplePath = path.join(root, 'examples', 'compatibility', 'cross-team-conformance.json');
 const example = JSON.parse(fs.readFileSync(examplePath, 'utf8'));
 assert.equal(example.brokerOfRecord, 'gwakga');
+assert.equal(example.publicFollowupIssue, 'https://github.com/jinwon-int/a2a-plane/issues/94');
+assert.equal(example.independentReviewIssue, 'https://github.com/jinwon-int/a2a-plane/issues/166');
 assert.ok(!example.fixtures.some((fixture) => fixture.startsWith('examples/local/')));
 for (const fixture of Object.values(fixtureFiles).map((file) => `fixtures/contract/${file}`)) {
   assert.ok(example.fixtures.includes(fixture), `compatibility example must reference ${fixture}`);
@@ -290,6 +332,220 @@ walk({ fixtures, example }, (value, trail) => {
     `terminal ACK mutation must only be listed as excluded at ${trail.join('.')}`,
   );
 });
+
+// --- Checkpoint & Human-Interrupt fixture validation ---
+
+// v0Freeze marker
+assert.ok(checkpointInterrupt.v0Freeze, 'checkpoint-interrupt fixture must carry v0Freeze marker');
+assert.ok(checkpointInterrupt.v0Freeze.frozenAt, 'checkpoint-interrupt v0Freeze must include frozenAt');
+assert.equal(
+  checkpointInterrupt.v0Freeze.round,
+  'a2a-public-readiness-next-20260509T165108Z',
+  'checkpoint-interrupt round must match',
+);
+assert.equal(checkpointInterrupt.contract, 'contracts/a2a/checkpoint-interrupt.md');
+
+// Checkpoint states are non-terminal transitory states
+assert.ok(checkpointInterrupt.checkpointStates.paused, 'paused state must be defined');
+assert.ok(checkpointInterrupt.checkpointStates.awaiting_operator, 'awaiting_operator state must be defined');
+assert.equal(checkpointInterrupt.checkpointStates.paused.terminal, false);
+assert.equal(checkpointInterrupt.checkpointStates.awaiting_operator.terminal, false);
+assert.deepEqual(
+  checkpointInterrupt.checkpointStates.paused.allowedTransitions.sort(),
+  ['blocked', 'cancelled', 'running'],
+);
+assert.deepEqual(
+  checkpointInterrupt.checkpointStates.awaiting_operator.allowedTransitions.sort(),
+  ['blocked', 'cancelled', 'running'],
+);
+
+// Interrupt decision types
+const interruptTypes = new Set(checkpointInterrupt.interruptDecisionTypes.map((d) => d.type));
+assert.deepEqual(
+  [...interruptTypes].sort(),
+  ['ambiguous_scope', 'approval_required', 'conflict_detected', 'safety_gate'],
+);
+for (const dt of checkpointInterrupt.interruptDecisionTypes) {
+  assert.ok(Array.isArray(dt.validOperatorActions) && dt.validOperatorActions.length >= 2);
+  assert.ok(dt.validOperatorActions.includes('approved'));
+  assert.ok(dt.validOperatorActions.includes('refused'));
+}
+
+// Scenario coverage: all decision types must have at least one scenario
+const scenarioDecisionTypes = new Set(
+  checkpointInterrupt.scenarios
+    .filter((s) => s.when?.decisionType || s.given?.decisionType)
+    .map((s) => s.when?.decisionType || s.given?.decisionType),
+);
+for (const dt of interruptTypes) {
+  assert.ok(scenarioDecisionTypes.has(dt), `interrupt decision type ${dt} must have at least one scenario`);
+}
+
+// Each scenario
+const ckScenarioByName = new Map(checkpointInterrupt.scenarios.map((s) => [s.name, s]));
+
+// Worker checkpoint scenario
+const checkpointScenario = ckScenarioByName.get('worker-checkpoints-during-safe-file-operation');
+assert.ok(checkpointScenario, 'checkpoint scenario must exist');
+assert.equal(checkpointScenario.then.state, 'paused');
+assert.equal(checkpointScenario.then.terminal, false);
+assert.equal(checkpointScenario.then.workerAssigned, false);
+assert.equal(checkpointScenario.then.terminalOutboxAckMutated, false);
+assert.equal(checkpointScenario.then.liveProviderSend, false);
+assert.ok(checkpointScenario.given.completedOperations.includes('write-file'));
+assert.ok(checkpointScenario.when.artifactRefs.length > 0);
+
+// Resume scenario
+const resumeScenario = ckScenarioByName.get('worker-resumes-from-checkpoint');
+assert.ok(resumeScenario, 'resume scenario must exist');
+assert.equal(resumeScenario.then.state, 'running');
+assert.equal(resumeScenario.then.terminal, false);
+assert.equal(resumeScenario.then.checkpointContextProvided, true);
+assert.equal(resumeScenario.then.preCheckpointOperationsNotReplayed, true);
+assert.equal(resumeScenario.then.terminalOutboxAckMutated, false);
+assert.equal(resumeScenario.then.liveProviderSend, false);
+
+// Pause timeout → cancelled
+const pauseTimeoutScenario = ckScenarioByName.get('pause-timeout-transitions-to-cancelled');
+assert.ok(pauseTimeoutScenario, 'pause timeout scenario must exist');
+assert.equal(pauseTimeoutScenario.then.state, 'cancelled');
+assert.equal(pauseTimeoutScenario.then.terminal, true);
+assert.equal(pauseTimeoutScenario.then.cancelSource, 'timeout');
+assert.equal(pauseTimeoutScenario.then.terminalOutboxAckMutated, false);
+assert.equal(pauseTimeoutScenario.then.liveProviderSend, false);
+
+// Human interrupt: safety gate approved
+const safetyGateScenario = ckScenarioByName.get('human-interrupt-safety-gate-approved');
+assert.ok(safetyGateScenario, 'safety gate interrupt scenario must exist');
+assert.equal(safetyGateScenario.thenInterrupt.state, 'awaiting_operator');
+assert.equal(safetyGateScenario.thenInterrupt.decisionType, 'safety_gate');
+assert.equal(safetyGateScenario.thenInterrupt.terminalOutboxAckMutated, false);
+assert.equal(safetyGateScenario.thenInterrupt.liveProviderSend, false);
+assert.equal(safetyGateScenario.operatorAction.action, 'approved');
+assert.equal(safetyGateScenario.thenResume.state, 'running');
+assert.equal(safetyGateScenario.thenResume.terminalOutboxAckMutated, false);
+assert.equal(safetyGateScenario.thenResume.liveProviderSend, false);
+
+// Human interrupt: ambiguous scope clarified
+const ambiguousScenario = ckScenarioByName.get('human-interrupt-ambiguous-scope-clarified');
+assert.ok(ambiguousScenario, 'ambiguous scope interrupt scenario must exist');
+assert.equal(ambiguousScenario.thenInterrupt.decisionType, 'ambiguous_scope');
+assert.equal(ambiguousScenario.operatorAction.action, 'clarified');
+assert.equal(ambiguousScenario.thenResume.state, 'running');
+
+// Human interrupt: refused becomes block
+const refusedScenario = ckScenarioByName.get('human-interrupt-refused-becomes-block');
+assert.ok(refusedScenario, 'refused interrupt scenario must exist');
+assert.equal(refusedScenario.operatorAction.action, 'refused');
+assert.equal(refusedScenario.then.state, 'blocked');
+assert.equal(refusedScenario.then.terminal, true);
+assert.equal(refusedScenario.then.blockerCategory, 'safety');
+assert.equal(refusedScenario.then.terminalOutboxAckMutated, false);
+assert.equal(refusedScenario.then.liveProviderSend, false);
+
+// Interrupt timeout → cancelled
+const intTimeoutScenario = ckScenarioByName.get('interrupt-timeout-transitions-to-cancelled');
+assert.ok(intTimeoutScenario, 'interrupt timeout scenario must exist');
+assert.equal(intTimeoutScenario.then.state, 'cancelled');
+assert.equal(intTimeoutScenario.then.terminal, true);
+assert.equal(intTimeoutScenario.then.cancelSource, 'timeout');
+assert.equal(intTimeoutScenario.then.terminalOutboxAckMutated, false);
+assert.equal(intTimeoutScenario.then.liveProviderSend, false);
+
+// Replay: completed task is idempotent noop
+const replayDoneScenario = ckScenarioByName.get('replay-completed-task-is-idempotent-noop');
+assert.ok(replayDoneScenario, 'replay done scenario must exist');
+assert.equal(replayDoneScenario.then.state, 'done');
+assert.equal(replayDoneScenario.then.newSideEffects, false);
+assert.equal(replayDoneScenario.then.newEvidencePosted, false);
+assert.equal(replayDoneScenario.then.terminalOutboxAckMutated, false);
+assert.equal(replayDoneScenario.then.liveProviderSend, false);
+
+// Replay: checkpoint resume does not re-execute pre-checkpoint ops
+const replayResumeScenario = ckScenarioByName.get('replay-checkpoint-resume-does-not-re-execute-pre-checkpoint-ops');
+assert.ok(replayResumeScenario, 'replay resume scenario must exist');
+assert.equal(replayResumeScenario.then.completedOperationsReplayed, false);
+assert.equal(replayResumeScenario.then.checkpointContextMatches, true);
+assert.equal(replayResumeScenario.then.terminalOutboxAckMutated, false);
+assert.equal(replayResumeScenario.then.liveProviderSend, false);
+
+// Replay guarantees
+const replayGuarantees = checkpointInterrupt.replayGuarantees;
+assert.ok(Array.isArray(replayGuarantees) && replayGuarantees.length >= 3);
+const guaranteeNames = new Set(replayGuarantees.map((g) => g.guarantee));
+assert.ok(guaranteeNames.has('idempotent-operation-replay'));
+assert.ok(guaranteeNames.has('checkpoint-resume-replay'));
+assert.ok(guaranteeNames.has('terminal-state-immutability'));
+assert.ok(guaranteeNames.has('evidence-immutability'));
+
+// Audit trace export
+assert.ok(checkpointInterrupt.auditTraceExport, 'audit trace export must be defined');
+assert.equal(checkpointInterrupt.auditTraceExport.exportSafety.noSecretsOrPrivatePaths, true);
+assert.equal(checkpointInterrupt.auditTraceExport.exportSafety.noProviderMessageIdsAboveAcceptedSend, true);
+assert.equal(checkpointInterrupt.auditTraceExport.exportSafety.noTerminalOutboxAckValues, true);
+assert.equal(checkpointInterrupt.auditTraceExport.exportSafety.deterministicEventSequence, true);
+assert.equal(checkpointInterrupt.auditTraceExport.exportSafety.redacted, true);
+assert.equal(checkpointInterrupt.auditTraceExport.schema.redacted, true);
+assert.equal(checkpointInterrupt.auditTraceExport.schema.brokerOfRecord, 'gwakga');
+assert.ok(
+  checkpointInterrupt.auditTraceExport.schema.events.some((e) => e.type === 'task.paused'),
+  'audit trace must include pause event',
+);
+assert.ok(
+  checkpointInterrupt.auditTraceExport.schema.events.some((e) => e.type === 'task.interrupted'),
+  'audit trace must include interrupt event',
+);
+assert.ok(
+  checkpointInterrupt.auditTraceExport.schema.events.some((e) => e.type === 'operator.decide'),
+  'audit trace must include operator decide event',
+);
+
+// Artifact version lineage
+assert.ok(checkpointInterrupt.artifactVersionLineage, 'artifact version lineage must be defined');
+const lineage = checkpointInterrupt.artifactVersionLineage;
+assert.equal(lineage.lineageSafety.pathsAreRepoRelative, true);
+assert.equal(lineage.lineageSafety.versionRefsAreDeterministic, true);
+assert.equal(lineage.lineageSafety.noHostSpecificPaths, true);
+assert.equal(lineage.lineageSafety.noArtifactContentInline, true);
+assert.equal(lineage.lineageSafety.noProviderCredentials, true);
+assert.ok(lineage.example.artifactPath, 'lineage example must have artifactPath');
+assert.ok(lineage.example.versionRef, 'lineage example must have versionRef');
+
+// Safety confirmations
+for (const [key, value] of Object.entries(checkpointInterrupt.safetyConfirmations)) {
+  assert.equal(value, true, `checkpoint-interrupt safety confirmation ${key} must be true`);
+}
+
+// Assertions
+assert.ok(Array.isArray(checkpointInterrupt.assertions) && checkpointInterrupt.assertions.length >= 8);
+const ckAssertionsSet = new Set(checkpointInterrupt.assertions);
+assert.ok(
+  ckAssertionsSet.has(
+    'paused and awaiting_operator are non-terminal transitory states',
+  ),
+);
+assert.ok(
+  ckAssertionsSet.has(
+    'all scenarios confirm terminalOutboxAckMutated: false and liveProviderSend: false',
+  ),
+);
+assert.ok(
+  ckAssertionsSet.has(
+    'checkpoint and interrupt contracts do not imply production DB mutation or persistence rollout',
+  ),
+);
+
+// Every scenario must confirm safety invariants
+for (const scenario of checkpointInterrupt.scenarios) {
+  walk(scenario, (value, trail) => {
+    if (trail.at(-1) === 'terminalOutboxAckMutated') {
+      assert.equal(value, false, `scenario ${scenario.name}: terminalOutboxAckMutated must be false at ${trail.join('.')}`);
+    }
+    if (trail.at(-1) === 'liveProviderSend') {
+      assert.equal(value, false, `scenario ${scenario.name}: liveProviderSend must be false at ${trail.join('.')}`);
+    }
+  });
+}
 
 console.log(JSON.stringify({
   ok: true,

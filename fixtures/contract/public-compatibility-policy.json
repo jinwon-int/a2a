@@ -1,0 +1,68 @@
+{
+  "fixtureId": "a2a-plane.contract.public-compatibility-policy.v1",
+  "contract": "contracts/compatibility/README.md",
+  "description": "Public-safe policy proof for issue #94 follow-ups: compatibility claims are backed by A2A Plane contracts and fixtures, not private Seoseo-only runtime assumptions.",
+  "sourceIssueUrl": "https://github.com/jinwon-int/a2a-plane/issues/94",
+  "reviewIssueUrl": "https://github.com/jinwon-int/a2a-plane/issues/166",
+  "round": "a2a-public-readiness-next-20260509T165108Z",
+  "policyInvariants": {
+    "referenceIntegrationIsNotExclusive": true,
+    "sourceBrokerIdsAreExamplesNotRequirements": true,
+    "compatibilityEvidenceUsesPublicContractsOnly": true,
+    "fixturesAreSyntheticAndReproducible": true,
+    "providerSendIsAcceptedSendOnly": true,
+    "operatorApprovalRequiredForVisibility": true
+  },
+  "requiredPublicEvidence": [
+    "contracts/a2a/task-lifecycle.md",
+    "contracts/a2a/worker-registration.md",
+    "contracts/a2a/terminal-semantics.md",
+    "contracts/a2a/broker-handoff-protocol.md",
+    "contracts/compatibility/matrix.md",
+    "fixtures/contract/worker-registration-capabilities.json",
+    "fixtures/contract/gwakga-cross-broker-handoff.json",
+    "fixtures/contract/terminal-evidence.json"
+  ],
+  "portableBrokerExamples": [
+    {
+      "brokerId": "gwakga",
+      "role": "broker-of-record",
+      "evidenceRef": "fixtures/contract/gwakga-cross-broker-handoff.json"
+    },
+    {
+      "brokerId": "generic-public-broker",
+      "role": "source-or-destination-example",
+      "evidenceRef": "contracts/a2a/broker-handoff-protocol.md"
+    }
+  ],
+  "forbiddenAssumptions": [
+    "requires-seoseo-as-broker-of-record",
+    "requires-private-worker-logs",
+    "requires-provider-message-id-as-terminal-ack",
+    "requires-live-provider-send",
+    "requires-terminal-outbox-ack-mutation",
+    "requires-openclaw-runtime-bootstrap-files",
+    "requires-repository-visibility-change"
+  ],
+  "validationCommands": [
+    "node test/conformance/check-contract-fixtures.mjs",
+    "npm run scan:public-readiness"
+  ],
+  "safetyConfirmations": {
+    "syntheticFixtureOnly": true,
+    "noPrivateTopology": true,
+    "noProductionDeployOrRestart": true,
+    "noProductionDatabaseMutation": true,
+    "noLiveProviderSend": true,
+    "noTerminalOutboxAckMutation": true,
+    "noSecretRotationOrDisclosure": true,
+    "noRepositoryVisibilityChange": true,
+    "noRuntimeBootstrapEvidence": true
+  },
+  "v0Freeze": {
+    "frozenAt": "2026-05-09T16:51:08Z",
+    "round": "a2a-public-readiness-next-20260509T165108Z",
+    "scope": "issue #94 public compatibility and policy follow-up proof",
+    "nonAckBoundary": "provider send success and provider message ids are accepted-send evidence only, not requester-visible receipt or terminal ACK"
+  }
+}

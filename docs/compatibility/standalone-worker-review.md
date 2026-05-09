@@ -9,6 +9,7 @@ This review records a second, non-OpenClaw worker lane for A2A Plane. It is docu
 - `contracts/a2a/terminal-semantics.md` for Done / PR / Block evidence boundaries.
 - `examples/canonical-demo-task.json` for the existing public-safe task envelope shape.
 - `docs/quickstart.md` for the local-only dummy or echo worker guidance.
+- `docs/validation/standalone-worker-terminal-evidence.md` for the second worker evidence mapping.
 
 Production broker, plugin, runner, database, provider, terminal-outbox, and visibility paths were intentionally out of scope.
 
@@ -23,6 +24,10 @@ A2A Plane is compatible with a standalone worker that only implements the broker
 5. The worker uses local loopback or placeholder configuration for demos; it does not depend on private hosts, provider IDs, raw session logs, or operator-specific paths.
 
 The example card in `examples/workers/standalone-http-worker/worker-card.json` follows this lane. It models a generic HTTP worker with documentation and repository-inspection capabilities and no OpenClaw-specific fields.
+
+## Second reference worker shape
+
+The standalone lane is intentionally smaller than an operator integration. A compatible worker only needs to speak the broker worker contract: advertise a public-safe card, claim a queued task, report running state, and close with one terminal result. Its terminal evidence can be a redacted Done summary, a PR URL with validation, or a Block reason. It must not rely on OpenClaw bootstrap files, Gateway configuration, provider delivery receipts, or terminal-outbox ACK mutation to prove completion.
 
 ## Non-coupling checks
 

@@ -22,6 +22,12 @@ Inspect the card:
 cat examples/workers/standalone-http-worker/worker-card.json
 ```
 
+Review the terminal evidence mapping for this second worker shape:
+
+```bash
+cat docs/validation/standalone-worker-terminal-evidence.md
+```
+
 Validate the repository safety checks from the repository root:
 
 ```bash

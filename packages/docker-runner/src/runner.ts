@@ -266,6 +266,11 @@ function buildMetadataEnv(config: RunnerConfig): Record<string, string> {
 export function buildContainerScript(task: NormalizedRunnerTask): string {
   return `#!/usr/bin/env bash
 set -euo pipefail
+cleanup_permissions() {
+  chmod a+rwx /work 2>/dev/null || true
+  chmod -R a+rwX /work/artifacts 2>/dev/null || true
+}
+trap cleanup_permissions EXIT
 mkdir -p /work/artifacts
 printf 'A2A Docker Runner task %s\n' ${shellQuote(task.id)} | tee /work/artifacts/summary.txt
 printf 'intent=%s\n' ${shellQuote(task.intent)} | tee -a /work/artifacts/summary.txt
@@ -283,7 +288,7 @@ cat /work/task.json > /work/artifacts/task.json
 ${runCommandsScript(task)}
 printf 'status=completed\n' | tee -a /work/artifacts/summary.txt
 # Keep host-side cleanup and artifact indexing reliable when the container runs as root.
-chmod -R a+rwX /work/artifacts || true
+cleanup_permissions
 `;
 }
 

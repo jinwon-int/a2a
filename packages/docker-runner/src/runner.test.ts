@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { mkdirSync, writeFileSync, rmSync, mkdtempSync } from "node:fs";
+import { chmodSync, lstatSync, mkdirSync, readdirSync, writeFileSync, rmSync, mkdtempSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { buildContainerScript, runTask } from "./runner.js";
@@ -136,9 +136,25 @@ test("collects artifacts from workDir/artifacts", async () => {
   } catch {
     // Docker not available; skip validation.
   } finally {
+    makeTreeWritable(dir);
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+function makeTreeWritable(path: string): void {
+  try {
+    const stat = lstatSync(path);
+    if (stat.isSymbolicLink()) return;
+    chmodSync(path, stat.isDirectory() ? 0o777 : 0o666);
+    if (stat.isDirectory()) {
+      for (const entry of readdirSync(path)) {
+        makeTreeWritable(join(path, entry));
+      }
+    }
+  } catch {
+    // Best-effort cleanup hardening for root-owned Docker artifacts.
+  }
+}
 
 // ---------------------------------------------------------------------------
 // github-propose-patch mode evidence

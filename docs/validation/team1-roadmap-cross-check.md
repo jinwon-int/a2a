@@ -1,39 +1,42 @@
-# Team1 roadmap cross-check
+# Team1 post-78261 merge-order cross-check
 
-Parent: [#114](https://github.com/jinwon-int/a2a-plane/issues/114)  
-Child: [#118](https://github.com/jinwon-int/a2a-plane/issues/118)  
-Run: `a2a-plane-roadmap-cross-team-20260509T131000Z`  
-Broker of record: `seoseo`  
-Team: `team1-seoseo`  
+Parent: [#130](https://github.com/jinwon-int/a2a-plane/issues/130)
+Child: [#134](https://github.com/jinwon-int/a2a-plane/issues/134)
+Baseline: [PR #129](https://github.com/jinwon-int/a2a-plane/pull/129)
+Run: `a2a-plane-post78261-next-20260509T142546Z`
+Broker of record: `seoseo`
+Team: `team1-seoseo`
 Worker: `yukson`
 
-This note is a validation artifact only. It does not overwrite the Contract v0, quickstart, or CI implementation lanes.
+This note is a validation artifact only. It does not overwrite contract, quickstart, CI, scanner, or conformance implementation lanes.
 
 ## Scope reviewed
 
 - Contract paths: `contracts/a2a/**`, `contracts/compatibility/**`
 - Quickstart paths: `README.md`, `docs/quickstart.md`, root/package workspace scripts
 - CI paths: `.github/workflows/ci.yml`, `scripts/release-gate.mjs`, root `package.json`
-- Safety wording around `openclaw/openclaw#78261`, Terminal Brief receipt, provider acceptance, and terminal-outbox ACK boundaries
+- Validation ownership: `docs/validation/**`
+- Safety wording around closed/superseded `openclaw/openclaw#78261`, provider accepted-send evidence, Terminal Brief receipt, and terminal-outbox ACK boundaries
 
 ## Cross-team findings
 
 | Area | Status | Evidence | Follow-up gate |
 | --- | --- | --- | --- |
-| Contract / terminal semantics | Pass for Team1 cross-check | `contracts/a2a/task-lifecycle.md` defines terminal `done`, `pr`, and `blocked`; `contracts/a2a/terminal-semantics.md` keeps provider-send success separate from ACK evidence. | Keep Team2 conformance fixtures aligned with these terms; do not extend contract semantics from the quickstart lane without coordination. |
-| Quickstart / package scripts | Needs implementation-lane follow-up | `docs/quickstart.md` documents `start:local` and `worker:echo` as desired local commands, but root `package.json` and `packages/broker/package.json` do not currently define `start:local`, `worker:echo`, or `test:smoke`. The guide safely says to stop and record a blocker when those commands are absent. | Before claiming a runnable five-minute smoke path, add or scaffold local-only commands in the quickstart lane, then report the exact smoke command result. |
-| CI / validation wiring | Needs CI-lane follow-up | `.github/workflows/ci.yml` runs `npm run check` and `npm run test:release-gate`; `scripts/release-gate.mjs` covers layout, packages, runner import smoke, Terminal Brief routing guard, public-readiness scan, and compatibility baselines. It does not yet exercise a clean-checkout broker → echo-worker quickstart smoke command because that command is not present. | Once the local smoke command exists, wire it into a deterministic CI-friendly gate or document why it remains a manual local-only blocker. |
-| `openclaw/openclaw#78261` wording | Superseded by maintainer close | Updated direction treats `#78261` as closed/superseded, not a merge gate. Provider acceptance, `sent`, Telegram message IDs, and GitHub PR/Done/Block evidence are still not terminal ACK evidence. | Continue to reject any wording that treats provider-send acceptance as `current_session_visible`, operator-visible receipt, or terminal-outbox ACK. |
-| Runtime/bootstrap evidence hygiene | Pass for this branch diff | This validation note does not include OpenClaw runtime/bootstrap context files or raw session dumps. | Fail closed if `AGENTS.md`, `SOUL.md`, `USER.md`, `TOOLS.md`, `HEARTBEAT.md`, `IDENTITY.md`, or `.openclaw/**` appear in a future branch diff or artifact evidence. |
+| Stale `openclaw/openclaw#78261` wording | Pass for Team1 validation | Current direction treats `openclaw/openclaw#78261` as closed/superseded and not as an A2A Plane merge or runtime gate. Baseline PR #129 already removed the upstream-merge dependency from the roadmap language. | Keep future closeout wording anchored on A2A-owned terminal evidence, replay-safe/no-duplicate proof, scanner/readiness evidence, and explicit operator approval instead of upstream #78261 state. |
+| Unsafe ACK promotion | Pass for Team1 validation | `contracts/a2a/terminal-semantics.md` keeps provider-send success separate from ACK evidence, and `contracts/a2a/task-lifecycle.md` forbids terminal-outbox ACK mutation to manufacture terminal evidence. Provider acceptance, `sent`, Telegram message IDs, and GitHub PR/Done/Block evidence remain accepted-send/non-ACK evidence only. | Reject any wording that treats provider accepted-send evidence as requester-visible receipt, operator-visible receipt, human-seen proof, terminal ACK, or terminal-outbox ACK. |
+| Duplicate file overlap | Pass for this lane | This lane only updates `docs/validation/team1-roadmap-cross-check.md`; it does not edit contract, quickstart, CI, scanner, broker implementation, or Team2-owned conformance fixture paths. | If a later lane needs those owned paths, coordinate before editing so parallel Team1/Team2 PRs do not race on the same files. |
+| Merge ordering | Updated recommendation | The parent issue orders accepted-send/non-ACK contract/fixtures before terminal evidence conformance, replay-safe/no-duplicate canary proof, scanner/readiness refresh, quickstart/CI updates, Team2 compatibility proof, and Libero closeout. | Merge implementation lanes in that dependency order; do not close public-readiness gates from validation notes alone. |
+| Runtime/bootstrap evidence hygiene | Pass for this branch diff | This validation note does not include OpenClaw runtime/bootstrap context files, host-specific private paths, raw session dumps, or raw secrets. | Fail closed if `AGENTS.md`, `SOUL.md`, `USER.md`, `TOOLS.md`, `HEARTBEAT.md`, `IDENTITY.md`, or `.openclaw/**` appear in a future branch diff or artifact evidence. |
 
 ## Merge-order recommendation
 
-1. Merge Contract v0 skeleton updates first.
-2. Merge or coordinate conformance fixture work against the contract terms.
-3. Add the local quickstart smoke commands (`start:local`, `worker:echo`, and/or `test:smoke`) without production dependencies.
-4. Wire the resulting deterministic smoke/conformance command into CI.
-5. Close the Team1 libero validation lane after the above gates have concrete command evidence.
+1. Merge accepted-send/non-ACK contract and fixture updates first.
+2. Merge terminal evidence conformance plus no-duplicate/replay-safe canary harness work against those terms.
+3. Merge scanner/readiness/governance gate refresh after terminal evidence semantics are stable.
+4. Merge local quickstart and CI documentation/command updates only after deterministic local smoke commands exist.
+5. Merge independent Team2 compatibility/reference-worker proof after the contract and conformance surface is stable.
+6. Perform Libero cross-check and parent #130 closeout last, with explicit command evidence and operator approval where required.
 
 ## Safety confirmation
 
-This cross-check did not perform production deploys, Gateway/broker/worker restarts, production database mutations, live provider or Telegram sends, terminal-outbox ACKs, edge-secret rotations, repository visibility changes, history rewrites, force pushes, or raw secret disclosure. It does not claim provider message-id evidence is operator-visible receipt, terminal ACK, or a bypass of A2A terminal evidence gates.
+This cross-check did not perform production deploys, Gateway/broker/worker restarts, production database mutations, live provider or Telegram sends, terminal-outbox ACKs, edge-secret rotations, repository visibility changes, history rewrites, force pushes, or raw secret disclosure. It does not claim provider message-id or send-success evidence is requester-visible receipt, operator-visible receipt, human-seen proof, terminal ACK, or a bypass of A2A terminal evidence gates.

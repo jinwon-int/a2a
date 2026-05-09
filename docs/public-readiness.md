@@ -90,10 +90,10 @@ A follow-on A2A dispatch round cross-repo synthesis (post-merge state after `ope
 **Synthesis decision: NO-GO / Waiting.**
 
 - All three sibling cross-repo lanes are now merged (`openclaw-plugin-a2a#235`, `a2a-broker#433`, `a2a-broker#434`). This clears the sibling-lane blocker.
-- Upstream gate [openclaw/openclaw#78261](https://github.com/openclaw/openclaw/pull/78261) remains open and blocks Terminal Brief/source closeout activation.
+- Upstream PR [openclaw/openclaw#78261](https://github.com/openclaw/openclaw/pull/78261) is closed/superseded. It no longer blocks as a merge gate; Terminal Brief/source closeout remains blocked on A2A terminal evidence, replay-safety, scanner evidence, and explicit operator approval.
 - External secret scanner unavailable (fail-closed).
 - Explicit operator approval for public repository visibility is still required.
-- Repository visibility remains **NO-GO** until upstream receipt proof is available, scanner evidence is clean, and operator explicitly approves.
+- Repository visibility remains **NO-GO** until A2A terminal evidence/replay-safety proof is available, scanner evidence is clean, and operator explicitly approves.
 - Issue [#75](https://github.com/jinwon-int/a2a-plane/issues/75) remains open: all public-readiness gates are not yet met.
 
 Relevant cross-repo guardrail docs:
@@ -121,7 +121,7 @@ Local validation on this closeout refresh:
 Decision: **NO-GO / Waiting.**
 
 - Sibling cross-repo lanes are now merged, clearing that blocker.
-- `openclaw/openclaw#78261` remains the upstream Terminal Brief gate; do not claim it is rolled out.
+- `openclaw/openclaw#78261` is closed/superseded; do not claim that this closure itself unblocks Terminal Brief or public-readiness.
 - External secret scanner evidence remains unavailable (fail-closed).
 - Explicit operator approval for repository visibility is still required.
 - Issue [#75](https://github.com/jinwon-int/a2a-plane/issues/75) remains open.
@@ -133,9 +133,9 @@ This closeout refresh performed redacted documentation evidence updates and loca
 Parent: [#75](https://github.com/jinwon-int/a2a-plane/issues/75).
 Roadmap: [#294](https://github.com/jinwon-int/a2a-broker/issues/294).
 
-Live preflight at dispatch (`team1-a2a-public-p0-next-round`): `openclaw/openclaw#78261` is OPEN and now `mergeable=CONFLICTING`, `mergeStateStatus=DIRTY`. No failed or in-progress checks were reported at the exact poll snapshot. This is an **external blocker only** — no upstream maintainer action is authorized from this repository.
+Historical live preflight at dispatch (`team1-a2a-public-p0-next-round`) observed `openclaw/openclaw#78261` as OPEN/CONFLICTING/DIRTY. That state is now superseded by maintainer close; no upstream maintainer action is authorized from this repository.
 
-This refines the G1 gate shape from "open and unmerged" to "CONFLICTING/DIRTY merge gate." The upstream PR has a merge conflict that must be resolved by the openclaw/openclaw maintainers before it can land. The conflict is not actionable from A2A Plane and does not change the NO-GO decision; it hardens the upstream-merge gate.
+This historical R9 conflict-gate shape is superseded by the maintainer close. The NO-GO decision remains, but the gate is now A2A-owned terminal evidence/replay-safety/scanner/operator approval rather than an upstream merge.
 
 ### G1 Gate Refinement: Upstream Conflict State
 
@@ -150,19 +150,17 @@ The conflict adds a prerequisite: even if rollout and receipt proof were ready, 
 
 ### Aggregate Decision
 
-**NO-GO / Waiting.** All three gates remain NO-GO. G1 is now gated on upstream conflict resolution in addition to merge + runtime rollout + receipt proof. G2 requires external scanner tooling and clean output. G3 requires explicit operator approval separated from execution. Until all three gates are GO, `#75` must remain open.
+**NO-GO / Waiting.** All three gates remain NO-GO. G1 is now gated on A2A terminal evidence plus replay-safe canary proof, not upstream #78261 merge. G2 requires external scanner tooling and clean output. G3 requires explicit operator approval separated from execution. Until all three gates are GO, `#75` must remain open.
 
 ### Seoseo Evidence Collection Checklist (updated for conflict gate)
 
 Seoseo is responsible for collecting and linking the following evidence before requesting `#75` closeout. Items marked **(new)** are added for the CONFLICTING/DIRTY preflight state.
 
-1. **G1 evidence (upstream gate):**
-   - [ ] **(new)** Confirm `openclaw/openclaw#78261` shows `mergeable=MERGEABLE` and `mergeStateStatus=CLEAN` (conflict resolved upstream).
-   - [ ] **(new)** Link to the upstream commit or force-push that resolved the conflict (the PR must show a clean diff against its base).
-   - [ ] Link to merged `openclaw/openclaw#78261`.
-   - [ ] Link to the OpenClaw runtime build/release tag that includes the merged change.
-   - [ ] Link to a follow-up proof (issue/PR comment or CI log) showing **current-session-visible receipt** for the Terminal Brief route. Provider acceptance or `messageId` alone is insufficient.
-   - [ ] Confirmation that the proof was produced with the rolled-out runtime, not a pre-merge snapshot.
+1. **G1 evidence (terminal evidence / replay-safe gate):**
+   - [ ] Confirm `openclaw/openclaw#78261` is recorded as closed/superseded, not a merge gate.
+   - [ ] Link to A2A Plane contract/test evidence that provider message id/send success is provider accepted-send evidence only.
+   - [ ] Link to a replay-safe one-event canary or no-live proof showing no duplicate/stale Terminal Brief replay.
+   - [ ] Link to a follow-up proof (issue/PR comment or CI log) showing manual operator receipt or explicit ACK-safe receipt before terminal ACK. Provider acceptance or `messageId` alone is insufficient.
 
 2. **G2 evidence:**
    - [ ] Install `gitleaks` and/or `trufflehog` in the operator environment.
@@ -200,23 +198,22 @@ This packet is the Team1 next-round operator decision surface for `bangtong`. It
 
 | Gate | Current State | Required for GO | NO-GO Trigger |
 |---|---|---|---|
-| **G1: Upstream `openclaw/openclaw#78261` merge / runtime rollout** | **NO-GO / Waiting.** PR [#78261](https://github.com/openclaw/openclaw/pull/78261) is open and unmerged. `providerAccepted` alone is insufficient; current-session-visible receipt proof is required per `docs/r6-terminal-brief-openclaw-routing-synthesis.md`. | `openclaw/openclaw#78261` is merged, released or pinned to an exact OpenClaw runtime build, and rolled out. A follow-up proof shows current-session-visible receipt for the Terminal Brief route. | Claiming GO before merge + rollout + fresh receipt proof. Treating `providerAccepted`, `accepted`, `sent`, or Telegram `messageId` as terminal ACK evidence. |
+| **G1: Terminal evidence / replay-safe canary proof** | **NO-GO / Waiting.** PR [#78261](https://github.com/openclaw/openclaw/pull/78261) is closed/superseded; `providerAccepted`, `accepted`, `sent`, or Telegram `messageId` remain non-ACK evidence. | A2A Plane contract/tests show provider message id/send success is accepted-send evidence only, and a replay-safe proof shows manual/proven ACK-safe receipt before terminal ACK. | Claiming GO because #78261 closed. Treating `providerAccepted`, `accepted`, `sent`, or Telegram `messageId` as terminal ACK evidence. |
 | **G2: Final external scanner evidence** | **NO-GO / Blocked.** `npm run scan:external-secrets` exits non-zero because neither `gitleaks` nor `trufflehog` is installed in the runner environment. See `docs/security/r4-external-scan-and-freeze.md`. | `npm run scan:external-secrets` exits zero with clean findings (or findings dispositioned by operator with redacted evidence). At least one supported scanner (`gitleaks` or `trufflehog`) produces a clean report. | Claiming GO without scanner output. Running a local-only substitute (`npm run scan:public-readiness`, `node scripts/redacted-readiness-inventory.mjs`) and treating it as external scanner evidence. |
 | **G3: Explicit operator approval for repository visibility/publication** | **NO-GO / Waiting.** Repository remains private. No operator has issued an explicit visibility-change approval. `docs/public-transition-smoke-plan.md` defines the post-approval checklist but does not authorize the transition itself. | 진원님 explicitly approves a repository visibility change in a linked issue/PR comment. Approval is separate from any execution step. | Claiming GO because "docs are ready" or "all checks passed." Executing a visibility change without explicit operator approval. |
 
 ### Aggregate Decision
 
-**NO-GO / Waiting.** All three gates are NO-GO. G1 requires upstream merge + runtime rollout + receipt proof. G2 requires external scanner tooling and clean output. G3 requires explicit operator approval separated from execution. Until all three gates are GO, `#75` must remain open.
+**NO-GO / Waiting.** All three gates are NO-GO. G1 requires A2A terminal evidence and replay-safe canary proof. G2 requires external scanner tooling and clean output. G3 requires explicit operator approval separated from execution. Until all three gates are GO, `#75` must remain open.
 
 ### Seoseo Evidence Collection Checklist (must complete before closing `#75`)
 
 Seoseo is responsible for collecting and linking the following evidence before requesting `#75` closeout:
 
 1. **G1 evidence:**
-   - [ ] Link to merged `openclaw/openclaw#78261`.
-   - [ ] Link to the OpenClaw runtime build/release tag that includes the merged change.
-   - [ ] Link to a follow-up proof (issue/PR comment or CI log) showing **current-session-visible receipt** for the Terminal Brief route. Provider acceptance or `messageId` alone is insufficient.
-   - [ ] Confirmation that the proof was produced with the rolled-out runtime, not a pre-merge snapshot.
+   - [ ] Link to `openclaw/openclaw#78261` close/superseded decision.
+   - [ ] Link to A2A Plane contract/test evidence that provider message id/send success is accepted-send evidence only.
+   - [ ] Link to a follow-up proof (issue/PR comment or CI log) showing manual operator receipt or explicit ACK-safe receipt before terminal ACK. Provider acceptance or `messageId` alone is insufficient.
 
 2. **G2 evidence:**
    - [ ] Install `gitleaks` and/or `trufflehog` in the operator environment.

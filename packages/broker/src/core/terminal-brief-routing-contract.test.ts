@@ -30,8 +30,8 @@ describe("Terminal Brief routing contract", () => {
     assert.equal(decision.routeAllowed, true);
     assert.equal(decision.ackAllowed, false);
     assert.equal(decision.providerAcceptedIsAck, false);
-    assert.equal(decision.receiptGate, "openclaw/openclaw#78261-current-session-visible");
-    assert.match(decision.reason, /provider accepted\/sent success is non-ACK/);
+    assert.equal(decision.receiptGate, "a2a-terminal-evidence-manual-or-ack-safe");
+    assert.match(decision.reason, /provider accepted\/sent success or message id is non-ACK/);
   });
 
   it("fails closed when an OpenClaw route lacks lifecycle or outbox proof", () => {
@@ -45,7 +45,7 @@ describe("Terminal Brief routing contract", () => {
     assert.match(decision.reason, /requires lifecycle or terminal-outbox proof/);
   });
 
-  it("only allows ACK with current-session-visible receipt proof", () => {
+  it("only allows ACK with explicit ACK-safe receipt proof", () => {
     const decision = evaluateTerminalBriefRouting({
       via: "terminal_outbox_replay",
       terminalOutboxId: "terminal:task-1:succeeded:2026-05-08T00%3A00%3A00.000Z",
@@ -57,6 +57,6 @@ describe("Terminal Brief routing contract", () => {
     assert.equal(decision.routeAllowed, true);
     assert.equal(decision.ackAllowed, true);
     assert.equal(decision.providerAcceptedIsAck, false);
-    assert.match(decision.reason, /current-session-visible receipt proof/);
+    assert.match(decision.reason, /ACK-safe receipt proof/);
   });
 });

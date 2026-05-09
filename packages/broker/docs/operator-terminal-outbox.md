@@ -53,7 +53,7 @@ Recommended adapter contract from OpenClaw/plugin-notifier to this broker:
 
 Negative test case: a Telegram provider send result shaped like `deliveryState: "provider_accepted"`, `providerAccepted: true`, `operatorVisible: false`, `ackRequired: false`, or any equivalent send-success-only response must remain `receipt.status: "provider_sent"` and must not call the terminal-outbox ACK route.
 
-Until OpenClaw has current-session-visible receipt proof for Terminal Brief notices (openclaw/openclaw#78261), provider accepted/send success is a non-ACK even when the prepared route is OpenClaw outbound lifecycle. A live notification or terminal ACK remains blocked unless the terminal outbox receives explicit current-session/operator-visible receipt evidence.
+After openclaw/openclaw#78261 was closed by maintainers, provider accepted/send success or a provider-returned message id is treated as provider accepted-send evidence only. It remains a non-ACK even when the prepared route is OpenClaw outbound lifecycle. A live notification or terminal ACK remains blocked unless the terminal outbox receives manual operator receipt or explicit ACK-safe receipt evidence.
 
 Safe pre-deploy commands:
 

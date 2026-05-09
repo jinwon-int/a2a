@@ -6,6 +6,7 @@ const steps = [
   ['packages', 'npm', ['run', 'check:packages']],
   ['runner-import-smoke', 'npm', ['run', 'check:runner-import-smoke']],
   ['terminal-brief-routing', 'npm', ['run', 'check:terminal-brief-routing']],
+  ['message-id-ack-boundary', 'npm', ['run', 'check:message-id-ack-boundary']],
   ['public-readiness', 'npm', ['run', 'scan:public-readiness']],
   ['readiness-gates', 'npm', ['run', 'scan:readiness-gates']],
   ['compatibility-baselines', 'node', ['scripts/check-compatibility-baselines.mjs']],

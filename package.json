@@ -13,6 +13,7 @@
     "check:packages": "node scripts/check-packages.mjs",
     "check:runner-import-smoke": "node scripts/check-runner-import-smoke.mjs",
     "check:terminal-brief-routing": "node scripts/check-terminal-brief-routing.mjs",
+    "check:message-id-ack-boundary": "node scripts/check-message-id-ack-boundary.mjs",
     "check:compatibility-baselines": "node scripts/check-compatibility-baselines.mjs",
     "check:quickstart-conformance": "node scripts/check-quickstart-conformance.mjs",
     "check:no-diff-closeout-guidance": "node --test scripts/check-no-diff-closeout-guidance.test.mjs",
@@ -21,7 +22,7 @@
     "scan:external-secrets": "node scripts/external-secret-scan.mjs",
     "libero:public-preflight-closeout": "node scripts/libero-public-preflight-closeout.mjs",
     "test": "npm run check",
-    "test:release-gate": "node --test scripts/check-compatibility-baselines.test.mjs scripts/libero-public-preflight-closeout.test.mjs scripts/check-no-diff-closeout-guidance.test.mjs scripts/check-quickstart-conformance.test.mjs",
+    "test:release-gate": "node --test scripts/check-compatibility-baselines.test.mjs scripts/libero-public-preflight-closeout.test.mjs scripts/check-no-diff-closeout-guidance.test.mjs scripts/check-quickstart-conformance.test.mjs scripts/check-message-id-ack-boundary.test.mjs",
     "test:conformance": "node test/conformance/check-contract-fixtures.mjs && node test/conformance/check-terminal-evidence-ack-boundary.mjs"
   },
   "license": "MIT"

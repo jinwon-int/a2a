@@ -9,6 +9,7 @@ const steps = [
   ['message-id-ack-boundary', 'npm', ['run', 'check:message-id-ack-boundary']],
   ['public-readiness', 'npm', ['run', 'scan:public-readiness']],
   ['readiness-gates', 'npm', ['run', 'scan:readiness-gates']],
+  ['external-secrets', 'npm', ['run', 'scan:external-secrets']],
   ['compatibility-baselines', 'node', ['scripts/check-compatibility-baselines.mjs']],
 ];
 

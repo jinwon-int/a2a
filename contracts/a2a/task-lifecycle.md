@@ -1,4 +1,8 @@
-# A2A Task Lifecycle Contract Skeleton
+# A2A Task Lifecycle Contract (v0 Freeze)
+
+> **v0 Freeze (2026-05-09):** This contract is frozen as the Contract v0 task lifecycle baseline.
+> States, transitions, and terminal result types are locked. No new states or transitions may be added
+> without a v0→v1 compatibility plan that covers all broker/plugin/runner consumers.
 
 This contract records the stable task lifecycle vocabulary shared by the broker, OpenClaw plugin, Docker runner, and future read models. It is intentionally a skeleton until the sanitized imports land; do not add private endpoint names, provider identifiers, secrets, or host-specific paths here.
 

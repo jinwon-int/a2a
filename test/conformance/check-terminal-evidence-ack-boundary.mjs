@@ -21,6 +21,12 @@ for (const pattern of secretLikePatterns) {
 }
 
 assert.equal(fixture.contract, 'contracts/compatibility/terminal-evidence-ack-boundary.md');
+
+// Contract v0: fixture must carry v0Freeze marker
+assert.ok(fixture.v0Freeze, 'accepted-send non-ack fixture must carry v0Freeze marker');
+assert.ok(fixture.v0Freeze.frozenAt, 'v0Freeze must include frozenAt');
+assert.ok(fixture.v0Freeze.round, 'v0Freeze must include round');
+
 assert.deepEqual(fixture.ackSafeReceiptTypes.sort(), [
   'current_session_visible',
   'manual_operator_receipt',

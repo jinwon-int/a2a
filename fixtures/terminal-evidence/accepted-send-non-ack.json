@@ -1,7 +1,12 @@
 {
   "fixtureId": "a2a-plane.terminal-evidence.accepted-send-non-ack.v1",
   "contract": "contracts/compatibility/terminal-evidence-ack-boundary.md",
-  "description": "Independent compatibility fixture proving accepted-send and provider message-id evidence are non-ACK, while terminal ACK eligibility requires manual or proven user-visible receipt evidence.",
+  "description": "Independent compatibility fixture proving accepted-send and provider message-id evidence are non-ACK, while terminal ACK eligibility requires manual or proven user-visible receipt evidence. Frozen at Contract v0 (2026-05-09).",
+  "v0Freeze": {
+    "frozenAt": "2026-05-09",
+    "round": "a2a-vnext-contract-smoke-crossbroker-20260510",
+    "note": "nonAckSignals and ackSafeReceiptTypes are locked; no new receipt types without a v0→v1 plan."
+  },
   "nonAckSignals": [
     "providerMessageId",
     "providerAccepted",

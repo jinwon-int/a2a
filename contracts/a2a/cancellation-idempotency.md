@@ -1,4 +1,8 @@
-# Cancellation & Idempotency Contract (v0)
+# Cancellation & Idempotency Contract (v0 Freeze)
+
+> **v0 Freeze (2026-05-09):** Cancellation sources, transitions, worker obligations, idempotency
+> guarantees, and timeout configuration are frozen as the Contract v0 baseline.
+> Changes to cancellation semantics or idempotency guarantees require a v0→v1 plan.
 
 This contract records the stable cancellation and idempotency semantics shared across the A2A broker, plugin, runner, and read models. It is intentionally a skeleton; do not add private endpoint names, provider identifiers, secrets, or host-specific paths.
 

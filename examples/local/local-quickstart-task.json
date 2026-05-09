@@ -1,0 +1,22 @@
+{
+  "id": "local-smoke-1",
+  "intent": "validate_change",
+  "requester": {
+    "id": "local-operator",
+    "kind": "node",
+    "role": "operator"
+  },
+  "target": {
+    "id": "local-echo-worker",
+    "kind": "node",
+    "role": "analyst"
+  },
+  "assignedWorkerId": "local-echo-worker",
+  "message": "hello quickstart",
+  "payload": {
+    "mode": "local-echo-smoke",
+    "noLive": true,
+    "expectedTerminalEvidence": "Done"
+  },
+  "taskOrigin": "operator"
+}

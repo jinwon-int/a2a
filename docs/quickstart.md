@@ -16,7 +16,7 @@ npm ci --ignore-scripts --include=dev
 
 ## 1. Run the local A2A Plane broker
 
-From the broker workspace, use the package's documented local start command when available:
+From the broker workspace, use the package's documented local start command:
 
 ```bash
 cd packages/broker
@@ -25,11 +25,11 @@ npm run build
 npm run start:local
 ```
 
-Use only loopback URLs such as `http://127.0.0.1:8787`. If `start:local` is not present in your checkout, stop here and record the blocker. Do not substitute a production broker or restart a managed service.
+Use only loopback URLs such as `http://127.0.0.1:8787`. Do not substitute a production broker or restart a managed service.
 
 ## 2. Start a dummy or echo worker
 
-Use a local worker fixture if the broker package provides one:
+Start the built-in local echo worker fixture:
 
 ```bash
 cd packages/broker
@@ -38,7 +38,7 @@ LOCAL_A2A_WORKER_ID=<local-echo-worker> \
 npm run worker:echo
 ```
 
-If the echo-worker command is absent, the current blocker is: **no public-safe dummy worker entrypoint is documented in this monorepo yet**. That should be fixed before public release rather than using a live worker as a workaround.
+The worker registers as `local-echo-worker` and uses the built-in `echo` handler. Keep it attached only to the loopback broker.
 
 ## 3. Connect the reference OpenClaw plugin locally
 
@@ -78,10 +78,15 @@ Never include real tokens, private hostnames, provider identifiers, Telegram cha
 
 ## 4. Submit a no-live test task
 
-Use a no-live task message such as:
+Submit the checked-in no-live task fixture from repository root:
 
-```text
-Echo this message and return Done evidence only. Do not send provider messages, do not ACK terminal outbox items, and do not touch production systems.
+```bash
+curl -s -X POST http://127.0.0.1:8787/tasks \
+  -H 'Content-Type: application/json' \
+  -H 'X-A2A-Requester-Id: local-operator' \
+  -H 'X-A2A-Requester-Kind: node' \
+  -H 'X-A2A-Requester-Role: operator' \
+  -d @examples/local/local-quickstart-task.json
 ```
 
 Expected terminal evidence is one of:

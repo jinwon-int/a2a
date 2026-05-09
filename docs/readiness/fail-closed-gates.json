@@ -1,0 +1,94 @@
+{
+  "schemaVersion": 1,
+  "lane": "team2-gwakga",
+  "run": "a2a-plane-roadmap-cross-team-20260509T131000Z",
+  "defaultDecision": "NO-GO",
+  "failClosed": true,
+  "goDecisionRequires": [
+    "publicPrivateBoundary",
+    "externalScannerEvidence",
+    "runtimeBootstrapHygiene",
+    "goNoGoMatrix",
+    "redactedEvidencePolicy",
+    "operatorApproval"
+  ],
+  "gates": [
+    {
+      "id": "publicPrivateBoundary",
+      "title": "Public/private boundary",
+      "failClosed": true,
+      "requiredForGo": true,
+      "blockedWhenMissing": "Repository remains private; public transition is NO-GO.",
+      "evidence": [
+        "GitHub metadata shows repository is still private before approval.",
+        "Docs and examples contain no private endpoints, provider identifiers, raw session dumps, host-specific private paths, or runtime/bootstrap context files.",
+        "Public-facing wording describes A2A Plane as alpha/feedback-welcome, not production-ready."
+      ]
+    },
+    {
+      "id": "externalScannerEvidence",
+      "title": "Secret/history scanner readiness",
+      "failClosed": true,
+      "requiredForGo": true,
+      "blockedWhenMissing": "External scanner evidence is absent or unavailable; public transition is NO-GO.",
+      "evidence": [
+        "At least one supported external scanner, such as gitleaks or trufflehog, ran against the candidate tree/history.",
+        "Findings are clean or explicitly dispositioned by the operator using redacted metadata only.",
+        "Scanner evidence postdates the last commit touching secrets-adjacent paths."
+      ]
+    },
+    {
+      "id": "runtimeBootstrapHygiene",
+      "title": "OpenClaw runtime/bootstrap hygiene",
+      "failClosed": true,
+      "requiredForGo": true,
+      "blockedWhenMissing": "Runtime/bootstrap context files would enter the branch or evidence; stop before PR/Done evidence.",
+      "denyPaths": [
+        "AGENTS.md",
+        "SOUL.md",
+        "USER.md",
+        "TOOLS.md",
+        "HEARTBEAT.md",
+        "IDENTITY.md",
+        ".openclaw/**"
+      ],
+      "evidence": [
+        "Branch diff excludes all denyPaths.",
+        "Artifact and PR/issue evidence exclude all denyPaths and raw runtime/session context."
+      ]
+    },
+    {
+      "id": "goNoGoMatrix",
+      "title": "GO/NO-GO matrix",
+      "failClosed": true,
+      "requiredForGo": true,
+      "blockedWhenMissing": "Any unresolved required gate leaves the aggregate decision NO-GO.",
+      "evidence": [
+        "Each required gate has a named owner, status, evidence link, and timestamp.",
+        "The aggregate decision is GO only when every required gate is GO."
+      ]
+    },
+    {
+      "id": "redactedEvidencePolicy",
+      "title": "Redacted evidence policy",
+      "failClosed": true,
+      "requiredForGo": true,
+      "blockedWhenMissing": "Evidence contains raw secrets, private paths, provider identifiers, terminal ACK mutations, or raw session dumps; stop and post Block evidence only.",
+      "evidence": [
+        "Issue and PR evidence includes commands, exit statuses, finding counts/classes, commit SHA, and linked artifacts only.",
+        "Matched secret values, host-specific private paths, provider IDs, Telegram IDs, and raw session dumps are never pasted."
+      ]
+    },
+    {
+      "id": "operatorApproval",
+      "title": "Explicit operator approval",
+      "failClosed": true,
+      "requiredForGo": true,
+      "blockedWhenMissing": "No explicit operator approval for public repository visibility; public transition is NO-GO.",
+      "evidence": [
+        "Approval is a linked issue/PR comment from the operator and explicitly names repository visibility/publication.",
+        "Approval is separate from execution and does not bundle deploys, restarts, DB mutations, provider sends, terminal ACKs, secret rotation/disclosure, history rewrite, or force-push."
+      ]
+    }
+  ]
+}

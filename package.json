@@ -15,6 +15,7 @@
     "check:terminal-brief-routing": "node scripts/check-terminal-brief-routing.mjs",
     "check:compatibility-baselines": "node scripts/check-compatibility-baselines.mjs",
     "scan:public-readiness": "node scripts/public-readiness-scan.mjs",
+    "scan:readiness-gates": "node scanner/readiness/fail-closed-gates.mjs --spec docs/readiness/fail-closed-gates.json",
     "scan:external-secrets": "node scripts/external-secret-scan.mjs",
     "libero:public-preflight-closeout": "node scripts/libero-public-preflight-closeout.mjs",
     "test": "npm run check",

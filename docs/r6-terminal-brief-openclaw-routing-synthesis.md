@@ -2,20 +2,20 @@
 
 Issue: [#87](https://github.com/jinwon-int/a2a-plane/issues/87)  
 Parent: [#83](https://github.com/jinwon-int/a2a-plane/issues/83)  
-Upstream gate: [`openclaw/openclaw#78261`](https://github.com/openclaw/openclaw/pull/78261)
+Upstream context: [`openclaw/openclaw#78261`](https://github.com/openclaw/openclaw/pull/78261) — closed/superseded by maintainer decision
 
 ## Decision
 
-**Done synthesis / activation remains blocked.** It is safe for A2A Plane to prepare Terminal Brief notice plumbing around OpenClaw CLI/Gateway/outbound lifecycle abstractions, but unsafe to use that plumbing as a terminal ACK path while `openclaw/openclaw#78261` is still unmerged/unrolled out and does not provide current-session-visible receipt proof.
+**Done synthesis / activation remains blocked.** It is safe for A2A Plane to prepare Terminal Brief notice plumbing around OpenClaw CLI/Gateway/outbound lifecycle abstractions, but unsafe to use that plumbing as a terminal ACK path from provider accepted-send evidence or provider message ids alone. `openclaw/openclaw#78261` is no longer a merge/runtime gate after maintainer close.
 
-`providerAccepted`, provider send success, Telegram message ids, or Gateway outbound success are **notice transport evidence only**. They must remain non-ACK and must not close Terminal Brief receipt gaps.
+`providerAccepted`, provider send success, Telegram message ids, or Gateway outbound success are **provider accepted-send / notice transport evidence only**. They must remain non-ACK and must not close Terminal Brief receipt gaps.
 
 ## Evidence reviewed
 
-- `#75` R5 closeout deferred Terminal Brief/source closeout until `openclaw/openclaw#78261` is merged and rolled out with fresh proof.
+- `#75` R5 originally deferred Terminal Brief/source closeout until `openclaw/openclaw#78261`; after maintainer close, that dependency is superseded by A2A-owned terminal evidence/replay-safety/operator-approval gates.
 - `#83` R6 parent allows OpenClaw routing preparation only as no-bypass best-effort notice plumbing.
 - `#84`, `#85`, and `#86` had Start evidence only at this snapshot; no sibling PR/Done/Block outputs were available to count as passing gates.
-- `openclaw/openclaw#78261` was still open at this snapshot and describes `delivery.providerAccepted` as separate from read receipts or user-visibility guarantees.
+- `openclaw/openclaw#78261` was later closed by maintainers; maintainer guidance treats Telegram provider message id as accepted-send evidence while keeping read/visibility separate.
 - Current repo guardrails already state the core boundary:
   - `contracts/a2a/terminal-semantics.md` says provider-send success is not ACK evidence.
   - `contracts/a2a/broker-handoff-protocol.md` says terminal evidence relay does not ACK terminal outbox rows.
@@ -37,14 +37,14 @@ Do not merge or run changes that do any of the following:
 
 Proceed only after all gates are satisfied and linked from the parent issue:
 
-1. `openclaw/openclaw#78261` is merged, released or pinned to an exact OpenClaw runtime build, and rolled out to the Gateway instance intended to own Terminal Brief delivery.
-2. A follow-up OpenClaw proof shows **current-session-visible receipt** for the Terminal Brief route. Provider acceptance alone is insufficient, even after `#78261`.
+1. A2A Plane contract/tests map provider message id and send success as provider accepted-send evidence only, not ACK.
+2. A follow-up proof shows manual operator receipt or an explicit ACK-safe receipt path for the Terminal Brief route. Provider acceptance/message id alone is insufficient.
 3. R6 sibling lanes finish with PR/Done/Block evidence:
    - broker contract rejects direct Telegram/curl Terminal Brief paths;
    - plugin bridge uses OpenClaw routing/outbound lifecycle and remains ACK fail-closed without current-session-visible proof;
    - CI/static guard prevents regressions into direct provider sends or providerAccepted-as-ACK.
 4. A no-live preflight proves runtime/config readiness without deploy, Gateway restart/reload, provider send, DB mutation, terminal ACK, source visibility change, or secret rotation.
-5. Any live proof is explicitly operator-approved, one-shot, tied to a fresh task/outbox id, and records current-session-visible receipt before ACKing that exact id.
+5. Any live proof is explicitly operator-approved, one-shot, tied to a fresh task/outbox id, and records manual/proven ACK-safe receipt before ACKing that exact id.
 6. After proof, no-live defaults are restored and evidence is redacted; runtime/bootstrap context files must not enter the branch or artifacts.
 
-Until these gates pass, the correct Terminal Brief closeout status is **Block / waiting on receipt-capable OpenClaw runtime proof**, not live notification or ACK activation.
+Until these gates pass, the correct Terminal Brief closeout status is **Block / waiting on A2A terminal evidence and replay-safe canary proof**, not live notification or ACK activation.

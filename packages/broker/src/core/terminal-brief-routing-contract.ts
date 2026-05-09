@@ -7,10 +7,10 @@
  * direct Telegram Bot API/curl path as a Terminal Brief transport.
  *
  * Receipt safety is intentionally stricter than provider send success:
- * `providerAccepted` only means a provider accepted the request. It is not a
- * terminal ACK until OpenClaw exposes current-session-visible receipt proof
- * (openclaw/openclaw#78261) or another explicit ACK evidence path is supplied
- * through the terminal outbox ACK contract.
+ * `providerAccepted` or a provider message id only means the provider accepted
+ * the send request. It is not a terminal ACK unless manual operator receipt or
+ * another explicit ACK-safe evidence path is supplied through the terminal
+ * outbox ACK contract.
  */
 
 export const TERMINAL_BRIEF_ROUTING_ALLOWED_VIA = [
@@ -45,7 +45,7 @@ export interface TerminalBriefRoutingDecision {
   providerAcceptedIsAck: false;
   reason: string;
   requiredRoute: "openclaw_outbound_lifecycle";
-  receiptGate: "openclaw/openclaw#78261-current-session-visible";
+  receiptGate: "a2a-terminal-evidence-manual-or-ack-safe";
 }
 
 const ALLOWED_ROUTES = new Set<string>(TERMINAL_BRIEF_ROUTING_ALLOWED_VIA);
@@ -55,7 +55,7 @@ export function evaluateTerminalBriefRouting(input: TerminalBriefRoutingInput): 
   const base = {
     providerAcceptedIsAck: false as const,
     requiredRoute: "openclaw_outbound_lifecycle" as const,
-    receiptGate: "openclaw/openclaw#78261-current-session-visible" as const,
+    receiptGate: "a2a-terminal-evidence-manual-or-ack-safe" as const,
   };
 
   if (FORBIDDEN_ROUTES.has(input.via)) {
@@ -91,7 +91,7 @@ export function evaluateTerminalBriefRouting(input: TerminalBriefRoutingInput): 
       ...base,
       routeAllowed: true,
       ackAllowed: true,
-      reason: "current-session-visible receipt proof is present; Terminal Brief ACK may be considered by the terminal outbox contract",
+      reason: "explicit ACK-safe receipt proof is present; Terminal Brief ACK may be considered by the terminal outbox contract",
     };
   }
 
@@ -100,7 +100,7 @@ export function evaluateTerminalBriefRouting(input: TerminalBriefRoutingInput): 
     routeAllowed: true,
     ackAllowed: false,
     reason: input.providerAccepted
-      ? "provider accepted/sent success is non-ACK; wait for current-session-visible receipt proof after openclaw/openclaw#78261"
-      : "OpenClaw route is prepared best-effort, but Terminal Brief ACK remains gated on current-session-visible receipt proof",
+      ? "provider accepted/sent success or message id is non-ACK; wait for manual operator receipt or explicit ACK-safe proof"
+      : "OpenClaw route is prepared best-effort, but Terminal Brief ACK remains gated on manual operator receipt or explicit ACK-safe proof",
   };
 }

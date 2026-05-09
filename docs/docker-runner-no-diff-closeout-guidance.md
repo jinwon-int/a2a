@@ -109,7 +109,7 @@ All closeout activity must obey these constraints:
 
 **NO-GO / Waiting.** This closeout guidance does not unblock public repository visibility:
 
-- Upstream gate [openclaw/openclaw#78261](https://github.com/openclaw/openclaw/pull/78261) remains open and unmerged. Do not claim public-readiness is unblocked while this upstream gate is unresolved.
+- Upstream PR [openclaw/openclaw#78261](https://github.com/openclaw/openclaw/pull/78261) is closed/superseded. Do not claim public-readiness is unblocked by that closure; provider message-id evidence remains non-ACK and A2A terminal evidence/replay-safety/scanner/operator-approval gates still apply.
 - External secret scanner evidence remains unavailable (fail-closed).
 - Explicit operator approval for repository visibility is still required.
 
@@ -123,7 +123,7 @@ The public-readiness decision matrix in [docs/public-readiness.md](./public-read
 | [jinwon-int/a2a-broker#443](https://github.com/jinwon-int/a2a-broker/issues/443) | Failed evidence lane for nosuk no-diff PR failure |
 | [jinwon-int/a2a-broker#294](https://github.com/jinwon-int/a2a-broker/issues/294) | A2A broker roadmap |
 | [jinwon-int/a2a-plane#102](https://github.com/jinwon-int/a2a-plane/issues/102) | This plane closeout issue |
-| [openclaw/openclaw#78261](https://github.com/openclaw/openclaw/pull/78261) | Upstream Terminal Brief gate (blocking public-readiness) |
+| [openclaw/openclaw#78261](https://github.com/openclaw/openclaw/pull/78261) | Closed/superseded upstream context; no longer a merge gate |
 | [docs/public-readiness.md](./public-readiness.md) | Authoritative public-readiness decision matrix |
 | [packages/docker-runner/docs/design.md](../packages/docker-runner/docs/design.md) | Docker Runner task lifecycle design |
 | [packages/docker-runner/docs/integration.md](../packages/docker-runner/docs/integration.md) | Handler integration and failure modes |

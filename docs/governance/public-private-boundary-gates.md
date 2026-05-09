@@ -7,7 +7,7 @@ This governance note defines who may turn public-readiness evidence into a visib
 - **Private by default:** the repository remains private until a separate, explicit operator approval names the visibility/publication action.
 - **Evidence is not approval:** passing tests, clean scanners, merged PRs, or green CI may support review, but none of them authorizes a visibility change.
 - **No bundled live actions:** visibility approval must not bundle deploys, service restarts, production database mutations, live provider sends, terminal-outbox ACKs, edge-secret rotation, secret disclosure, history rewrite, or force-push.
-- **OpenClaw gate remains blocking:** do not claim public-readiness is unblocked by routing or terminal evidence that bypasses `openclaw/openclaw#78261`.
+- **OpenClaw/A2A receipt boundary remains blocking:** do not claim public-readiness is unblocked by provider message ids or send-result evidence. `openclaw/openclaw#78261` is closed/superseded; A2A Plane must prove terminal evidence, replay safety, scanner readiness, and explicit operator approval instead.
 
 ## Gate owners and outcomes
 

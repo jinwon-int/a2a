@@ -19,8 +19,11 @@ test('Team1 source-public approval packet matrix covers current run lanes and ou
   assert.match(content, /openclaw-plugin-a2a#254/);
   assert.match(content, /a2a-docker-runner#173/);
   assert.match(content, /a2a-plane#193/);
-  assert.match(content, /current observed output is dispatch plus `Start` only/);
-  assert.match(content, /A `Start` marker proves work began; it is not sufficient approval-packet evidence/);
+  assert.match(content, /Closeout refreshed at/);
+  assert.match(content, /broker#478/);
+  assert.match(content, /openclaw-plugin-a2a#255/);
+  assert.match(content, /a2a-docker-runner#176/);
+  assert.match(content, /A `Start` marker alone would not have been sufficient approval-packet evidence/);
 });
 
 test('Team1 source-public approval packet matrix covers remaining approval gates', async () => {
@@ -38,10 +41,11 @@ test('Team1 source-public approval packet matrix covers remaining approval gates
 test('Team1 source-public approval packet matrix preserves fail-closed and non-ACK posture', async () => {
   const content = await doc();
 
-  assert.match(content, /source-public approval remains NO-GO \/ Waiting/);
+  assert.match(content, /source-public execution remains NO-GO \/ Waiting/);
   assert.match(content, /Public-readiness scans are not a substitute for external history\/secret evidence/);
   assert.match(content, /Provider message id\/send success is accepted-send evidence only/);
   assert.match(content, /Tests, scanner success, provider IDs, and Start\/PR\/Done\/Block comments are not operator approval/);
+  assert.match(content, /not as release, source-public visibility, or community-post approval/);
   assert.doesNotMatch(content, /public-readiness GO|Final GO|visibility change was performed|terminal ACK evidence from provider|raw session dump publication as evidence/i);
 });
 

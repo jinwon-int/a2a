@@ -27,8 +27,8 @@ test('Team1 source public-readiness libero matrix covers the required lanes and 
 test('Team1 source public-readiness libero matrix preserves fail-closed wording', async () => {
   const content = await doc();
 
-  assert.match(content, /NO-GO \/ Waiting/);
-  assert.match(content, /Start-only/);
+  assert.match(content, /public-readiness still NO-GO/);
+  assert.match(content, /no-change evidence\/RCA/);
   assert.match(content, /accepted-send evidence remains non-ACK/);
   assert.match(content, /Tests, scanner success, provider IDs, and PR\/Done\/Block comments are not approval/);
   assert.doesNotMatch(content, /public-readiness GO|Final GO|visibility change was performed|terminal ACK evidence from provider/i);

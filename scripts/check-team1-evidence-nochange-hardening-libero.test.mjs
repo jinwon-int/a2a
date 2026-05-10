@@ -29,10 +29,11 @@ test('Team1 evidence-only no-change hardening matrix covers required lanes and g
 test('Team1 evidence-only no-change hardening matrix preserves non-ACK and fail-closed semantics', async () => {
   const content = await doc();
 
-  assert.match(content, /NO-GO \/ Waiting for round closeout/);
+  assert.match(content, /public-readiness still NO-GO/);
   assert.match(content, /accepted-send evidence remains non-ACK/);
   assert.match(content, /Empty diff is evidence input, not a terminal result/);
   assert.match(content, /PR\/Done\/Block evidence, scanner success, accepted-send\/provider message IDs, and tests are not approval/);
+  assert.match(content, /Round closeout OK after sibling PR merges/);
   assert.doesNotMatch(content, /public-readiness GO|Final GO|visibility change was performed|terminal ACK evidence from provider/i);
 });
 

@@ -91,3 +91,45 @@ At this review point, the Team1 sibling issues have only Start/dispatch evidence
 ## Safety confirmation for this vNext cross-check
 
 This cross-check performed only repository inspection, issue/comment inspection, and this documentation update. It did not perform production deploys, Gateway/broker/worker restarts, production database mutations, live provider or Telegram sends, terminal-outbox ACKs, edge-secret rotations, repository visibility changes, history rewrites, force pushes, raw secret disclosure, host-private path disclosure, or raw session dump disclosure. Provider send success and provider message ids remain accepted-send evidence only and are not requester-visible receipt, operator-visible receipt, human-seen proof, terminal ACK, or terminal-outbox ACK evidence.
+
+---
+
+# Team1 post-#78261 health/readiness libero matrix
+
+Parent: [#181](https://github.com/jinwon-int/a2a-plane/issues/181)
+Child: [#182](https://github.com/jinwon-int/a2a-plane/issues/182)
+Run: `a2a-post-78261-health-readiness-20260510T024701Z`
+Broker of record: `seoseo`
+Team: `team1-seoseo`
+Worker: `yukson`
+Reviewed at: `2026-05-10T02:50:23Z`
+
+This is a compact validation artifact for the Team1 lanes in the post-#78261 health/readiness round. It does not change contract semantics, broker/plugin code, scanners, provider delivery, terminal-outbox ACK state, production databases, service state, or repository visibility.
+
+## Team1 lane output snapshot
+
+At review time, the Team1 sibling lanes had dispatch and Start evidence only; no PR, Done, or Block closeout evidence was visible on the linked issues.
+
+| Lane | Issue | Focus | Visible output | Libero status |
+| --- | --- | --- | --- | --- |
+| bangtong | [a2a-broker#463](https://github.com/jinwon-int/a2a-broker/issues/463) | Broker `/health` intermittent ~2s latency | Linked to parent and started | Waiting for analysis/PR/Done/Block evidence with safe local or redacted benchmark output. |
+| sogyo | [openclaw-plugin-a2a#249](https://github.com/jinwon-int/openclaw-plugin-a2a/issues/249) | Plugin-side accepted-send/non-ACK Terminal Brief wording/tests | Linked to parent and started | Waiting for PR/Done/Block evidence proving provider message IDs stay non-ACK. |
+| nosuk | [a2a-broker#464](https://github.com/jinwon-int/a2a-broker/issues/464) | `/health` SQLite query-plan and p95/p99 regression coverage | Linked to parent and started | Waiting for p95/p99 regression proof and query-plan evidence. |
+
+## Compact validation matrix
+
+| Surface | Required semantics / criterion | Current evidence | Libero decision |
+| --- | --- | --- | --- |
+| `openclaw/openclaw#78261` semantics | Treat upstream #78261 as closed/superseded, not an A2A merge gate; provider send success or message IDs are accepted-send evidence only. | Parent [#181](https://github.com/jinwon-int/a2a-plane/issues/181) states this direction. `packages/broker/docs/operator-terminal-outbox.md` records that provider accepted/send success and provider-returned message IDs remain non-ACK evidence. | **Pass for semantics; Waiting for sibling closeout**. Reject any output that promotes accepted-send evidence to requester-visible receipt, operator-visible receipt, human-seen proof, terminal ACK, or terminal-outbox ACK. |
+| `/health` p99 criteria | The broker health lane needs a small-DB repeated-request regression target with p95/p99 under 500ms, plus no production DB mutation or service restart. | Issues [a2a-broker#463](https://github.com/jinwon-int/a2a-broker/issues/463) and [#464](https://github.com/jinwon-int/a2a-broker/issues/464) define the symptom and p95/p99 target, but had only Start evidence at review time. | **Waiting / not green** until Team1 posts exact commands, sample size, p95/p99 values, and query-plan evidence from safe local or redacted environments. |
+| Replay / no-duplicate | Terminal evidence and replay paths must not mint duplicate notifications, duplicate artifacts, or false ACKs. Duplicate provider sends must remain suppressed or non-ACK until real receipt evidence exists. | Existing repo contracts and docs cover idempotency/replay boundaries, including `contracts/a2a/checkpoint-interrupt.md`, `contracts/a2a/terminal-semantics.md`, and `packages/broker/docs/operator-terminal-outbox.md`; current Team1 round has no new linked replay closeout yet. | **Waiting / not green** for this round. Existing contract language is useful baseline evidence, not a substitute for current replay/no-duplicate proof. |
+| Scanner / readiness | Public-readiness remains fail-closed unless scanner/readiness evidence is current, redacted, and separate from terminal evidence; runtime/bootstrap files must not enter diffs or evidence. | `docs/readiness/fail-closed-scanner-readiness.md` and `docs/readiness/fail-closed-gates.json` keep the aggregate decision NO-GO when required evidence is missing. This patch only updates this validation note. | **Pass for fail-closed wording; Waiting for current scanner evidence**. A missing external scanner, stale output, or runtime/bootstrap leakage remains Block/NO-GO. |
+| Approval boundaries | No production deploy/restart, Gateway/broker restart, live provider/Telegram send, terminal ACK, production DB mutation, secret/visibility change, history rewrite, or force-push without explicit operator approval. Repository visibility approval must be separate. | Parent [#181](https://github.com/jinwon-int/a2a-plane/issues/181), child [#182](https://github.com/jinwon-int/a2a-plane/issues/182), and the readiness docs all state these boundaries. No such action was performed by this validation lane. | **Pass**. Passing docs/tests or accepted-send evidence does not authorize public visibility, live notification, deploy/restart, DB mutation, or terminal ACK. |
+
+## Aggregate libero decision
+
+**Decision: NO-GO / Waiting.** Team1 is not green from Start/dispatch comments alone. The current safe next step is for the owning lanes to post PR/Done/Block evidence for plugin non-ACK conformance, broker `/health` p99 regression coverage, replay/no-duplicate proof, scanner/readiness evidence, and explicit approval separation. This validation lane can be refreshed after those outputs land.
+
+## Safety confirmation for this health/readiness cross-check
+
+This cross-check performed only repository inspection, GitHub issue/comment inspection, and this documentation update. It did not perform production deploys, Gateway/broker/worker restarts, production database mutations, live provider or Telegram sends, terminal-outbox ACKs, secret rotations, secret disclosure, repository visibility changes, history rewrites, force pushes, raw session dump disclosure, or runtime/bootstrap evidence publication. Provider send success and provider message IDs remain accepted-send evidence only and are not requester-visible receipt, operator-visible receipt, human-seen proof, terminal ACK, or terminal-outbox ACK evidence.

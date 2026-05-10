@@ -18,13 +18,19 @@ npm run check
 `npm run check` runs `scripts/release-gate.mjs`, which executes these steps in order:
 
 1. `npm run check:layout` — required monorepo paths exist.
-2. `npm run check:packages` — every `packages/*/package.json` must define `scripts.check`, and each check must pass.
-3. `npm run scan:public-readiness` — runtime/bootstrap files, token-shaped literals, and unsafe secret assignments must be absent from tracked or unignored candidate files.
-4. `node scripts/check-compatibility-baselines.mjs` — compatibility matrix rows must carry exact current baselines and must not retain unsupported baseline placeholders.
+2. `npm run test:conformance` — contract fixtures and terminal-evidence ACK-boundary fixtures remain valid.
+3. `npm run check:packages` — every `packages/*/package.json` must define `scripts.check`, and each check must pass.
+4. `npm run check:runner-import-smoke` — the Docker runner package import surface remains usable from the monorepo.
+5. `npm run check:terminal-brief-routing` — production routing code must not bypass broker-owned delivery or treat provider acceptance as terminal ACK.
+6. `npm run check:message-id-ack-boundary` — documentation and fixtures must not describe provider message IDs or send success as ACK evidence.
+7. `npm run scan:public-readiness` — runtime/bootstrap files, token-shaped literals, and unsafe secret assignments must be absent from tracked or unignored candidate files.
+8. `npm run scan:readiness-gates` — the fail-closed readiness spec must keep the aggregate decision at `NO-GO` unless every required gate is satisfied.
+9. `npm run scan:external-secrets` — supported external secret/history scanners (`gitleaks` and/or `trufflehog`) must produce redacted clean evidence; the gate fails closed when neither scanner is installed.
+10. `node scripts/check-compatibility-baselines.mjs` — compatibility matrix rows must carry exact current baselines and must not retain unsupported baseline placeholders.
 
 ## External secret/history scan
 
-R4 adds an operator-run external scan wrapper:
+The integrated root gate includes the external scan wrapper:
 
 ```sh
 npm run scan:external-secrets

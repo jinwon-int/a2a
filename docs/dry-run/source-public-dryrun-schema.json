@@ -1,0 +1,165 @@
+{
+  "schemaVersion": 1,
+  "description": "A2A Plane source-public dry-run schema. Deterministic GO/NO-GO evidence packet for broker, plugin, and runner metadata. Source-public execution remains NO-GO without explicit operator approval.",
+  "run": "a2a-source-dryrun-orchestrator-20260510T133022Z",
+  "parentIssue": "https://github.com/jinwon-int/a2a-plane/issues/197",
+  "issue": "https://github.com/jinwon-int/a2a-plane/issues/198",
+  "lane": "team1-bangtong",
+  "failClosed": true,
+  "defaultDecision": "NO-GO",
+  "goDecisionRequires": [
+    "brokerReadiness",
+    "pluginReadiness",
+    "runnerReadiness",
+    "publicPrivateBoundary",
+    "terminalEvidence",
+    "replaySafety",
+    "externalScannerEvidence",
+    "runtimeBootstrapHygiene",
+    "goNoGoMatrix",
+    "redactedEvidencePolicy",
+    "operatorApproval"
+  ],
+  "gates": [
+    {
+      "id": "brokerReadiness",
+      "title": "Broker read-only readiness",
+      "failClosed": true,
+      "requiredForGo": true,
+      "blockedWhenMissing": "Broker readiness evidence is missing, stale, or does not pass all read-only health, worker matrix, queue/stale closeout checks.",
+      "evidence": [
+        "Broker health check passes with ok=true, including revision/build version evidence.",
+        "Worker capacity matrix confirms all expected workers online.",
+        "Queue/stale closeout confirms queued=0, claimed=0, running=0, stale=0.",
+        "Migration health gate passes all checks."
+      ]
+    },
+    {
+      "id": "pluginReadiness",
+      "title": "Plugin operator-facing status and projection",
+      "failClosed": true,
+      "requiredForGo": true,
+      "blockedWhenMissing": "Plugin operator-facing status/projection evidence is missing or does not confirm read-only projection state.",
+      "evidence": [
+        "Plugin configuration is read-only; no live Telegram/provider send configured.",
+        "Operator-facing status confirms notification delivery is disabled or projection-only.",
+        "Gateway health report shows ok status.",
+        "Plugin approval separation is verified: operator approval gate is distinct from plugin status."
+      ]
+    },
+    {
+      "id": "runnerReadiness",
+      "title": "Docker runner evidence",
+      "failClosed": true,
+      "requiredForGo": true,
+      "blockedWhenMissing": "Docker runner scan/history evidence is missing or does not pass deterministic validation.",
+      "evidence": [
+        "Runner artifact manifest is present and valid.",
+        "Deterministic scanner/history scan profile passes.",
+        "Redacted artifact bundle contains no runtime/bootstrap files or secrets."
+      ]
+    },
+    {
+      "id": "publicPrivateBoundary",
+      "title": "Public/private boundary",
+      "failClosed": true,
+      "requiredForGo": true,
+      "blockedWhenMissing": "Repository remains private; public transition is NO-GO.",
+      "evidence": [
+        "GitHub metadata shows repository is still private before approval.",
+        "Docs and examples contain no private endpoints, provider identifiers, raw session dumps, host-specific private paths, or runtime/bootstrap context files.",
+        "Public-facing wording describes A2A Plane as alpha/feedback-welcome, not production-ready."
+      ]
+    },
+    {
+      "id": "terminalEvidence",
+      "title": "Terminal evidence",
+      "failClosed": true,
+      "requiredForGo": true,
+      "blockedWhenMissing": "Terminal requester/operator-visible evidence is missing or only shows accepted-send/provider message IDs; public transition is NO-GO.",
+      "evidence": [
+        "A linked, redacted terminal evidence packet proves requester-visible or operator-visible terminal receipt for the candidate flow.",
+        "Provider message IDs, send-result success, queued/accepted states, or delivery attempts are labeled accepted-send evidence only and are not treated as terminal ACK.",
+        "Evidence postdates the last commit that changes terminal-evidence or receipt-routing behavior."
+      ]
+    },
+    {
+      "id": "replaySafety",
+      "title": "Replay-safety proof",
+      "failClosed": true,
+      "requiredForGo": true,
+      "blockedWhenMissing": "Replay-safety proof for terminal evidence is missing, stale, or disputed; public transition is NO-GO.",
+      "evidence": [
+        "A linked, redacted replay/canary run shows duplicate sends or retries cannot mint a false terminal ACK.",
+        "Idempotency keys, receipt correlation, or equivalent replay controls are identified without exposing secrets or provider identifiers.",
+        "Replay-safety evidence postdates the last commit touching terminal evidence, receipt routing, or retry behavior."
+      ]
+    },
+    {
+      "id": "externalScannerEvidence",
+      "title": "Scanner output evidence (secret/history)",
+      "failClosed": true,
+      "requiredForGo": true,
+      "blockedWhenMissing": "External scanner evidence is absent or unavailable; public transition is NO-GO.",
+      "evidence": [
+        "At least one supported external scanner, such as gitleaks or trufflehog, ran against the candidate tree/history.",
+        "Findings are clean or explicitly dispositioned by the operator using redacted metadata only.",
+        "Scanner evidence postdates the last commit touching secrets-adjacent paths."
+      ]
+    },
+    {
+      "id": "runtimeBootstrapHygiene",
+      "title": "OpenClaw runtime/bootstrap hygiene",
+      "failClosed": true,
+      "requiredForGo": true,
+      "blockedWhenMissing": "Runtime/bootstrap context files would enter the branch or evidence; stop before PR/Done evidence.",
+      "denyPaths": [
+        "AGENTS.md",
+        "SOUL.md",
+        "USER.md",
+        "TOOLS.md",
+        "HEARTBEAT.md",
+        "IDENTITY.md",
+        ".openclaw/**"
+      ],
+      "evidence": [
+        "Branch diff excludes all denyPaths.",
+        "Artifact and PR/issue evidence exclude all denyPaths and raw runtime/session context."
+      ]
+    },
+    {
+      "id": "goNoGoMatrix",
+      "title": "GO/NO-GO matrix",
+      "failClosed": true,
+      "requiredForGo": true,
+      "blockedWhenMissing": "Any unresolved required gate leaves the aggregate decision NO-GO.",
+      "evidence": [
+        "Each required gate has a named owner, status, evidence link, and timestamp.",
+        "The aggregate decision is GO only when every required gate is GO."
+      ]
+    },
+    {
+      "id": "redactedEvidencePolicy",
+      "title": "Redacted evidence policy",
+      "failClosed": true,
+      "requiredForGo": true,
+      "blockedWhenMissing": "Evidence contains raw secrets, private paths, provider identifiers, terminal ACK mutations, or raw session dumps; stop and post Block evidence only.",
+      "evidence": [
+        "Issue and PR evidence includes commands, exit statuses, finding counts/classes, commit SHA, and linked artifacts only.",
+        "Matched secret values, host-specific private paths, provider IDs, Telegram IDs, and raw session dumps are never pasted."
+      ]
+    },
+    {
+      "id": "operatorApproval",
+      "title": "Explicit operator approval (separate from execution)",
+      "failClosed": true,
+      "requiredForGo": true,
+      "blockedWhenMissing": "No explicit operator approval for source-public execution; source-public execution remains NO-GO.",
+      "evidence": [
+        "Approval is a linked issue/PR comment from the operator and explicitly names source-public execution/publication.",
+        "Approval is separate from execution and does not bundle deploys, restarts, DB mutations, provider sends, terminal ACKs, secret rotation/disclosure, history rewrite, or force-push.",
+        "Source-public execution remains NO-GO until this gate is explicitly GO."
+      ]
+    }
+  ]
+}

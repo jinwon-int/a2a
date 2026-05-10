@@ -21,6 +21,8 @@
     "check:no-diff-closeout-guidance": "node --test scripts/check-no-diff-closeout-guidance.test.mjs",
     "scan:public-readiness": "node scripts/public-readiness-scan.mjs",
     "scan:readiness-gates": "node scanner/readiness/fail-closed-gates.mjs --spec docs/readiness/fail-closed-gates.json",
+    "a2a:source-dryrun": "node scripts/a2a-source-dryrun-aggregator.mjs --spec docs/dry-run/source-public-dryrun-schema.json",
+    "a2a:source-dryrun:test": "node --test scripts/a2a-source-dryrun-aggregator.test.mjs",
     "scan:external-secrets": "node scripts/external-secret-scan.mjs",
     "libero:public-preflight-closeout": "node scripts/libero-public-preflight-closeout.mjs",
     "test": "npm run check",

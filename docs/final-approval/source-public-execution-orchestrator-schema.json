@@ -1,0 +1,158 @@
+{
+  "schemaVersion": 1,
+  "description": "A2A Plane source-public final approval packet and execution-orchestrator schema. It converts reviewed evidence into a deterministic, dry-run/simulate execution plan only. GO_CANDIDATE means approval-ready; it never performs approval, repository visibility, release, provider-send, deploy/restart, terminal ACK, database mutation, or community-post actions.",
+  "run": "a2a-source-public-execution-orchestrator-20260511T023207Z",
+  "parentIssue": "https://github.com/jinwon-int/a2a-plane/issues/218",
+  "issue": "https://github.com/jinwon-int/a2a-plane/issues/221",
+  "lane": "team2-soonwook-libero",
+  "failClosed": true,
+  "defaultDecision": "NO_GO",
+  "decisionStates": [
+    "GO_CANDIDATE",
+    "NEEDS_OPERATOR_APPROVAL",
+    "NO_GO"
+  ],
+  "planMode": "SIMULATE_ONLY",
+  "sourcePublicExecution": "NOT_PERFORMED",
+  "approvalExecution": "NOT_PERFORMED",
+  "requiredGates": [
+    "finalApprovalPacket",
+    "deterministicExecutionPlan",
+    "scannerHistoryBinding",
+    "idempotencyReplayProtection",
+    "preflightFailureSemantics",
+    "rollbackAbortRunbook",
+    "runtimeBootstrapHygiene",
+    "redactedEvidencePolicy"
+  ],
+  "operatorApprovalGate": "operatorApproval",
+  "runtimeBootstrapDenyPaths": [
+    "AGENTS.md",
+    "SOUL.md",
+    "USER.md",
+    "TOOLS.md",
+    "HEARTBEAT.md",
+    "IDENTITY.md",
+    ".openclaw/**"
+  ],
+  "forbiddenLiveFlags": [
+    "approvalExecution",
+    "releasePublication",
+    "repositoryVisibilityChange",
+    "productionDeploy",
+    "gatewayRestart",
+    "terminalAck",
+    "liveProviderSend",
+    "productionDbMutation",
+    "forcePush",
+    "communityPost",
+    "automaticMerge"
+  ],
+  "gates": [
+    {
+      "id": "finalApprovalPacket",
+      "title": "Final approval packet",
+      "requiredForCandidate": true,
+      "failClosed": true,
+      "blockedWhenMissing": "Final approval packet is missing packetId/manifestDigest or does not bind a separate operator-approval gate.",
+      "evidence": [
+        "Packet has stable packetId and manifestDigest.",
+        "Packet names the reviewed source-public scope without executing it.",
+        "Operator approval, if present, is separate from tests, scanners, Start/PR/Done/Block comments, provider IDs, and Terminal Brief evidence."
+      ]
+    },
+    {
+      "id": "deterministicExecutionPlan",
+      "title": "Deterministic dry-run execution plan",
+      "requiredForCandidate": true,
+      "failClosed": true,
+      "blockedWhenMissing": "Execution plan is missing, is not dry-run/simulate, is not bound to the approved packet digest, or its declared digest does not match its canonical content.",
+      "evidence": [
+        "Plan approvalPacketId and approvedManifestDigest exactly match the final approval packet.",
+        "Plan mode is simulate/dry-run only and source-public execution remains not performed.",
+        "Plan digest is derived from canonical plan content and remains stable across replay."
+      ]
+    },
+    {
+      "id": "scannerHistoryBinding",
+      "title": "Scanner/history binding",
+      "requiredForCandidate": true,
+      "failClosed": true,
+      "blockedWhenMissing": "Scanner/history evidence is absent, stale, not dispositioned, or bound to a different manifest digest.",
+      "evidence": [
+        "Scanner digest, history digest, and manifest digest are redacted and present.",
+        "Findings are clean or explicitly dispositioned without publishing secret values.",
+        "Binding manifest digest matches the final approval packet manifest digest."
+      ]
+    },
+    {
+      "id": "idempotencyReplayProtection",
+      "title": "Idempotency and replay protection",
+      "requiredForCandidate": true,
+      "failClosed": true,
+      "blockedWhenMissing": "Replay proof is missing, uses a different idempotency key, creates duplicate execution plans/live actions/terminal markers, or permits manifest mismatch reuse.",
+      "evidence": [
+        "Idempotency key is stable and shared by the packet, plan, and replay proof.",
+        "Replay count is at least two and creates zero duplicate live actions, terminal markers, or divergent plans.",
+        "Manifest mismatch decision is NO_GO."
+      ]
+    },
+    {
+      "id": "preflightFailureSemantics",
+      "title": "Preflight failure semantics",
+      "requiredForCandidate": true,
+      "failClosed": true,
+      "blockedWhenMissing": "Preflight semantics are missing or allow side effects before a failing preflight resolves to NO_GO.",
+      "evidence": [
+        "Preflight status is GO for candidate plans; failures resolve to NO_GO.",
+        "No side effects occur before preflight completes.",
+        "Failure output is Block/NO_GO evidence, not approval execution."
+      ]
+    },
+    {
+      "id": "rollbackAbortRunbook",
+      "title": "Rollback and abort runbook",
+      "requiredForCandidate": true,
+      "failClosed": true,
+      "blockedWhenMissing": "Rollback/abort runbook is missing or does not stop before approval/release/visibility/provider/deploy/DB/ACK effects.",
+      "evidence": [
+        "Abort path stops before any side effect.",
+        "Rollback path names manual operator steps for a later separately approved execution failure.",
+        "No automatic approval, release, merge, visibility change, provider send, deploy/restart, DB mutation, or terminal ACK is included."
+      ]
+    },
+    {
+      "id": "runtimeBootstrapHygiene",
+      "title": "OpenClaw runtime/bootstrap hygiene",
+      "requiredForCandidate": true,
+      "failClosed": true,
+      "blockedWhenMissing": "Runtime/bootstrap context files would enter branch diff, PR text, issue comment, or artifact evidence.",
+      "evidence": [
+        "Branch diff and artifact evidence exclude AGENTS.md, SOUL.md, USER.md, TOOLS.md, HEARTBEAT.md, IDENTITY.md, and .openclaw/**.",
+        "Block output reports exact repo-relative offending paths when detected."
+      ]
+    },
+    {
+      "id": "redactedEvidencePolicy",
+      "title": "Redacted evidence policy",
+      "requiredForCandidate": true,
+      "failClosed": true,
+      "blockedWhenMissing": "Evidence includes raw secrets, raw session dumps, provider targets, host-private paths, or private source snippets.",
+      "evidence": [
+        "Evidence contains issue/PR URLs, statuses, counts, hashes, and redacted artifact references only.",
+        "No credentials, provider identifiers, chat IDs, raw logs, raw session dumps, or host-private paths are pasted."
+      ]
+    },
+    {
+      "id": "operatorApproval",
+      "title": "Separate explicit operator approval",
+      "requiredForCandidate": false,
+      "failClosed": true,
+      "blockedWhenMissing": "Complete dry-run plan remains NEEDS_OPERATOR_APPROVAL until a separate operator approval names the exact packet/plan scope. Approval evidence is never execution.",
+      "evidence": [
+        "Approval evidence, if present, is separate from scanner/test/provider/Terminal Brief/Start/PR/Done/Block evidence.",
+        "This orchestrator never executes that approval."
+      ]
+    }
+  ]
+}

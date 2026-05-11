@@ -59,7 +59,7 @@ STATE_FILE=/var/lib/a2a-broker/state.json
 
 # Security
 ENFORCE_REQUESTER_IDENTITY=1
-EDGE_SECRET_FILE=/run/secrets/a2a-edge-secret
+EDGE_SECRET_FILE=/path/to/edge-secret-file
 
 # Stale reaper
 STALE_REAPER_ENABLED=1

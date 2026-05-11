@@ -26,7 +26,7 @@
     "scan:external-secrets": "node scripts/external-secret-scan.mjs",
     "libero:public-preflight-closeout": "node scripts/libero-public-preflight-closeout.mjs",
     "test": "npm run check",
-    "test:release-gate": "node --test scanner/readiness/fail-closed-gates.test.mjs scripts/check-compatibility-baselines.test.mjs scripts/libero-public-preflight-closeout.test.mjs scripts/check-no-diff-closeout-guidance.test.mjs scripts/check-quickstart-conformance.test.mjs scripts/check-message-id-ack-boundary.test.mjs scripts/check-team1-source-public-readiness-libero.test.mjs scripts/check-team1-evidence-nochange-hardening-libero.test.mjs scripts/check-team1-source-public-approval-packet-libero.test.mjs scripts/check-team1-source-dryrun-orchestrator-libero.test.mjs scripts/round-merge-preflight.test.mjs",
+    "test:release-gate": "node --test scanner/readiness/fail-closed-gates.test.mjs scripts/check-compatibility-baselines.test.mjs scripts/libero-public-preflight-closeout.test.mjs scripts/check-no-diff-closeout-guidance.test.mjs scripts/check-quickstart-conformance.test.mjs scripts/check-message-id-ack-boundary.test.mjs scripts/check-team1-source-public-readiness-libero.test.mjs scripts/check-team1-evidence-nochange-hardening-libero.test.mjs scripts/check-team1-source-public-approval-packet-libero.test.mjs scripts/check-team1-source-public-approval-rehearsal-libero.test.mjs scripts/check-team1-source-dryrun-orchestrator-libero.test.mjs scripts/round-merge-preflight.test.mjs",
     "test:conformance": "node test/conformance/check-contract-fixtures.mjs && node test/conformance/check-terminal-evidence-ack-boundary.mjs",
     "round:merge-preflight": "node scripts/round-merge-preflight.mjs"
   },

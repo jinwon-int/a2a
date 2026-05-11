@@ -1,0 +1,231 @@
+{
+  "schemaVersion": 1,
+  "description": "A2A Plane final go/no-go gate schema. Aggregates the execution orchestrator dry-run plan into a presentable final approval packet. Produces deterministic GO/NO-GO per-repo matrix, release candidate tagging readiness, and CI gate capsule. Never executes approval, release, visibility changes, or live sends.",
+  "run": "a2a-source-public-go-nogo-gate-20260511T052500Z",
+  "parentIssue": "https://github.com/jinwon-int/a2a-plane/issues/225",
+  "issue": "https://github.com/jinwon-int/a2a-plane/issues/226",
+  "lane": "team1-bangtong",
+  "failClosed": true,
+  "defaultDecision": "NO_GO",
+  "decisionOutputs": ["GO", "NO_GO", "BLOCKED"],
+  "sourcePublicExecution": "NO_GO",
+  "allowedModes": ["dry-run", "simulate"],
+  "goDecisionRequires": [
+    "orchestratorPlanBinding",
+    "aggregatedGateMatrix",
+    "releaseCandidateTagging",
+    "ciGateCapsule",
+    "operatorApprovalPacket",
+    "scannerHistoryBinding",
+    "idempotencyReplayProtection",
+    "rollbackAbortRunbook",
+    "runtimeBootstrapHygiene",
+    "redactedEvidencePolicy",
+    "publicPrivateBoundary",
+    "crossLaneEvidenceBinding"
+  ],
+  "runtimeBootstrapDenyPaths": [
+    "AGENTS.md",
+    "SOUL.md",
+    "USER.md",
+    "TOOLS.md",
+    "HEARTBEAT.md",
+    "IDENTITY.md",
+    ".openclaw/**"
+  ],
+  "forbiddenLiveFlags": [
+    "approvalExecution",
+    "releasePublication",
+    "repositoryVisibilityChange",
+    "productionDeploy",
+    "gatewayRestart",
+    "brokerRestart",
+    "workerRestart",
+    "terminalAck",
+    "liveProviderSend",
+    "productionDbMutation",
+    "forcePush",
+    "communityPost",
+    "automaticMerge",
+    "automaticApproval"
+  ],
+  "gates": [
+    {
+      "id": "orchestratorPlanBinding",
+      "title": "Execution orchestrator plan binding",
+      "failClosed": true,
+      "requiredForGo": true,
+      "blockedWhenMissing": "Final approval packet is not bound to the execution orchestrator's deterministic dry-run plan; gate cannot proceed.",
+      "evidence": [
+        "Orchestrator plan id matches the execution orchestrator report's deterministicPlanId.",
+        "Orchestrator decision is NEEDS_OPERATOR_APPROVAL or GO_CANDIDATE (not NO_GO).",
+        "Orchestrator execution mode is dry-run/simulate; no live execution was performed.",
+        "Plan binding is pinned by the orchestrator report's idempotency key hash."
+      ]
+    },
+    {
+      "id": "aggregatedGateMatrix",
+      "title": "Aggregated per-repo GO/NO-GO matrix",
+      "failClosed": true,
+      "requiredForGo": true,
+      "blockedWhenMissing": "Per-repo GO/NO-GO matrix is missing, incomplete, or contains unresolved gates.",
+      "evidence": [
+        "Matrix covers all lanes in the round: plane, plugin, runner, and broker repos.",
+        "Each lane has a named owner, status, evidence link, and timestamp.",
+        "Aggregate decision is GO only when every required gate across all lanes is GO or explicitly waived.",
+        "Cross-broker handoff evidence links at least two broker lanes."
+      ]
+    },
+    {
+      "id": "releaseCandidateTagging",
+      "title": "Release candidate tagging readiness",
+      "failClosed": true,
+      "requiredForGo": true,
+      "blockedWhenMissing": "Release candidate tag is not ready or references unapproved artifacts.",
+      "evidence": [
+        "Release candidate tag references a specific commit SHA with a deterministic naming scheme.",
+        "Tag does not imply release publication, npm publish, Docker publish, or visibility change.",
+        "Tag manifest includes the orchestrator plan id and approval packet id.",
+        "Tag creation script is idempotent and no-live."
+      ]
+    },
+    {
+      "id": "ciGateCapsule",
+      "title": "CI gate capsule",
+      "failClosed": true,
+      "requiredForGo": true,
+      "blockedWhenMissing": "CI gate is not documented or its checks cannot be independently verified.",
+      "evidence": [
+        "CI gate checks are listed with individual pass/fail status for each repo lane.",
+        "CI gate includes: build, test, lint, scanner, and conformance checks.",
+        "CI gate does not mutate production state, deploy, restart, or send provider messages.",
+        "Gate capsule includes the CI run ID and redacted log links."
+      ]
+    },
+    {
+      "id": "operatorApprovalPacket",
+      "title": "Final operator approval packet",
+      "failClosed": true,
+      "requiredForGo": true,
+      "blockedWhenMissing": "Final approval packet is missing, structurally incomplete, or not bound to the orchestrator plan.",
+      "evidence": [
+        "Packet has stable packetId and manifestDigest derived from orchestrator plan, gate matrix, RC tag, and CI capsule.",
+        "Packet is deterministic: identical input produces identical packet.",
+        "Packet summary is presentable for operator review with blocked/ready gate counts.",
+        "Operator approval gate is explicitly separate from the approval packet's evidence ledger."
+      ]
+    },
+    {
+      "id": "scannerHistoryBinding",
+      "title": "Scanner/history evidence binding",
+      "failClosed": true,
+      "requiredForGo": true,
+      "blockedWhenMissing": "Scanner/history evidence is not bound to the final approval packet.",
+      "evidence": [
+        "Scanner digest, history digest, and manifest digest are redacted and bound to this packet.",
+        "Findings are clean or explicitly dispositioned without publishing secret values.",
+        "Binding manifest digest matches the orchestrator plan's scanner binding digest."
+      ]
+    },
+    {
+      "id": "idempotencyReplayProtection",
+      "title": "Idempotency and replay protection",
+      "failClosed": true,
+      "requiredForGo": true,
+      "blockedWhenMissing": "Idempotency key or replay guard is missing; duplicate final approval packets could exist.",
+      "evidence": [
+        "Unique idempotency key is derived from run identifier, orchestrator plan id, and lane.",
+        "Replay detection confirms no prior final approval packet with the same key exists.",
+        "Duplicate submission produces the same result or clean rejection."
+      ]
+    },
+    {
+      "id": "rollbackAbortRunbook",
+      "title": "Rollback and abort runbook",
+      "failClosed": true,
+      "requiredForGo": true,
+      "blockedWhenMissing": "Rollback/abort runbook is missing, incomplete, or would cause live side effects.",
+      "evidence": [
+        "Rollback procedure stops all gate aggregation and reverts to orchestrator-only state.",
+        "Abort procedure handles each gate failure individually without cascading.",
+        "Both rollback and abort are no-live: no deploys, restarts, provider sends, DB mutations, or visibility changes."
+      ]
+    },
+    {
+      "id": "runtimeBootstrapHygiene",
+      "title": "OpenClaw runtime/bootstrap hygiene",
+      "failClosed": true,
+      "requiredForGo": true,
+      "blockedWhenMissing": "Runtime/bootstrap context files would enter branch diff, PR text, issue comment, or artifact evidence.",
+      "denyPaths": [
+        "AGENTS.md",
+        "SOUL.md",
+        "USER.md",
+        "TOOLS.md",
+        "HEARTBEAT.md",
+        "IDENTITY.md",
+        ".openclaw/**"
+      ],
+      "evidence": [
+        "Branch diff and artifact evidence exclude all denyPaths.",
+        "Block output reports exact repo-relative offending paths when detected."
+      ]
+    },
+    {
+      "id": "redactedEvidencePolicy",
+      "title": "Redacted evidence policy",
+      "failClosed": true,
+      "requiredForGo": true,
+      "blockedWhenMissing": "Evidence includes raw secrets, raw session dumps, provider targets, host-private paths, or unredacted identifiers.",
+      "evidence": [
+        "Evidence contains issue/PR URLs, statuses, counts, hashes, and redacted artifact references only.",
+        "No credentials, provider identifiers, chat IDs, raw logs, raw session dumps, or host-private paths are pasted."
+      ]
+    },
+    {
+      "id": "publicPrivateBoundary",
+      "title": "Public/private boundary",
+      "failClosed": true,
+      "requiredForGo": true,
+      "blockedWhenMissing": "Repository remains private; visibility change is not part of this gate.",
+      "evidence": [
+        "GitHub metadata shows repository is still private.",
+        "Docs and examples contain no private endpoints, provider identifiers, raw session dumps, or runtime/bootstrap files."
+      ]
+    },
+    {
+      "id": "crossLaneEvidenceBinding",
+      "title": "Cross-lane evidence binding",
+      "failClosed": true,
+      "requiredForGo": true,
+      "blockedWhenMissing": "Cross-lane evidence is missing or incomplete; final approval packet cannot validate all repos.",
+      "evidence": [
+        "Each sibling lane (plugin, runner, broker) has an evidence status linked in the matrix.",
+        "Cross-broker handoff evidence links the plane lane to at least one broker lane.",
+        "All lane evidence postdates the last commit in the respective repo."
+      ]
+    }
+  ],
+  "roundLanes": {
+    "a2a-plane": {
+      "owner": "team1-bangtong",
+      "issue": "https://github.com/jinwon-int/a2a-plane/issues/226",
+      "role": "Final go/no-go gate schema and operator approval packet aggregator"
+    },
+    "openclaw-plugin-a2a": {
+      "owner": "team1-sogyo",
+      "issue": "https://github.com/jinwon-int/a2a-plane/issues/265",
+      "role": "Plugin final go/no-go operator-facing status projection"
+    },
+    "a2a-docker-runner": {
+      "owner": "team1-nosuk",
+      "issue": "https://github.com/jinwon-int/a2a-plane/issues/195",
+      "role": "Runner final release candidate tagging and CI gate capsule"
+    },
+    "a2a-broker": {
+      "owner": "team2-dungae",
+      "issue": "https://github.com/jinwon-int/a2a-plane/issues/488",
+      "role": "Broker final go/no-go gate ledger and approval intent record"
+    }
+  }
+}

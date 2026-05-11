@@ -7,6 +7,17 @@
 
 A2A terminal results are operator-facing evidence, not provider delivery signals. These semantics are stable assumptions for broker, plugin, runner, and imported package behavior.
 
+## GitHub Evidence Projection (Terminal Brief Extension)
+
+GitHub issue/PR comment evidence projection is a first-class Terminal Brief extension defined in
+[contracts/a2a/github-evidence-projection.md](github-evidence-projection.md). GitHub comments serve
+as durable evidence ledger entries — manifest-bound, idempotent, replay-safe, and redacted — but
+they are **never** terminal ACK, read receipts, visibility proof, or operator approval.
+
+- Contract: [contracts/a2a/github-evidence-projection.md](github-evidence-projection.md)
+- Fixture: [fixtures/contract/github-evidence-projection.json](../../fixtures/contract/github-evidence-projection.json)
+- Conformance: `node test/conformance/check-github-evidence-projection.mjs`
+
 ## Result types
 
 - **Done**: the worker completed the requested non-PR task and posted redacted evidence.

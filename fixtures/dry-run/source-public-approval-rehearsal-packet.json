@@ -1,0 +1,179 @@
+{
+  "schemaVersion": 1,
+  "kind": "a2a.source-public-approval-rehearsal.packet",
+  "run": "a2a-source-public-approval-rehearsal-20260511T014240Z",
+  "parentIssue": "https://github.com/jinwon-int/a2a-plane/issues/211",
+  "issue": "https://github.com/jinwon-int/a2a-plane/issues/213",
+  "lane": "team1-yukson-libero",
+  "packetKey": "a2a-source-public-approval-rehearsal-20260511T014240Z/team1-yukson-libero/v1",
+  "canonicalization": {
+    "sortObjectKeys": true,
+    "stableArrayOrder": "as-listed-by-gate-id",
+    "volatileFieldsExcluded": [
+      "generatedAt",
+      "localPath",
+      "rawLog",
+      "sessionDump"
+    ]
+  },
+  "decision": "NO_GO",
+  "sourcePublicExecution": "NO_GO",
+  "approvalExecution": "NOT_REQUESTED_NOT_EXECUTED",
+  "decisionReason": "Current round evidence is Start-only for sibling lanes at this snapshot; the rehearsal packet shape is documented, but integrated PR/Done/Block evidence, replay/no-duplicate proof, rollback/abort proof, and explicit operator approval are not complete.",
+  "allowedDecisionOutputs": [
+    "GO_CANDIDATE",
+    "NO_GO",
+    "NEEDS_OPERATOR_APPROVAL"
+  ],
+  "candidateActions": [
+    {
+      "id": "source-public-visibility-change",
+      "description": "Change repository visibility/publication state only after a later explicit operator approval.",
+      "rehearsalOnly": true,
+      "executed": false
+    },
+    {
+      "id": "release-publication",
+      "description": "Publish release artifacts only after a later explicit operator approval.",
+      "rehearsalOnly": true,
+      "executed": false
+    },
+    {
+      "id": "terminal-brief-notice",
+      "description": "Render no-live Terminal Brief evidence without provider send or terminal ACK.",
+      "rehearsalOnly": true,
+      "executed": false
+    }
+  ],
+  "evidenceBundle": [
+    {
+      "id": "parent-dispatch",
+      "url": "https://github.com/jinwon-int/a2a-plane/issues/211",
+      "status": "OBSERVED",
+      "redacted": true
+    },
+    {
+      "id": "libero-start",
+      "url": "https://github.com/jinwon-int/a2a-plane/issues/213#issuecomment-4416984827",
+      "status": "OBSERVED",
+      "redacted": true
+    },
+    {
+      "id": "plane-schema-lane",
+      "url": "https://github.com/jinwon-int/a2a-plane/issues/212",
+      "status": "START_ONLY",
+      "redacted": true
+    },
+    {
+      "id": "plugin-status-lane",
+      "url": "https://github.com/jinwon-int/openclaw-plugin-a2a/issues/261",
+      "status": "START_ONLY",
+      "redacted": true
+    },
+    {
+      "id": "runner-bundle-lane",
+      "url": "https://github.com/jinwon-int/a2a-docker-runner/issues/185",
+      "status": "START_ONLY",
+      "redacted": true
+    },
+    {
+      "id": "team2-cross-check",
+      "url": "https://github.com/jinwon-int/a2a-plane/issues/214",
+      "status": "START_ONLY",
+      "redacted": true
+    }
+  ],
+  "gates": [
+    {
+      "id": "deterministicApprovalPacket",
+      "status": "PASS_FOR_SHAPE",
+      "requiredForGoCandidate": true,
+      "evidence": "This fixture is keyed by packetKey and excludes volatile fields from canonicalization."
+    },
+    {
+      "id": "integratedEvidenceBundle",
+      "status": "NO_GO",
+      "requiredForGoCandidate": true,
+      "evidence": "Sibling lanes are Start-only at snapshot; PR/Done/Block evidence is incomplete."
+    },
+    {
+      "id": "noLiveTerminalBriefRehearsal",
+      "status": "PASS_NO_LIVE_BOUNDARY",
+      "requiredForGoCandidate": true,
+      "evidence": "No provider send, Terminal Brief ACK, or production DB mutation is represented by this packet."
+    },
+    {
+      "id": "replayNoDuplicateProof",
+      "status": "NO_GO",
+      "requiredForGoCandidate": true,
+      "evidence": "Replay/no-duplicate proof requires landed lane evidence with packetKey/idempotency behavior, not Start-only comments."
+    },
+    {
+      "id": "rollbackAbortPaths",
+      "status": "NO_GO",
+      "requiredForGoCandidate": true,
+      "evidence": "Abort criteria are documented; executable rollback/no-live restoration proof is pending sibling evidence."
+    },
+    {
+      "id": "runtimeBootstrapHygiene",
+      "status": "PASS_IF_DIFF_ONLY",
+      "requiredForGoCandidate": true,
+      "denyPaths": [
+        "AGENTS.md",
+        "SOUL.md",
+        "USER.md",
+        "TOOLS.md",
+        "HEARTBEAT.md",
+        "IDENTITY.md",
+        ".openclaw/**"
+      ],
+      "evidence": "Branch diff and evidence must list no offending runtime/bootstrap files beyond denyPath names."
+    },
+    {
+      "id": "operatorApproval",
+      "status": "NEEDS_OPERATOR_APPROVAL",
+      "requiredForExecution": true,
+      "evidence": "No explicit approval for source-public execution is present or used."
+    }
+  ],
+  "safetyInvariants": {
+    "productionDeploy": false,
+    "gatewayRestart": false,
+    "brokerRestart": false,
+    "workerRestart": false,
+    "liveProviderSend": false,
+    "telegramSend": false,
+    "terminalAck": false,
+    "productionDbMutation": false,
+    "secretOrVisibilityChange": false,
+    "historyRewrite": false,
+    "forcePush": false,
+    "releasePublication": false,
+    "communityPost": false,
+    "automaticMergeOrApproval": false,
+    "approvalExecution": false,
+    "repositoryVisibilityChange": false
+  },
+  "terminalBriefRehearsal": {
+    "mode": "no-live",
+    "providerSendExecuted": false,
+    "terminalAckExecuted": false,
+    "githubCommentProjectionIsAck": false,
+    "decision": "non-ACK evidence only"
+  },
+  "replayNoDuplicateProof": {
+    "idempotencyKey": "packetKey",
+    "duplicatePolicy": "same packetKey may update or supersede the rehearsal packet, but must not execute approval or live delivery",
+    "currentProofStatus": "pending landed sibling evidence"
+  },
+  "rollbackAbortPaths": {
+    "abortOn": [
+      "unsafe safetyInvariant true",
+      "runtime/bootstrap offending path in diff or artifact evidence",
+      "missing integrated PR/Done/Block evidence",
+      "manifest mismatch or non-deterministic packet key",
+      "operator approval bundled with execution"
+    ],
+    "rollbackState": "No live state was changed by this rehearsal packet; rollback is abort/no-op plus post Block evidence."
+  }
+}

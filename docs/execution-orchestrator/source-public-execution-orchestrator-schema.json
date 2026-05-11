@@ -1,0 +1,223 @@
+{
+  "schemaVersion": 1,
+  "description": "A2A Plane source-public execution orchestrator schema. Converts an approved evidence packet into a deterministic, explicitly operator-gated execution plan with dry-run/simulate mode, scanner/history binding, rollback/abort runbook, idempotency/replay protection, and preflight failure semantics. This round never executes approval, release, or visibility changes.",
+  "run": "a2a-source-public-execution-orchestrator-20260511T023207Z",
+  "parentIssue": "https://github.com/jinwon-int/a2a-plane/issues/218",
+  "issue": "https://github.com/jinwon-int/a2a-plane/issues/219",
+  "lane": "team1-bangtong",
+  "failClosed": true,
+  "defaultDecision": "NO_GO",
+  "decisionOutputs": ["GO_CANDIDATE", "NO_GO", "NEEDS_OPERATOR_APPROVAL"],
+  "executionModes": ["dry-run", "simulate"],
+  "defaultExecutionMode": "dry-run",
+  "goDecisionRequires": [
+    "approvalPacketLocked",
+    "executionPlanIntegrity",
+    "scannerHistoryBinding",
+    "rollbackAbortRunbook",
+    "idempotencyReplayProtection",
+    "preflightFailureSemantics",
+    "actionManifestDeterminism",
+    "operatorExecutionGate",
+    "crossBrokerHandoffEvidence",
+    "brokerReadiness",
+    "pluginReadiness",
+    "runnerReadiness",
+    "publicPrivateBoundary",
+    "runtimeBootstrapHygiene",
+    "redactedEvidencePolicy"
+  ],
+  "gates": [
+    {
+      "id": "approvalPacketLocked",
+      "title": "Approval packet locked and immutable",
+      "failClosed": true,
+      "requiredForGo": true,
+      "blockedWhenMissing": "Approval packet is not locked or has changed since the last approval rehearsal; execution plan cannot be derived.",
+      "evidence": [
+        "Approval packet is pinned by commit SHA, run identifier, and timestamp.",
+        "Approval packet hash matches the last approved rehearsal output.",
+        "No gate status, evidence URL, or evidence packet has changed since the locked version."
+      ]
+    },
+    {
+      "id": "executionPlanIntegrity",
+      "title": "Execution plan structural integrity",
+      "failClosed": true,
+      "requiredForGo": true,
+      "blockedWhenMissing": "Execution plan is structurally incomplete or missing required sections.",
+      "evidence": [
+        "Execution plan includes: executionMode, actionManifest, scannerBinding, rollbackRunbook, abortRunbook, idempotencyKey, replayProtection, preflightChecks.",
+        "All action manifest entries have target repo, action, dry-run flag, and rollback step.",
+        "Deterministic rendering produces identical output for identical input."
+      ]
+    },
+    {
+      "id": "scannerHistoryBinding",
+      "title": "Scanner/history evidence binding",
+      "failClosed": true,
+      "requiredForGo": true,
+      "blockedWhenMissing": "Scanner and history evidence is not bound to the execution plan; execution cannot proceed.",
+      "evidence": [
+        "External scanner evidence (gitleaks/trufflehog) is bound by commit SHA and scan timestamp.",
+        "History scan evidence is bound by commit SHA range.",
+        "Scanner evidence postdates the last commit touching secrets-adjacent or evidence paths.",
+        "Binding is immutable: execution plan references specific scanner run identifiers."
+      ]
+    },
+    {
+      "id": "rollbackAbortRunbook",
+      "title": "Rollback and abort runbook",
+      "failClosed": true,
+      "requiredForGo": true,
+      "blockedWhenMissing": "Rollback or abort runbook is missing, incomplete, or would cause side effects.",
+      "evidence": [
+        "Rollback procedure is documented step-by-step for each action in the manifest.",
+        "Abort procedure is documented for each preflight failure mode.",
+        "Both rollback and abort are no-live: they do not deploy, restart services, send provider messages, mutate databases, or change visibility.",
+        "Rollback/abort has been dry-run validated at least once."
+      ]
+    },
+    {
+      "id": "idempotencyReplayProtection",
+      "title": "Idempotency and replay protection",
+      "failClosed": true,
+      "requiredForGo": true,
+      "blockedWhenMissing": "Idempotency key or replay protection is missing; duplicate execution could occur.",
+      "evidence": [
+        "Unique idempotency key is derived from run identifier, approval packet hash, and lane.",
+        "Replay detection confirms no prior execution plan with the same idempotency key exists.",
+        "Duplicate execution prevention is proven: an identical plan submitted twice produces the same result or a clean rejection.",
+        "Idempotency key is redacted in public evidence but referenced by hash."
+      ]
+    },
+    {
+      "id": "preflightFailureSemantics",
+      "title": "Preflight failure semantics",
+      "failClosed": true,
+      "requiredForGo": true,
+      "blockedWhenMissing": "Preflight checks are not defined or failure behavior is unspecified.",
+      "evidence": [
+        "Preflight checklist is explicit: git status clean, branch exists, scanner pass, no dirty working tree, no untracked bootstrap files, approval packet still locked.",
+        "Each preflight failure mode has a documented abort path.",
+        "Preflight failures produce a BLOCKED outcome, never a silent skip or partial execution.",
+        "Preflight checks are idempotent: running them twice produces the same result."
+      ]
+    },
+    {
+      "id": "actionManifestDeterminism",
+      "title": "Action manifest determinism",
+      "failClosed": true,
+      "requiredForGo": true,
+      "blockedWhenMissing": "Action manifest is not deterministic or contains ambiguous entries.",
+      "evidence": [
+        "Every action lists target repo, action type, dry-run-safe flag, and rollback step.",
+        "Actions are ordered: preflight → scanner → plan → (operator gate) → no further actions in this round.",
+        "No ambiguous or conditional actions that depend on runtime state.",
+        "Manifest is reproducible: identical input produces identical ordered action list."
+      ]
+    },
+    {
+      "id": "operatorExecutionGate",
+      "title": "Explicit operator execution gate",
+      "failClosed": true,
+      "requiredForGo": true,
+      "blockedWhenMissing": "Operator has not explicitly approved execution; plan remains in dry-run/simulate mode.",
+      "evidence": [
+        "Operator approval is a linked issue/PR comment that explicitly names source-public execution.",
+        "Approval is separate from rehearsal approval and does not bundle deploys, restarts, DB mutations, provider sends, terminal ACKs, secret rotation, history rewrite, or force-push.",
+        "Without this gate, execution mode is locked to dry-run/simulate."
+      ]
+    },
+    {
+      "id": "crossBrokerHandoffEvidence",
+      "title": "Cross-broker handoff evidence",
+      "failClosed": true,
+      "requiredForGo": true,
+      "blockedWhenMissing": "Cross-broker handoff evidence is missing or incomplete; execution plan cannot be trusted across brokers.",
+      "evidence": [
+        "Broker approval-intent/final-execution ledger model is documented with idempotency and replay/no-duplicate semantics.",
+        "Cross-broker handoff evidence links at least two broker lanes.",
+        "Handoff evidence postdates the last commit touching broker ledger, handoff, or conference-fan-in behavior."
+      ]
+    },
+    {
+      "id": "brokerReadiness",
+      "title": "Broker read-only readiness",
+      "failClosed": true,
+      "requiredForGo": true,
+      "blockedWhenMissing": "Broker readiness evidence is missing or does not pass read-only health, worker matrix, queue/stale closeout checks.",
+      "evidence": [
+        "Broker health check passes with ok=true.",
+        "Worker capacity matrix confirms all expected workers online.",
+        "Queue/stale closeout confirms queued=0, claimed=0, running=0, stale=0."
+      ]
+    },
+    {
+      "id": "pluginReadiness",
+      "title": "Plugin operator-facing status and projection",
+      "failClosed": true,
+      "requiredForGo": true,
+      "blockedWhenMissing": "Plugin operator-facing status/projection evidence is missing or does not confirm read-only state.",
+      "evidence": [
+        "Plugin configuration is read-only; no live Telegram/provider send configured.",
+        "Operator-facing status confirms notification delivery is disabled or projection-only.",
+        "Plugin approval separation is verified."
+      ]
+    },
+    {
+      "id": "runnerReadiness",
+      "title": "Docker runner evidence",
+      "failClosed": true,
+      "requiredForGo": true,
+      "blockedWhenMissing": "Docker runner scan/history evidence is missing or does not pass deterministic validation.",
+      "evidence": [
+        "Runner artifact manifest is present and valid.",
+        "Deterministic scanner/history scan profile passes.",
+        "Redacted artifact bundle contains no runtime/bootstrap files or secrets."
+      ]
+    },
+    {
+      "id": "publicPrivateBoundary",
+      "title": "Public/private boundary",
+      "failClosed": true,
+      "requiredForGo": true,
+      "blockedWhenMissing": "Repository remains private; public transition is NO_GO.",
+      "evidence": [
+        "GitHub metadata shows repository is still private.",
+        "Docs and examples contain no private endpoints, provider identifiers, raw session dumps, or host-specific private paths."
+      ]
+    },
+    {
+      "id": "runtimeBootstrapHygiene",
+      "title": "OpenClaw runtime/bootstrap hygiene",
+      "failClosed": true,
+      "requiredForGo": true,
+      "blockedWhenMissing": "Runtime/bootstrap context files would enter the branch or evidence; stop before PR/Done evidence.",
+      "denyPaths": [
+        "AGENTS.md",
+        "SOUL.md",
+        "USER.md",
+        "TOOLS.md",
+        "HEARTBEAT.md",
+        "IDENTITY.md",
+        ".openclaw/**"
+      ],
+      "evidence": [
+        "Branch diff excludes all denyPaths.",
+        "Artifact and PR/issue evidence exclude all denyPaths and raw runtime/session context."
+      ]
+    },
+    {
+      "id": "redactedEvidencePolicy",
+      "title": "Redacted evidence policy",
+      "failClosed": true,
+      "requiredForGo": true,
+      "blockedWhenMissing": "Evidence contains raw secrets, private paths, provider identifiers, terminal ACK mutations, or raw session dumps.",
+      "evidence": [
+        "Issue and PR evidence includes commands, exit statuses, finding counts/classes, commit SHA, and linked artifacts only.",
+        "Matched secret values, host-specific private paths, provider IDs, Telegram IDs, and raw session dumps are never pasted."
+      ]
+    }
+  ]
+}

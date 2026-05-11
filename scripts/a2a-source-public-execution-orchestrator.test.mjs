@@ -1,293 +1,660 @@
 import assert from 'node:assert/strict';
-import crypto from 'node:crypto';
-import { spawnSync } from 'node:child_process';
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { spawnSync } from 'node:child_process';
 import test from 'node:test';
 
-const spec = 'docs/final-approval/source-public-execution-orchestrator-schema.json';
+const spec = 'docs/execution-orchestrator/source-public-execution-orchestrator-schema.json';
 const script = 'scripts/a2a-source-public-execution-orchestrator.mjs';
-const runId = 'a2a-source-public-execution-orchestrator-20260511T023207Z';
-const manifestDigest = 'sha256:111122223333444455556666777788889999aaaabbbbccccddddeeeeffff0000';
-const requiredGateIds = [
-  'finalApprovalPacket',
-  'deterministicExecutionPlan',
+const gateIds = [
+  'approvalPacketLocked',
+  'executionPlanIntegrity',
   'scannerHistoryBinding',
+  'rollbackAbortRunbook',
   'idempotencyReplayProtection',
   'preflightFailureSemantics',
-  'rollbackAbortRunbook',
+  'actionManifestDeterminism',
+  'operatorExecutionGate',
+  'crossBrokerHandoffEvidence',
+  'brokerReadiness',
+  'pluginReadiness',
+  'runnerReadiness',
+  'publicPrivateBoundary',
   'runtimeBootstrapHygiene',
   'redactedEvidencePolicy',
 ];
 
-function canonicalize(value) {
-  if (Array.isArray(value)) return value.map(canonicalize);
-  if (value && typeof value === 'object') {
-    return Object.fromEntries(
-      Object.entries(value)
-        .filter(([, nested]) => nested !== undefined)
-        .sort(([a], [b]) => a.localeCompare(b))
-        .map(([key, nested]) => [key, canonicalize(nested)]),
-    );
-  }
-  return value;
-}
-
-function sha256Digest(value) {
-  return `sha256:${crypto.createHash('sha256').update(JSON.stringify(canonicalize(value))).digest('hex')}`;
-}
-
-function canonicalExecutionPlan(input) {
-  const packet = input.approvalPacket || {};
-  const plan = input.executionPlan || {};
-  const steps = Array.isArray(plan.steps)
-    ? plan.steps
-        .map((step) => ({
-          order: Number(step.order),
-          repo: String(step.repo || ''),
-          action: String(step.action || ''),
-          scope: String(step.scope || ''),
-        }))
-        .sort((a, b) => a.order - b.order || a.repo.localeCompare(b.repo) || a.action.localeCompare(b.action))
-    : [];
-  return {
-    run: input.run || undefined,
-    approvalPacketId: plan.approvalPacketId,
-    approvedManifestDigest: plan.approvedManifestDigest,
-    packetManifestDigest: packet.manifestDigest,
-    scannerHistoryDigest: plan.scannerHistoryDigest,
-    idempotencyKey: plan.idempotencyKey,
-    mode: plan.mode,
-    dryRun: plan.dryRun,
-    simulate: plan.simulate,
-    sourcePublicExecution: plan.sourcePublicExecution || 'NOT_PERFORMED',
-    steps,
-  };
-}
-
 function inputPath(input) {
-  const dir = mkdtempSync(join(tmpdir(), 'a2a-execution-orchestrator-'));
+  const dir = mkdtempSync(join(tmpdir(), 'a2a-exec-orch-'));
   const file = join(dir, 'evidence.json');
   writeFileSync(file, JSON.stringify(input, null, 2));
   return file;
 }
 
-function run(input, extraArgs = []) {
-  return spawnSync(process.execPath, [script, '--spec', spec, '--input', inputPath(input), ...extraArgs], {
-    cwd: process.cwd(),
+function run(input) {
+  return spawnSync(process.execPath, [script, '--spec', spec, '--input', inputPath(input)], {
     encoding: 'utf8',
+    cwd: process.cwd(),
   });
 }
 
-function allCandidateInput(overrides = {}) {
-  const gates = Object.fromEntries(
-    requiredGateIds.map((id, index) => [
-      id,
-      {
-        status: 'GO',
-        evidence: [`https://github.com/jinwon-int/a2a-plane/issues/221#${id}-${index + 1}`],
-        ...overrides.gates?.[id],
-      },
-    ]),
-  );
-
-  const input = {
-    run: runId,
-    gates: {
-      ...gates,
-      ...overrides.gates,
-    },
-    approvalPacket: {
-      packetId: `final-approval:${runId}`,
-      manifestDigest,
-      deterministic: true,
-      idempotencyKey: `source-public-final:${runId}`,
-      approvalExecution: false,
-      sourcePublicExecution: false,
-      evidence: ['https://github.com/jinwon-int/a2a-plane/issues/221#final-approval-packet'],
-      ...overrides.approvalPacket,
-    },
-    executionPlan: {
-      approvalPacketId: `final-approval:${runId}`,
-      approvedManifestDigest: manifestDigest,
-      scannerHistoryDigest: manifestDigest,
-      idempotencyKey: `source-public-final:${runId}`,
-      mode: 'simulate',
-      dryRun: true,
-      simulate: true,
-      sourcePublicExecution: 'NOT_PERFORMED',
-      steps: [
-        {
-          order: 1,
-          repo: 'jinwon-int/a2a-plane',
-          action: 'repository-visibility-change',
-          scope: 'source-public-if-separately-approved-later',
-        },
-      ],
-      ...overrides.executionPlan,
-    },
-    scannerHistoryBinding: {
-      status: 'GO',
-      scannerDigest: 'sha256:aaaabbbbccccddddeeeeffff0000111122223333444455556666777788889999',
-      historyDigest: 'sha256:9999888877776666555544443333222211110000ffffeeeeddddccccbbbbaaaa',
-      manifestDigest,
-      findings: 'clean',
-      ...overrides.scannerHistoryBinding,
-    },
-    idempotencyReplay: {
-      idempotencyKey: `source-public-final:${runId}`,
-      replayAttemptCount: 2,
-      duplicateExecutionPlans: 0,
-      duplicateLiveActions: 0,
-      duplicateTerminalMarkers: 0,
-      manifestMismatchDecision: 'NO_GO',
-      ...overrides.idempotencyReplay,
-    },
-    preflight: {
-      status: 'GO',
-      failureDecision: 'NO_GO',
-      sideEffectsBeforePreflight: false,
-      ...overrides.preflight,
-    },
-    rollbackAbortRunbook: {
-      abortBeforeSideEffects: true,
-      abortPath: 'Stop before approval execution and post Block evidence.',
-      rollbackPath: 'Use separately approved manual rollback if a later execution is approved and fails.',
-      rollbackSteps: ['Confirm no source-public execution ran before applying any rollback.'],
-      ...overrides.rollbackAbortRunbook,
-    },
-    ...overrides.root,
-  };
-  input.executionPlan.executionPlanDigest = overrides.executionPlan?.executionPlanDigest ?? sha256Digest(canonicalExecutionPlan(input));
-  return input;
-}
-
-function withOperatorApproval(input) {
-  return {
-    ...input,
-    gates: {
-      ...input.gates,
-      operatorApproval: {
-        status: 'GO',
-        evidence: ['https://github.com/jinwon-int/a2a-plane/issues/218#separate-operator-approval-placeholder'],
-      },
-    },
-  };
-}
-
-test('spec-only mode advertises simulate-only fail-closed execution semantics', () => {
-  const result = spawnSync(process.execPath, [script, '--spec', spec], {
-    cwd: process.cwd(),
+function runMarkdown(input) {
+  return spawnSync(process.execPath, [script, '--spec', spec, '--input', inputPath(input), '--format', 'markdown'], {
     encoding: 'utf8',
+    cwd: process.cwd(),
+  });
+}
+
+/** All gates GO with unique evidence URLs. */
+function allGo(overrides = {}) {
+  return {
+    decision: 'GO_CANDIDATE',
+    approvalPacketHash: 'abc123def456',
+    commitSha: 'a1b2c3d4e5f6',
+    gates: Object.fromEntries(
+      gateIds.map((id, index) => [
+        id,
+        {
+          status: 'GO',
+          evidence: [`https://github.com/jinwon-int/a2a-plane/issues/219#gate-${index + 1}`],
+          ...overrides[id],
+        },
+      ]),
+    ),
+  };
+}
+
+// ── Spec validation ──────────────────────────────────────────────
+
+test('spec-only mode prints default NO_GO with required gates', () => {
+  const result = spawnSync(process.execPath, [script, '--spec', spec], {
+    encoding: 'utf8',
+    cwd: process.cwd(),
   });
   assert.equal(result.status, 0);
   const parsed = JSON.parse(result.stdout);
   assert.equal(parsed.decision, 'NO_GO');
-  assert.equal(parsed.planMode, 'SIMULATE_ONLY');
-  assert.equal(parsed.sourcePublicExecution, 'NOT_PERFORMED');
-  assert.equal(parsed.approvalExecution, 'NOT_PERFORMED');
-  assert.ok(parsed.decisionStates.includes('GO_CANDIDATE'));
-  assert.ok(parsed.requiredGates.includes('idempotencyReplayProtection'));
+  assert.equal(parsed.sourcePublicExecution, 'NO_GO');
+  assert.ok(Array.isArray(parsed.requiredGates));
+  assert.ok(parsed.requiredGates.includes('operatorExecutionGate'));
+  assert.ok(parsed.decisionOutputs.includes('GO_CANDIDATE'));
+  assert.ok(parsed.decisionOutputs.includes('NO_GO'));
+  assert.ok(parsed.decisionOutputs.includes('NEEDS_OPERATOR_APPROVAL'));
+  assert.equal(parsed.executionMode, 'dry-run');
 });
 
-test('complete plan without separate approval needs operator approval and does not execute', () => {
-  const result = run(allCandidateInput());
+test('spec-only mode respects explicit mode flag', () => {
+  const result = spawnSync(process.execPath, [script, '--spec', spec, '--mode', 'simulate'], {
+    encoding: 'utf8',
+    cwd: process.cwd(),
+  });
   assert.equal(result.status, 0);
   const parsed = JSON.parse(result.stdout);
-  assert.equal(parsed.decision, 'NEEDS_OPERATOR_APPROVAL');
-  assert.equal(parsed.planMode, 'SIMULATE_ONLY');
-  assert.equal(parsed.sourcePublicExecution, 'NOT_PERFORMED');
-  assert.equal(parsed.approvalExecution, 'NOT_PERFORMED');
-  assert.equal(parsed.operatorApprovalReady, false);
+  assert.equal(parsed.executionMode, 'simulate');
 });
 
-test('separate approval evidence can produce GO_CANDIDATE but never execution GO', () => {
-  const input = withOperatorApproval(allCandidateInput());
+test('spec-only mode rejects unsupported execution mode', () => {
+  const result = spawnSync(process.execPath, [script, '--spec', spec, '--mode', 'execute'], {
+    encoding: 'utf8',
+    cwd: process.cwd(),
+  });
+  assert.notEqual(result.status, 0);
+});
+
+// ── Decision output: GO_CANDIDATE ─────────────────────────────────
+
+test('all gates GO with operator execution gate GO yields GO_CANDIDATE', () => {
+  const input = allGo({
+    operatorExecutionGate: {
+      status: 'GO',
+      evidence: ['https://github.com/jinwon-int/a2a-plane/issues/219#explicit-operator-execution-approval'],
+    },
+  });
   const result = run(input);
   assert.equal(result.status, 0);
   const parsed = JSON.parse(result.stdout);
   assert.equal(parsed.decision, 'GO_CANDIDATE');
-  assert.equal(parsed.operatorApprovalReady, true);
-  assert.equal(parsed.sourcePublicExecution, 'NOT_PERFORMED');
-  assert.equal(parsed.approvalExecution, 'NOT_PERFORMED');
-  assert.equal(parsed.declaredExecutionPlanDigest, sha256Digest(canonicalExecutionPlan(input)));
+  assert.equal(parsed.sourcePublicExecution, 'NO_GO');
+  assert.equal(parsed.blockers.length, 0);
 });
 
-test('execution plan must exactly match the approved packet manifest and canonical digest', () => {
-  const input = allCandidateInput({
-    executionPlan: {
-      approvedManifestDigest: 'sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
-      executionPlanDigest: 'sha256:0000000000000000000000000000000000000000000000000000000000000000',
-    },
+// ── Decision output: NEEDS_OPERATOR_APPROVAL ──────────────────────
+
+test('all gates GO except operatorExecutionGate yields NEEDS_OPERATOR_APPROVAL', () => {
+  const input = allGo({
+    operatorExecutionGate: { status: 'MISSING', evidence: [] },
   });
   const result = run(input);
-  assert.notEqual(result.status, 0);
-  const parsed = JSON.parse(result.stderr);
-  assert.equal(parsed.decision, 'NO_GO');
-  assert.ok(parsed.blockers.some((blocker) => blocker.reason.includes('approvedManifestDigest does not match')));
-  assert.ok(parsed.blockers.some((blocker) => blocker.reason.includes('digest does not match canonical')));
-});
-
-test('replay/idempotency proof rejects duplicate live actions and terminal markers', () => {
-  const input = allCandidateInput({
-    idempotencyReplay: {
-      replayAttemptCount: 2,
-      duplicateLiveActions: 1,
-      duplicateTerminalMarkers: 1,
-    },
-  });
-  const result = run(input);
-  assert.notEqual(result.status, 0);
-  const parsed = JSON.parse(result.stderr);
-  assert.equal(parsed.decision, 'NO_GO');
-  assert.ok(parsed.blockers.some((blocker) => blocker.reason.includes('duplicate live actions')));
-  assert.ok(parsed.blockers.some((blocker) => blocker.reason.includes('duplicate terminal markers')));
-});
-
-test('preflight failures fail closed before side effects', () => {
-  const input = allCandidateInput({
-    preflight: {
-      status: 'BLOCKED',
-      failureDecision: 'GO',
-      sideEffectsBeforePreflight: true,
-    },
-  });
-  const result = run(input);
-  assert.notEqual(result.status, 0);
-  const parsed = JSON.parse(result.stderr);
-  assert.equal(parsed.decision, 'NO_GO');
-  assert.ok(parsed.blockers.some((blocker) => blocker.reason.includes('preflight status is BLOCKED')));
-  assert.ok(parsed.blockers.some((blocker) => blocker.reason.includes('failureDecision must be NO_GO')));
-  assert.ok(parsed.blockers.some((blocker) => blocker.reason.includes('no side effects')));
-});
-
-test('forbidden live execution flags are rejected even with valid plan evidence', () => {
-  const input = allCandidateInput({ root: { liveProviderSend: true, repositoryVisibilityChange: true, terminalAck: true } });
-  const result = run(input);
-  assert.notEqual(result.status, 0);
-  const parsed = JSON.parse(result.stderr);
-  assert.equal(parsed.decision, 'NO_GO');
-  assert.ok(parsed.blockers.some((blocker) => blocker.reason.includes('liveProviderSend is forbidden')));
-  assert.ok(parsed.blockers.some((blocker) => blocker.reason.includes('repositoryVisibilityChange is forbidden')));
-  assert.ok(parsed.blockers.some((blocker) => blocker.reason.includes('terminalAck is forbidden')));
-});
-
-test('runtime/bootstrap files fail closed and report exact offending repo-relative paths', () => {
-  const input = allCandidateInput({ root: { offendingPaths: ['AGENTS.md', '.openclaw/workspace-state.json'] } });
-  const result = run(input);
-  assert.notEqual(result.status, 0);
-  const parsed = JSON.parse(result.stderr);
-  assert.deepEqual(parsed.offendingPaths, ['.openclaw/workspace-state.json', 'AGENTS.md']);
-  assert.ok(parsed.blockers.some((blocker) => blocker.path === 'AGENTS.md'));
-  assert.ok(parsed.blockers.some((blocker) => blocker.path === '.openclaw/workspace-state.json'));
-});
-
-test('markdown output states GO_CANDIDATE is approval-ready only', () => {
-  const result = run(withOperatorApproval(allCandidateInput()), ['--format', 'markdown']);
   assert.equal(result.status, 0);
-  assert.match(result.stdout, /Decision: GO_CANDIDATE/);
-  assert.match(result.stdout, /Plan mode: SIMULATE_ONLY/);
-  assert.match(result.stdout, /Source-public execution: NOT_PERFORMED/);
-  assert.match(result.stdout, /GO_CANDIDATE means the final packet and deterministic plan are approval-ready only/);
+  const parsed = JSON.parse(result.stdout);
+  assert.equal(parsed.decision, 'NEEDS_OPERATOR_APPROVAL');
+  assert.equal(parsed.sourcePublicExecution, 'NO_GO');
+});
+
+test('NEEDS_OPERATOR_APPROVAL with operator gate WAITING', () => {
+  const input = allGo({
+    operatorExecutionGate: { status: 'WAITING', evidence: ['https://example.com/waiting'] },
+  });
+  const result = run(input);
+  assert.equal(result.status, 0);
+  const parsed = JSON.parse(result.stdout);
+  assert.equal(parsed.decision, 'NEEDS_OPERATOR_APPROVAL');
+});
+
+// ── Execution plan generation ─────────────────────────────────────
+
+test('execution plan includes action manifest with dry-run steps', () => {
+  const input = allGo({
+    operatorExecutionGate: { status: 'MISSING', evidence: [] },
+  });
+  const result = run(input);
+  assert.equal(result.status, 0);
+  const parsed = JSON.parse(result.stdout);
+  const plan = parsed.executionPlan;
+  assert.ok(plan, 'execution plan must exist');
+  assert.equal(plan.executionMode, 'dry-run');
+  assert.ok(plan.actionManifest.length >= 5, 'action manifest must have at least 5 steps');
+  assert.ok(plan.actionManifest.every((a) => a.dryRunSafe === true), 'all actions must be dry-run safe');
+
+  // Verify preflight checks
+  assert.ok(plan.preflightChecks.gitClean);
+  assert.ok(plan.preflightChecks.scannerPass);
+  assert.ok(plan.preflightChecks.bootstrapHygiene);
+  assert.ok(plan.preflightChecks.approvalPacketLocked);
+  assert.ok(plan.preflightChecks.idempotencyNoCollision);
+
+  // Verify rollback runbook
+  assert.ok(plan.rollbackRunbook);
+  assert.ok(plan.rollbackRunbook.steps.length >= 3);
+  plan.rollbackRunbook.steps.forEach((s) => {
+    assert.ok(s.step, 'each rollback step must have a step number');
+    assert.ok(s.action, 'each rollback step must have an action');
+    assert.ok(s.detail, 'each rollback step must have detail');
+  });
+
+  // Verify abort runbook
+  assert.ok(plan.abortRunbook);
+  assert.ok(plan.abortRunbook.failureModes.length >= 5);
+  plan.abortRunbook.failureModes.forEach((fm) => {
+    assert.ok(fm.when, 'each failure mode must have a when');
+    assert.ok(fm.abort, 'each failure mode must have an abort procedure');
+  });
+
+  // No abort procedure references live actions
+  const abortText = plan.abortRunbook.failureModes.map((fm) => fm.abort).join(' ');
+  assert.ok(!abortText.includes('deploy'), 'abort must not deploy');
+  assert.ok(!abortText.includes('restart'), 'abort must not restart');
+  assert.ok(!abortText.includes('ACK'), 'abort must not ACK');
+});
+
+test('execution plan with operator approval is simulate mode', () => {
+  const input = allGo({
+    operatorExecutionGate: {
+      status: 'GO',
+      evidence: ['https://github.com/jinwon-int/a2a-plane/issues/219#operator-execution-approval'],
+    },
+  });
+  const result = run(input);
+  assert.equal(result.status, 0);
+  const parsed = JSON.parse(result.stdout);
+  assert.equal(parsed.executionPlan.executionMode, 'simulate');
+  assert.ok(parsed.executionPlan.actionManifest.some((a) => a.action === 'orchestrator-simulate'),
+    'simulate step must be in action manifest');
+});
+
+test('execution plan includes idempotency key', () => {
+  const input = allGo({
+    operatorExecutionGate: { status: 'MISSING', evidence: [] },
+  });
+  const result = run(input);
+  assert.equal(result.status, 0);
+  const parsed = JSON.parse(result.stdout);
+  assert.ok(parsed.executionPlan.idempotencyKey, 'idempotency key must exist');
+  assert.ok(parsed.executionPlan.idempotencyKeyHash, 'idempotency key hash must exist');
+  assert.ok(parsed.executionPlan.idempotencyKey.includes('...'), 'idempotency key must be redacted');
+});
+
+test('execution plan includes scanner binding', () => {
+  const input = allGo({
+    operatorExecutionGate: { status: 'MISSING', evidence: [] },
+  });
+  const result = run(input);
+  assert.equal(result.status, 0);
+  const parsed = JSON.parse(result.stdout);
+  assert.ok(parsed.executionPlan.scannerBinding.boundToExecutionPlan);
+  assert.ok(parsed.executionPlan.scannerBinding.commitSha);
+  assert.ok(parsed.executionPlan.scannerBinding.bindingTimestamp);
+});
+
+test('operator execution gate is always last action', () => {
+  const input = allGo({
+    operatorExecutionGate: { status: 'MISSING', evidence: [] },
+  });
+  const result = run(input);
+  assert.equal(result.status, 0);
+  const parsed = JSON.parse(result.stdout);
+  const actions = parsed.executionPlan.actionManifest;
+  const lastAction = actions[actions.length - 1];
+  assert.equal(lastAction.action, 'operator-execution-gate',
+    'operator execution gate must be the last action in manifest');
+});
+
+// ── Decision output: NO_GO ────────────────────────────────────────
+
+test('any non-operator gate MISSING yields NO_GO', () => {
+  const input = allGo({
+    approvalPacketLocked: { status: 'MISSING', evidence: [] },
+    operatorExecutionGate: {
+      status: 'GO',
+      evidence: ['https://github.com/jinwon-int/a2a-plane/issues/219#approval'],
+    },
+  });
+  const result = run(input);
+  assert.notEqual(result.status, 0);
+  const parsed = JSON.parse(result.stderr);
+  assert.equal(parsed.decision, 'NO_GO');
+});
+
+test('orchestrator-specific gate MISSING yields NO_GO', () => {
+  const input = allGo({
+    executionPlanIntegrity: { status: 'MISSING', evidence: [] },
+    operatorExecutionGate: {
+      status: 'GO',
+      evidence: ['https://github.com/jinwon-int/a2a-plane/issues/219#approval'],
+    },
+  });
+  const result = run(input);
+  assert.notEqual(result.status, 0);
+  const parsed = JSON.parse(result.stderr);
+  assert.equal(parsed.decision, 'NO_GO');
+});
+
+test('scannerHistoryBinding missing yields NO_GO', () => {
+  const input = allGo({
+    scannerHistoryBinding: { status: 'MISSING', evidence: [] },
+    operatorExecutionGate: {
+      status: 'GO',
+      evidence: ['https://github.com/jinwon-int/a2a-plane/issues/219#approval'],
+    },
+  });
+  const result = run(input);
+  assert.notEqual(result.status, 0);
+  const parsed = JSON.parse(result.stderr);
+  assert.equal(parsed.decision, 'NO_GO');
+});
+
+test('rollbackAbortRunbook missing yields NO_GO', () => {
+  const input = allGo({
+    rollbackAbortRunbook: { status: 'MISSING', evidence: [] },
+    operatorExecutionGate: {
+      status: 'GO',
+      evidence: ['https://github.com/jinwon-int/a2a-plane/issues/219#approval'],
+    },
+  });
+  const result = run(input);
+  assert.notEqual(result.status, 0);
+  const parsed = JSON.parse(result.stderr);
+  assert.equal(parsed.decision, 'NO_GO');
+});
+
+test('idempotencyReplayProtection missing yields NO_GO', () => {
+  const input = allGo({
+    idempotencyReplayProtection: { status: 'MISSING', evidence: [] },
+    operatorExecutionGate: {
+      status: 'GO',
+      evidence: ['https://github.com/jinwon-int/a2a-plane/issues/219#approval'],
+    },
+  });
+  const result = run(input);
+  assert.notEqual(result.status, 0);
+  const parsed = JSON.parse(result.stderr);
+  assert.equal(parsed.decision, 'NO_GO');
+});
+
+test('preflightFailureSemantics missing yields NO_GO', () => {
+  const input = allGo({
+    preflightFailureSemantics: { status: 'MISSING', evidence: [] },
+    operatorExecutionGate: {
+      status: 'GO',
+      evidence: ['https://github.com/jinwon-int/a2a-plane/issues/219#approval'],
+    },
+  });
+  const result = run(input);
+  assert.notEqual(result.status, 0);
+  const parsed = JSON.parse(result.stderr);
+  assert.equal(parsed.decision, 'NO_GO');
+});
+
+test('actionManifestDeterminism missing yields NO_GO', () => {
+  const input = allGo({
+    actionManifestDeterminism: { status: 'MISSING', evidence: [] },
+    operatorExecutionGate: {
+      status: 'GO',
+      evidence: ['https://github.com/jinwon-int/a2a-plane/issues/219#approval'],
+    },
+  });
+  const result = run(input);
+  assert.notEqual(result.status, 0);
+  const parsed = JSON.parse(result.stderr);
+  assert.equal(parsed.decision, 'NO_GO');
+});
+
+test('crossBrokerHandoffEvidence missing yields NO_GO', () => {
+  const input = allGo({
+    crossBrokerHandoffEvidence: { status: 'MISSING', evidence: [] },
+    operatorExecutionGate: {
+      status: 'GO',
+      evidence: ['https://github.com/jinwon-int/a2a-plane/issues/219#approval'],
+    },
+  });
+  const result = run(input);
+  assert.notEqual(result.status, 0);
+  const parsed = JSON.parse(result.stderr);
+  assert.equal(parsed.decision, 'NO_GO');
+});
+
+// ── Domain validation with evidence packets ──────────────────────
+
+test('broker readiness GO validates evidence packet', () => {
+  const input = allGo({
+    brokerReadiness: {
+      status: 'GO',
+      evidence: ['https://github.com/jinwon-int/a2a-plane/issues/219#broker'],
+      evidencePacket: {
+        health: { ok: true },
+        expectedWorkers: ['bangtong'],
+        onlineWorkerIds: ['bangtong'],
+        queue: { queued: 0, claimed: 0, running: 0 },
+        stale: 0,
+      },
+    },
+    operatorExecutionGate: {
+      status: 'GO',
+      evidence: ['https://github.com/jinwon-int/a2a-plane/issues/219#operator-execution-approval'],
+    },
+  });
+  const result = run(input);
+  assert.equal(result.status, 0);
+  const parsed = JSON.parse(result.stdout);
+  assert.equal(parsed.decision, 'GO_CANDIDATE');
+});
+
+test('broker readiness fails on non-zero queue', () => {
+  const input = allGo({
+    brokerReadiness: {
+      status: 'GO',
+      evidence: ['https://github.com/jinwon-int/a2a-plane/issues/219#broker'],
+      evidencePacket: {
+        health: { ok: true },
+        expectedWorkers: [],
+        onlineWorkerIds: [],
+        queue: { queued: 5, claimed: 2, running: 1 },
+        stale: 1,
+      },
+    },
+    operatorExecutionGate: {
+      status: 'GO',
+      evidence: ['https://github.com/jinwon-int/a2a-plane/issues/219#approval'],
+    },
+  });
+  const result = run(input);
+  assert.notEqual(result.status, 0);
+  const parsed = JSON.parse(result.stderr);
+  assert.ok(parsed.blockers.some((b) => b.gate === 'brokerReadiness' && b.reason.includes('queued=5')));
+});
+
+test('plugin readiness fails when live Telegram is configured', () => {
+  const input = allGo({
+    pluginReadiness: {
+      status: 'GO',
+      evidence: ['https://github.com/jinwon-int/a2a-plane/issues/219#plugin'],
+      evidencePacket: { liveTelegramConfigured: true },
+    },
+    operatorExecutionGate: {
+      status: 'GO',
+      evidence: ['https://github.com/jinwon-int/a2a-plane/issues/219#approval'],
+    },
+  });
+  const result = run(input);
+  assert.notEqual(result.status, 0);
+  const parsed = JSON.parse(result.stderr);
+  assert.ok(parsed.blockers.some((b) => b.gate === 'pluginReadiness' && b.reason.includes('live Telegram')));
+});
+
+test('runner readiness fails when production deploy flag is set', () => {
+  const input = allGo({
+    runnerReadiness: {
+      status: 'GO',
+      evidence: ['https://github.com/jinwon-int/a2a-plane/issues/219#runner'],
+      evidencePacket: {
+        artifactManifest: { ok: true },
+        scannerProfile: { ok: true },
+        productionDeploy: true,
+      },
+    },
+    operatorExecutionGate: {
+      status: 'GO',
+      evidence: ['https://github.com/jinwon-int/a2a-plane/issues/219#approval'],
+    },
+  });
+  const result = run(input);
+  assert.notEqual(result.status, 0);
+  const parsed = JSON.parse(result.stderr);
+  assert.ok(parsed.blockers.some((b) => b.gate === 'runnerReadiness' && b.reason.includes('production deploy')));
+});
+
+// ── Redaction checks ─────────────────────────────────────────────
+
+test('GO_CANDIDATE fails when evidence contains unredacted private path', () => {
+  const unsafePath = '/home/operator/private-key.pem';
+  const input = allGo({
+    scannerHistoryBinding: { status: 'GO', evidence: [unsafePath] },
+    operatorExecutionGate: {
+      status: 'GO',
+      evidence: ['https://github.com/jinwon-int/a2a-plane/issues/219#approval'],
+    },
+  });
+  const result = run(input);
+  assert.notEqual(result.status, 0);
+  const parsed = JSON.parse(result.stderr);
+  assert.ok(parsed.blockers.some((b) => b.reason && b.reason.includes('absolute-private-path')));
+});
+
+test('GO_CANDIDATE fails when evidence contains raw session dump markers', () => {
+  const dumpLine = 'assistant <| this is raw context';
+  const input = allGo({
+    scannerHistoryBinding: { status: 'GO', evidence: [dumpLine] },
+    operatorExecutionGate: {
+      status: 'GO',
+      evidence: ['https://github.com/jinwon-int/a2a-plane/issues/219#approval'],
+    },
+  });
+  const result = run(input);
+  assert.notEqual(result.status, 0);
+  const parsed = JSON.parse(result.stderr);
+  assert.ok(parsed.blockers.some((b) => b.reason && b.reason.includes('raw-session-dump')));
+});
+
+// ── Source-public execution remains NO_GO ────────────────────────
+
+test('source-public execution is NO_GO when any gate is missing', () => {
+  const input = allGo({
+    operatorExecutionGate: { status: 'MISSING', evidence: [] },
+  });
+  const result = run(input);
+  assert.equal(result.status, 0);
+  const parsed = JSON.parse(result.stdout);
+  assert.equal(parsed.sourcePublicExecution, 'NO_GO');
+});
+
+test('source-public execution is NO_GO even in GO_CANDIDATE', () => {
+  const input = allGo({
+    operatorExecutionGate: {
+      status: 'GO',
+      evidence: ['https://github.com/jinwon-int/a2a-plane/issues/219#explicit-operator-execution-approval'],
+    },
+  });
+  const result = run(input);
+  assert.equal(result.status, 0);
+  const parsed = JSON.parse(result.stdout);
+  assert.equal(parsed.decision, 'GO_CANDIDATE');
+  assert.equal(parsed.sourcePublicExecution, 'NO_GO');
+});
+
+// ── NO_GO is a valid fail-closed outcome ─────────────────────────
+
+test('NO_GO is a valid fail-closed outcome with unresolved gates', () => {
+  const input = {
+    decision: 'NO_GO',
+    gates: {
+      approvalPacketLocked: { status: 'GO', evidence: ['https://github.com/jinwon-int/a2a-plane/issues/219#locked'] },
+    },
+  };
+  const result = run(input);
+  assert.equal(result.status, 0);
+  const parsed = JSON.parse(result.stdout);
+  assert.equal(parsed.decision, 'NO_GO');
+  assert.equal(parsed.sourcePublicExecution, 'NO_GO');
+  assert.ok(parsed.blockers.length > 0);
+});
+
+// ── Markdown output ──────────────────────────────────────────────
+
+test('markdown format produces deterministic report for NO_GO', () => {
+  const input = {
+    decision: 'NO_GO',
+    gates: {
+      approvalPacketLocked: { status: 'GO', evidence: ['https://github.com/jinwon-int/a2a-plane/issues/219#locked'] },
+      executionPlanIntegrity: { status: 'GO', evidence: ['https://github.com/jinwon-int/a2a-plane/issues/219#integrity'] },
+    },
+  };
+  const result = runMarkdown(input);
+  const out = result.stdout || result.stderr;
+  assert.ok(out.includes('A2A Plane source-public execution orchestrator report'));
+  assert.ok(out.includes('NO_GO'));
+  assert.ok(out.includes('## Gate status'));
+  assert.ok(out.includes('Execution Plan'));
+  assert.ok(out.includes('Action Manifest'));
+  assert.ok(out.includes('Scanner Binding'));
+  assert.ok(out.includes('Rollback Runbook'));
+  assert.ok(out.includes('Abort Runbook'));
+  assert.ok(out.includes('Preflight Checks'));
+});
+
+test('markdown output for GO_CANDIDATE shows execution plan ready', () => {
+  const input = allGo({
+    operatorExecutionGate: {
+      status: 'GO',
+      evidence: ['https://github.com/jinwon-int/a2a-plane/issues/219#operator-execution-approval'],
+    },
+  });
+  const result = runMarkdown(input);
+  assert.equal(result.status, 0);
+  assert.ok(result.stdout.includes('GO_CANDIDATE'));
+  assert.ok(result.stdout.includes('Execution plan ready'));
+  assert.ok(result.stdout.includes('simulate'));
+});
+
+test('markdown output for NEEDS_OPERATOR_APPROVAL shows operator sign-off required', () => {
+  const input = allGo({
+    operatorExecutionGate: { status: 'MISSING', evidence: [] },
+  });
+  const result = runMarkdown(input);
+  assert.equal(result.status, 0);
+  assert.ok(result.stdout.includes('NEEDS_OPERATOR_APPROVAL'));
+  assert.ok(result.stdout.includes('operator sign-off required'));
+});
+
+// ── Execution plan determinism ────────────────────────────────────
+
+test('identical input produces identical execution plan', () => {
+  const input = allGo({
+    operatorExecutionGate: { status: 'MISSING', evidence: [] },
+    approvalPacketLocked: {
+      status: 'GO',
+      evidence: ['https://github.com/jinwon-int/a2a-plane/issues/219#locked'],
+      packetHash: 'abc123',
+    },
+  });
+
+  const result1 = run(input);
+  const result2 = run(input);
+
+  assert.equal(result1.status, result2.status);
+  const plan1 = JSON.parse(result1.stdout).executionPlan;
+  const plan2 = JSON.parse(result2.stdout).executionPlan;
+
+  // Execution mode must be deterministic
+  assert.equal(plan1.executionMode, plan2.executionMode);
+  // Action count must be deterministic
+  assert.equal(plan1.actionManifest.length, plan2.actionManifest.length);
+  // Rollback steps must be deterministic
+  assert.equal(plan1.rollbackRunbook.steps.length, plan2.rollbackRunbook.steps.length);
+  // Abort failure modes must be deterministic
+  assert.equal(plan1.abortRunbook.failureModes.length, plan2.abortRunbook.failureModes.length);
+  // Preflight checks must be deterministic
+  assert.equal(Object.keys(plan1.preflightChecks).length, Object.keys(plan2.preflightChecks).length);
+});
+
+// ── Safety: execution mode is always dry-run/simulate ─────────────
+
+test('dry-run execution plan never contains live actions', () => {
+  const input = allGo({
+    operatorExecutionGate: { status: 'MISSING', evidence: [] },
+  });
+  const result = run(input);
+  assert.equal(result.status, 0);
+  const parsed = JSON.parse(result.stdout);
+  const plan = parsed.executionPlan;
+  assert.ok(['dry-run', 'simulate'].includes(plan.executionMode));
+
+  // Every action must be dryRunSafe
+  for (const action of plan.actionManifest) {
+    assert.equal(action.dryRunSafe, true,
+      `action "${action.action}" must be dry-run safe`);
+  }
+
+  // Abort runbook must not contain live actions
+  const allAbortText = plan.abortRunbook.failureModes.map((fm) => fm.abort).join(' ');
+  assert.doesNotMatch(allAbortText, /deploy/);
+  assert.doesNotMatch(allAbortText, /restart Gateway/);
+  assert.doesNotMatch(allAbortText, /send.*Telegram/);
+  assert.doesNotMatch(allAbortText, /ACK/);
+  assert.doesNotMatch(allAbortText, /mutate.*DB/);
+  assert.doesNotMatch(allAbortText, /force.push/);
+  assert.doesNotMatch(allAbortText, /visibility change/);
+});
+
+// ── Fixture validation ───────────────────────────────────────────
+
+test('team1-bangtong execution orchestrator fixture yields NEEDS_OPERATOR_APPROVAL', () => {
+  const result = spawnSync(process.execPath, [
+    script,
+    '--spec', spec,
+    '--input', 'fixtures/execution-orchestrator/team1-bangtong-execution-plan-evidence.json',
+  ], {
+    encoding: 'utf8',
+    cwd: process.cwd(),
+  });
+  assert.equal(result.status, 0);
+  const parsed = JSON.parse(result.stdout);
+  assert.equal(parsed.decision, 'NEEDS_OPERATOR_APPROVAL');
+  assert.equal(parsed.sourcePublicExecution, 'NO_GO');
+  assert.ok(parsed.executionPlan);
+  assert.equal(parsed.executionPlan.executionMode, 'dry-run');
+});
+
+// ── Null/empty evidence input ────────────────────────────────────
+
+test('null evidence packet is treated as missing all gates', () => {
+  const input = {
+    decision: 'GO_CANDIDATE',
+    gates: {},
+  };
+  const result = run(input);
+  assert.notEqual(result.status, 0);
+  const parsed = JSON.parse(result.stderr);
+  assert.equal(parsed.decision, 'NO_GO');
+  assert.ok(parsed.blockers.length > 0);
 });

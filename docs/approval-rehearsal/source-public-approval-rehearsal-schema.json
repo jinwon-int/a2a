@@ -1,0 +1,142 @@
+{
+  "schemaVersion": 1,
+  "description": "A2A Plane source-public approval rehearsal schema. Deterministic, no-live approval packet evaluation before any source-public execution. The rehearsal may produce GO_CANDIDATE, NO_GO, or NEEDS_OPERATOR_APPROVAL, but it never performs approval, release, visibility, provider-send, deploy, restart, terminal ACK, or database mutation actions.",
+  "run": "a2a-source-public-approval-rehearsal-20260511T014240Z",
+  "parentIssue": "https://github.com/jinwon-int/a2a-plane/issues/211",
+  "issue": "https://github.com/jinwon-int/a2a-plane/issues/214",
+  "lane": "team2-soonwook-libero",
+  "failClosed": true,
+  "defaultDecision": "NO_GO",
+  "decisionStates": [
+    "GO_CANDIDATE",
+    "NO_GO",
+    "NEEDS_OPERATOR_APPROVAL"
+  ],
+  "sourcePublicExecution": "NO_GO",
+  "approvalExecution": "NOT_PERFORMED",
+  "requiredRehearsalGates": [
+    "approvalPacket",
+    "integratedEvidenceBundle",
+    "noLiveTerminalBriefRehearsal",
+    "replayNoDuplicateProof",
+    "rollbackAbortPlan",
+    "scannerHistoryReadiness",
+    "runtimeBootstrapHygiene",
+    "redactedEvidencePolicy"
+  ],
+  "operatorApprovalGate": "operatorApproval",
+  "runtimeBootstrapDenyPaths": [
+    "AGENTS.md",
+    "SOUL.md",
+    "USER.md",
+    "TOOLS.md",
+    "HEARTBEAT.md",
+    "IDENTITY.md",
+    ".openclaw/**"
+  ],
+  "gates": [
+    {
+      "id": "approvalPacket",
+      "title": "Deterministic approval packet",
+      "requiredForCandidate": true,
+      "failClosed": true,
+      "blockedWhenMissing": "Approval packet is missing, nondeterministic, lacks a packetId/manifestDigest, or does not identify exactly what a later operator-approved source-public execution would run.",
+      "evidence": [
+        "Deterministic packetId and manifestDigest are present.",
+        "Packet lists the exact candidate repos/actions and explicitly labels execution as not performed.",
+        "Packet separates approval review from approval execution."
+      ]
+    },
+    {
+      "id": "integratedEvidenceBundle",
+      "title": "Integrated evidence bundle",
+      "requiredForCandidate": true,
+      "failClosed": true,
+      "blockedWhenMissing": "Integrated broker/plugin/runner/libero evidence bundle is absent, stale, or lacks a stable manifest digest.",
+      "evidence": [
+        "Bundle has a stable manifestDigest and redacted links for broker, plugin, runner, and libero evidence.",
+        "Bundle excludes raw source history, raw session dumps, secrets, provider targets, and host-private paths."
+      ]
+    },
+    {
+      "id": "noLiveTerminalBriefRehearsal",
+      "title": "No-live Terminal Brief rehearsal",
+      "requiredForCandidate": true,
+      "failClosed": true,
+      "blockedWhenMissing": "Terminal Brief rehearsal is missing or indicates live provider sends, terminal ACKs, operator-visible receipt inference, or terminal-outbox mutation.",
+      "evidence": [
+        "Terminal Brief output is rehearsal/no-live only.",
+        "Provider message ids, send success, accepted-send, and queued states are labeled non-ACK evidence only.",
+        "No terminal ACK or terminal-outbox ACK is performed."
+      ]
+    },
+    {
+      "id": "replayNoDuplicateProof",
+      "title": "Replay/no-duplicate proof",
+      "requiredForCandidate": true,
+      "failClosed": true,
+      "blockedWhenMissing": "Replay proof is missing, lacks stable idempotency keys, or allows duplicate approval packets, duplicate Terminal Brief markers, or duplicate live sends.",
+      "evidence": [
+        "Replay attempted at least twice with the same dedupe/idempotency key.",
+        "Replay returns the same packetId/manifestDigest and creates zero duplicate terminal markers or provider sends.",
+        "Manifest mismatch is classified as NO_GO rather than silently reusing approval state."
+      ]
+    },
+    {
+      "id": "rollbackAbortPlan",
+      "title": "Rollback and abort paths",
+      "requiredForCandidate": true,
+      "failClosed": true,
+      "blockedWhenMissing": "Rollback/abort plan is missing or does not prove a safe stop before any source-public execution.",
+      "evidence": [
+        "Abort path stops before visibility/release/provider/deploy/DB/ACK effects.",
+        "Rollback path names the manual operator steps needed if a later separately approved execution fails.",
+        "No automatic merge, release, visibility change, or approval execution is included."
+      ]
+    },
+    {
+      "id": "scannerHistoryReadiness",
+      "title": "Scanner/history readiness",
+      "requiredForCandidate": true,
+      "failClosed": true,
+      "blockedWhenMissing": "External scanner/history evidence is missing, stale, or not explicitly dispositioned.",
+      "evidence": [
+        "At least one supported secret/history scanner result is linked by redacted metadata.",
+        "Findings are clean or explicitly dispositioned without publishing matched secret values."
+      ]
+    },
+    {
+      "id": "runtimeBootstrapHygiene",
+      "title": "OpenClaw runtime/bootstrap hygiene",
+      "requiredForCandidate": true,
+      "failClosed": true,
+      "blockedWhenMissing": "Runtime/bootstrap context paths would enter a branch, PR text, issue comment, or artifact evidence.",
+      "evidence": [
+        "Branch diff and artifact evidence exclude AGENTS.md, SOUL.md, USER.md, TOOLS.md, HEARTBEAT.md, IDENTITY.md, and .openclaw/**.",
+        "Block output reports exact repo-relative offending paths if any are detected."
+      ]
+    },
+    {
+      "id": "redactedEvidencePolicy",
+      "title": "Redacted evidence policy",
+      "requiredForCandidate": true,
+      "failClosed": true,
+      "blockedWhenMissing": "Evidence includes raw secrets, raw session dumps, provider targets, host-private paths, or private source snippets.",
+      "evidence": [
+        "Evidence contains issue/PR URLs, commands, statuses, counts, hashes, and redacted artifact references only.",
+        "No credentials, provider identifiers, chat IDs, raw logs, raw session dumps, or host-private paths are pasted."
+      ]
+    },
+    {
+      "id": "operatorApproval",
+      "title": "Separate explicit operator approval",
+      "requiredForCandidate": false,
+      "failClosed": true,
+      "blockedWhenMissing": "All rehearsal gates may be complete, but source-public execution still needs a later explicit operator approval. Without it the decision is NEEDS_OPERATOR_APPROVAL, not GO_CANDIDATE.",
+      "evidence": [
+        "Approval evidence, if present, is separate from scanner/tests/Start/PR/Done/Block evidence and names the source-public action explicitly.",
+        "This rehearsal never executes that approval."
+      ]
+    }
+  ]
+}

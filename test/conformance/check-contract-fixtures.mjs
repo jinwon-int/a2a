@@ -10,6 +10,7 @@ const fixtureFiles = {
   workers: 'worker-registration-capabilities.json',
   cancellation: 'cancellation-idempotency.json',
   evidence: 'terminal-evidence.json',
+  githubEvidenceProjection: 'github-evidence-projection.json',
   crossBroker: 'gwakga-cross-broker-handoff.json',
   checkpointInterrupt: 'checkpoint-interrupt.json',
   publicPolicy: 'public-compatibility-policy.json',
@@ -74,6 +75,7 @@ const {
   workers,
   cancellation,
   evidence,
+  githubEvidenceProjection,
   crossBroker,
   checkpointInterrupt,
   publicPolicy,
@@ -194,6 +196,61 @@ for (const item of evidence.evidence) {
 }
 for (const [key, value] of Object.entries(evidence.safetyConfirmations)) {
   assert.equal(value, true, `safety confirmation ${key} must be true`);
+}
+
+// GitHub evidence projection validation
+assert.ok(evidence.githubEvidenceProjection, 'terminal-evidence fixture must reference githubEvidenceProjection');
+assert.equal(
+  evidence.githubEvidenceProjection.contract,
+  'contracts/a2a/github-evidence-projection.md',
+);
+assert.equal(
+  evidence.githubEvidenceProjection.fixture,
+  'fixtures/contract/github-evidence-projection.json',
+);
+
+const gep = githubEvidenceProjection;
+assert.equal(gep.contract, 'contracts/a2a/github-evidence-projection.md');
+assert.equal(gep.parentIssue, 'https://github.com/jinwon-int/a2a-plane/issues/204');
+assert.equal(gep.issue, 'https://github.com/jinwon-int/a2a-plane/issues/205');
+assert.equal(gep.team, 'team1-bangtong');
+assert.equal(gep.brokerOfRecord, 'gwakga');
+assert.deepEqual(gep.evidenceCommentKinds.sort(), ['block', 'done', 'pr', 'start']);
+assert.ok(gep.nonAckSignals.includes('githubCommentUrl'));
+assert.ok(gep.nonAckSignals.includes('githubCommentId'));
+assert.ok(gep.nonAckSignals.includes('commentPosted'));
+assert.ok(gep.nonAckSignals.includes('commentVisible'));
+assert.deepEqual(gep.ackSafeReceiptTypes.sort(), ['current_session_visible', 'manual_operator_receipt']);
+assert.ok(!gep.ackSafeReceiptTypes.includes('githubCommentUrl'), 'githubCommentUrl must not be ACK-safe');
+
+const gepScenarios = new Map(gep.scenarios.map((s) => [s.name, s]));
+const dupScenario = gepScenarios.get('duplicate-evidence-key-returns-existing-comment');
+assert.equal(dupScenario.then.status, 'deduplicated');
+assert.equal(dupScenario.then.newCommentPosted, false);
+const conflictScenario = gepScenarios.get('same-key-different-payload-conflicts');
+assert.equal(conflictScenario.then.status, 'conflict');
+const replayScenario = gepScenarios.get('replay-terminal-task-returns-existing-evidence-without-posting');
+assert.equal(replayScenario.then.newCommentsPosted, 0);
+assert.equal(replayScenario.then.returnedExistingEvidence, true);
+
+// Every gep scenario: isApproval/isTerminalAck/isReadReceipt must be false where present
+walk(gep, (value, trail) => {
+  if (trail.at(-1) === 'isApproval' && typeof value === 'boolean') {
+    assert.equal(value, false, `gep isApproval must be false at ${trail.join('.')}`);
+  }
+  if (trail.at(-1) === 'isTerminalAck' && typeof value === 'boolean') {
+    assert.equal(value, false, 'gep isTerminalAck must be false');
+  }
+  if (trail.at(-1) === 'isReadReceipt' && typeof value === 'boolean') {
+    assert.equal(value, false, 'gep isReadReceipt must be false');
+  }
+  if (trail.at(-1) === 'mayBeUsedAsApproval' && typeof value === 'boolean') {
+    assert.equal(value, false, 'gep mayBeUsedAsApproval must be false');
+  }
+});
+
+for (const [key, value] of Object.entries(gep.safetyConfirmations)) {
+  assert.equal(value, true, `gep safety confirmation ${key} must be true`);
 }
 
 assert.equal(crossBroker.contract, 'contracts/a2a/broker-handoff-protocol.md');

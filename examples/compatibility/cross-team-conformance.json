@@ -14,6 +14,7 @@
     "fixtures/contract/worker-registration-capabilities.json",
     "fixtures/contract/cancellation-idempotency.json",
     "fixtures/contract/terminal-evidence.json",
+    "fixtures/contract/github-evidence-projection.json",
     "fixtures/contract/gwakga-cross-broker-handoff.json",
     "fixtures/contract/checkpoint-interrupt.json",
     "fixtures/contract/public-compatibility-policy.json",

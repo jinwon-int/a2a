@@ -1,0 +1,269 @@
+{
+  "fixtureId": "a2a-plane.contract.github-evidence-projection.v1",
+  "contract": "contracts/a2a/github-evidence-projection.md",
+  "description": "GitHub issue/PR comment evidence projection as a first-class Terminal Brief extension. Covers manifest-bound comment evidence, idempotency keys, replay/no-duplicate rules, redaction, and explicit non-ACK/non-approval boundary. Frozen at Contract v0 (2026-05-11).",
+  "v0Freeze": {
+    "frozenAt": "2026-05-11",
+    "round": "a2a-terminal-brief-github-evidence-20260511T000448Z",
+    "note": "Evidence comment kinds, idempotency keys, replay-suppression, and non-ACK/non-approval boundary are locked."
+  },
+  "runId": "a2a-terminal-brief-github-evidence-20260511T000448Z",
+  "parentIssue": "https://github.com/jinwon-int/a2a-plane/issues/204",
+  "issue": "https://github.com/jinwon-int/a2a-plane/issues/205",
+  "team": "team1-bangtong",
+  "brokerOfRecord": "gwakga",
+  "evidenceCommentKinds": ["start", "pr", "done", "block"],
+  "nonAckSignals": [
+    "githubCommentUrl",
+    "githubCommentId",
+    "commentPosted",
+    "commentVisible"
+  ],
+  "ackSafeReceiptTypes": [
+    "manual_operator_receipt",
+    "current_session_visible"
+  ],
+  "manifestBinding": {
+    "keyFormat": "<idempotencyKey>:<envelopeHash>:<evidenceKind>",
+    "description": "Each evidence comment is bound to a task manifest. A single manifest produces at most one comment per evidence kind.",
+    "rules": [
+      "first-write-wins for each evidence key",
+      "duplicate post returns existing comment URL, no new comment created",
+      "conflict on same key with different logical payload",
+      "replay returns existing evidence URLs without posting"
+    ]
+  },
+  "scenarios": [
+    {
+      "name": "start-comment-is-evidence-ledger-not-ack",
+      "given": {
+        "evidenceKind": "start",
+        "idempotencyKey": "issue-205:team1-bangtong:github-evidence-projection",
+        "envelopeHash": "sha256:fixture-github-evidence-v1",
+        "issueUrl": "https://github.com/jinwon-int/a2a-plane/issues/205"
+      },
+      "when": {
+        "action": "post-evidence-comment",
+        "summary": "Start: a2a-terminal-brief-github-evidence-20260511T000448Z"
+      },
+      "then": {
+        "evidenceKind": "start",
+        "commentPosted": true,
+        "commentUrl": "https://github.com/jinwon-int/a2a-plane/issues/205#issuecomment-fixture-start",
+        "redacted": true,
+        "isApproval": false,
+        "isTerminalAck": false,
+        "isReadReceipt": false,
+        "terminalOutboxAckMutated": false,
+        "liveProviderSend": false,
+        "evidenceClass": "accepted-send",
+        "reasonCodes": [
+          "github-comment-is-evidence-ledger-not-ack",
+          "manual-or-visible-receipt-required"
+        ]
+      }
+    },
+    {
+      "name": "pr-comment-is-evidence-not-approval",
+      "given": {
+        "evidenceKind": "pr",
+        "idempotencyKey": "issue-205:team1-bangtong:github-evidence-projection",
+        "envelopeHash": "sha256:fixture-github-evidence-v1",
+        "prUrl": "https://github.com/jinwon-int/a2a-plane/pull/redacted"
+      },
+      "when": {
+        "action": "post-evidence-comment",
+        "summary": "PR opened with GitHub evidence projection schema, fixtures, and conformance tests."
+      },
+      "then": {
+        "evidenceKind": "pr",
+        "commentPosted": true,
+        "commentUrl": "https://github.com/jinwon-int/a2a-plane/issues/205#issuecomment-fixture-pr",
+        "prUrl": "https://github.com/jinwon-int/a2a-plane/pull/redacted",
+        "redacted": true,
+        "isApproval": false,
+        "isTerminalAck": false,
+        "isReadReceipt": false,
+        "terminalOutboxAckMutated": false,
+        "liveProviderSend": false,
+        "evidenceClass": "accepted-send",
+        "reasonCodes": [
+          "github-comment-is-evidence-ledger-not-ack",
+          "pr-comment-is-not-operator-approval",
+          "manual-or-visible-receipt-required"
+        ]
+      }
+    },
+    {
+      "name": "duplicate-evidence-key-returns-existing-comment",
+      "given": {
+        "existingCommentUrl": "https://github.com/jinwon-int/a2a-plane/issues/205#issuecomment-fixture-start",
+        "existingEvidenceKey": "issue-205:team1-bangtong:github-evidence-projection:sha256:fixture-github-evidence-v1:start"
+      },
+      "when": {
+        "action": "post-evidence-comment",
+        "evidenceKind": "start",
+        "idempotencyKey": "issue-205:team1-bangtong:github-evidence-projection",
+        "envelopeHash": "sha256:fixture-github-evidence-v1"
+      },
+      "then": {
+        "status": "deduplicated",
+        "newCommentPosted": false,
+        "returnedExistingCommentUrl": "https://github.com/jinwon-int/a2a-plane/issues/205#issuecomment-fixture-start",
+        "evidenceClass": "accepted-send",
+        "terminalOutboxAckMutated": false,
+        "liveProviderSend": false,
+        "reasonCodes": [
+          "duplicate-evidence-key-suppressed",
+          "existing-comment-returned"
+        ]
+      }
+    },
+    {
+      "name": "same-key-different-payload-conflicts",
+      "given": {
+        "existingCommentUrl": "https://github.com/jinwon-int/a2a-plane/issues/205#issuecomment-fixture-start",
+        "existingEvidenceKey": "issue-205:team1-bangtong:github-evidence-projection:sha256:fixture-github-evidence-v1:start",
+        "existingSummary": "Start: original message"
+      },
+      "when": {
+        "action": "post-evidence-comment",
+        "evidenceKind": "start",
+        "idempotencyKey": "issue-205:team1-bangtong:github-evidence-projection",
+        "envelopeHash": "sha256:different-fixture-envelope",
+        "summary": "Start: different message"
+      },
+      "then": {
+        "status": "conflict",
+        "newCommentPosted": false,
+        "terminalOutboxAckMutated": false,
+        "liveProviderSend": false,
+        "reasonCodes": [
+          "evidence-key-conflict-different-envelope",
+          "refuse-overwrite-existing-evidence"
+        ]
+      }
+    },
+    {
+      "name": "replay-terminal-task-returns-existing-evidence-without-posting",
+      "given": {
+        "terminalResult": "pr",
+        "existingEvidenceComments": [
+          {
+            "evidenceKind": "start",
+            "commentUrl": "https://github.com/jinwon-int/a2a-plane/issues/205#issuecomment-fixture-start"
+          },
+          {
+            "evidenceKind": "pr",
+            "commentUrl": "https://github.com/jinwon-int/a2a-plane/issues/205#issuecomment-fixture-pr"
+          }
+        ]
+      },
+      "when": {
+        "action": "replay-terminal-task",
+        "idempotencyKey": "issue-205:team1-bangtong:github-evidence-projection"
+      },
+      "then": {
+        "newCommentsPosted": 0,
+        "returnedExistingEvidence": true,
+        "returnedCommentUrls": [
+          "https://github.com/jinwon-int/a2a-plane/issues/205#issuecomment-fixture-start",
+          "https://github.com/jinwon-int/a2a-plane/issues/205#issuecomment-fixture-pr"
+        ],
+        "terminalOutboxAckMutated": false,
+        "liveProviderSend": false,
+        "reasonCodes": [
+          "replay-suppression",
+          "existing-evidence-returned",
+          "no-new-side-effects"
+        ]
+      }
+    },
+    {
+      "name": "block-comment-is-evidence-not-terminal-ack",
+      "given": {
+        "evidenceKind": "block",
+        "idempotencyKey": "issue-205:team1-bangtong:github-evidence-projection",
+        "envelopeHash": "sha256:fixture-github-evidence-v1",
+        "blockerCategory": "safety"
+      },
+      "when": {
+        "action": "post-evidence-comment",
+        "summary": "Block: task cannot proceed due to safety gate."
+      },
+      "then": {
+        "evidenceKind": "block",
+        "commentPosted": true,
+        "commentUrl": "https://github.com/jinwon-int/a2a-plane/issues/205#issuecomment-fixture-block",
+        "blockerCategory": "safety",
+        "redacted": true,
+        "isApproval": false,
+        "isTerminalAck": false,
+        "isReadReceipt": false,
+        "terminalOutboxAckMutated": false,
+        "liveProviderSend": false,
+        "evidenceClass": "accepted-send",
+        "reasonCodes": [
+          "github-comment-is-evidence-ledger-not-ack",
+          "block-comment-is-not-terminal-ack",
+          "manual-or-visible-receipt-required"
+        ]
+      }
+    },
+    {
+      "name": "github-comment-url-is-explicitly-non-ack-and-non-approval",
+      "given": {
+        "commentUrl": "https://github.com/jinwon-int/a2a-plane/issues/205#issuecomment-any",
+        "evidenceKind": "pr"
+      },
+      "when": {
+        "action": "inspect-comment-properties"
+      },
+      "then": {
+        "isApproval": false,
+        "isTerminalAck": false,
+        "isReadReceipt": false,
+        "mayBeUsedAsApproval": false,
+        "mayBeUsedAsTerminalAck": false,
+        "mayBeUsedAsReadReceipt": false,
+        "terminalOutboxAckMutated": false,
+        "liveProviderSend": false,
+        "reasonCodes": [
+          "github-comment-not-in-ackSafeReceiptTypes",
+          "non-ack-non-approval-explicit-flag",
+          "approval-must-be-explicit-separate-channel"
+        ]
+      }
+    }
+  ],
+  "safetyConfirmations": {
+    "noProductionDeployOrRestart": true,
+    "noGatewayRestart": true,
+    "noBrokerRestart": true,
+    "noWorkerRestart": true,
+    "noLiveProviderSend": true,
+    "noTerminalOutboxAckMutation": true,
+    "noProductionDatabaseMutation": true,
+    "noSecretRotationOrDisclosure": true,
+    "noHistoryRewrite": true,
+    "noForcePush": true,
+    "noReleasePublication": true,
+    "noCommunityPost": true,
+    "noAutomaticMergeOrApproval": true,
+    "noRepositoryVisibilityChange": true,
+    "redacted": true,
+    "syntheticFixtureOnly": true
+  },
+  "assertions": [
+    "start, pr, done, and block are the only evidence comment kinds",
+    "every evidence comment carries isApproval: false, isTerminalAck: false, isReadReceipt: false",
+    "terminalOutboxAckMutated is false for every scenario",
+    "liveProviderSend is false for every scenario",
+    "duplicate evidence key returns existing comment without creating a new one",
+    "same key with different envelope produces conflict, not overwrite",
+    "replay of a terminal task returns existing evidence URLs without posting new comments",
+    "githubCommentUrl is not in ackSafeReceiptTypes",
+    "no scenario promotes githubCommentUrl to terminal ACK or approval",
+    "all comment bodies are redacted (no secrets, private paths, session dumps)"
+  ]
+}

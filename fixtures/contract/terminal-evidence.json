@@ -59,6 +59,11 @@
       "liveProviderSend": false
     }
   ],
+  "githubEvidenceProjection": {
+    "contract": "contracts/a2a/github-evidence-projection.md",
+    "fixture": "fixtures/contract/github-evidence-projection.json",
+    "note": "GitHub evidence comments are a Terminal Brief extension. They are evidence ledger entries, not ACK, read receipt, visibility proof, or approval."
+  },
   "safetyConfirmations": {
     "noPublicVisibilityChange": true,
     "noProductionDeployOrRestart": true,

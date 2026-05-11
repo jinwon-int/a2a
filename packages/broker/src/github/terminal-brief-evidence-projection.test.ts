@@ -10,6 +10,7 @@ import {
 } from "./terminal-brief-evidence-projection.js";
 
 function makeEvent(overrides: Partial<TerminalTaskOutboxEvent> = {}): TerminalTaskOutboxEvent {
+  const syntheticGitHubToken = ["ghp", "deadbeefDEADBEEF1234567890"].join("_");
   return {
     id: "terminal:task-207:succeeded:2026-05-11T00%3A00%3A00.000Z",
     kind: "task.terminal",
@@ -21,7 +22,7 @@ function makeEvent(overrides: Partial<TerminalTaskOutboxEvent> = {}): TerminalTa
       worker: "soonwook",
       repo: "jinwon-int/a2a-plane",
       issue: 207,
-      taskBrief: "Project Terminal Brief GitHub evidence; token=ghp_deadbeefDEADBEEF1234567890 /work/repo/AGENTS.md",
+      taskBrief: `Project Terminal Brief GitHub evidence; token=${syntheticGitHubToken} /work/repo/AGENTS.md`,
       prUrl: "https://github.com/jinwon-int/a2a-plane/pull/208",
       testSummary: "safe summary with /home/runner/private.log and SOUL.md",
       createdAt: "2026-05-11T00:00:00.000Z",

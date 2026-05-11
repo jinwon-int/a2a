@@ -1,3 +1,4 @@
+> 📖 [A2A Ecosystem Guide](docs/ecosystem-guide.md) — 4개 저장소의 역할과 관계를 한눈에.
 # A2A Plane
 
 [![ci](https://github.com/jinwon-int/a2a-plane/actions/workflows/ci.yml/badge.svg)](https://github.com/jinwon-int/a2a-plane/actions/workflows/ci.yml)

@@ -143,7 +143,11 @@ export type AuditAction =
   | "task.wake.skipped"
   | "task.wake.failed"
   | "worker.registered"
-  | "worker.heartbeat";
+  | "worker.heartbeat"
+  | "task.paused"
+  | "task.resumed"
+  | "task.interrupt-requested"
+  | "task.interrupt-decided";
 export type A2AWorkerEnvironment = "research" | "staging" | "live";
 export type WorkerStatus = "online" | "stale";
 
@@ -436,6 +440,44 @@ export interface TaskRecord extends A2ATaskRequest {
   teamId?: string;
 }
 
+// ---- Checkpoint & Human-Interrupt Types (per contracts/a2a/checkpoint-interrupt.md v0 freeze) ----
+
+/** Per contract §2.2: types of decisions a worker can request from a human operator. */
+export type InterruptDecisionType = "safety_gate" | "ambiguous_scope" | "approval_required" | "conflict_detected";
+
+/** Per contract §2.3: operator action on a human-interrupt decision. */
+export type OperatorInterruptAction = "approved" | "refused" | "clarified";
+
+/** Per contract §1.2–1.4: checkpoint state record. Redacted, never contains secrets. */
+export interface CheckpointRecord {
+  checkpointId: string;
+  pausedAt: string;
+  reason: string;
+  artifactRefs: string[];
+  workerId?: string;
+  attemptId?: string;
+}
+
+/** Per contract §2.2–2.4: human-interrupt state record. Redacted, never contains secrets. */
+export interface HumanInterruptRecord {
+  interruptId: string;
+  decisionType: InterruptDecisionType;
+  summary: string;
+  requestedAt: string;
+  decidedAt?: string;
+  operatorAction?: OperatorInterruptAction;
+  operatorComment?: string;
+}
+
+/** Per contract §5: artifact version lineage metadata. */
+export interface ArtifactVersionLineage {
+  artifactPath: string;
+  versionRef: string;
+  parentVersionRef?: string;
+  producingTaskId?: string;
+  producingRunId?: string;
+}
+
 export interface TaskClaimRequest {
   workerId: string;
 }
@@ -532,6 +574,10 @@ export interface WorkerCapabilities {
   canPromoteLive: boolean;
   workspaceIds: string[];
   environments: A2AWorkerEnvironment[];
+  /** Per contract checkpoint-interrupt §7: worker can save/restore checkpoint state. */
+  canCheckpoint?: boolean;
+  /** Per contract checkpoint-interrupt §7: worker can request human-operator interrupt decisions. */
+  canHumanInterrupt?: boolean;
 }
 
 export interface WorkerRecord {

@@ -33,6 +33,42 @@ This contract defines four receipt levels in increasing order of assurance:
 - Workers must not treat live Telegram/provider sends outside GitHub comments as terminal evidence for monorepo readiness tasks.
 - Evidence must be redacted: no secret values, private endpoint values, raw session dumps, or host-specific private paths.
 
+## Terminal Brief extension: GitHub comment evidence projection
+
+GitHub issue and pull-request comments are a first-class Terminal Brief evidence
+projection target. They are useful ledger entries for Start/PR/Done/Block markers,
+but they do not change the receipt/approval boundary above.
+
+Every GitHub comment projection MUST be:
+
+- **Manifest-bound**: the projected comment references the runner artifact manifest
+  and its digest or equivalent immutable manifest identity. Comments without a
+  matching manifest binding are incomplete evidence.
+- **Idempotent**: each managed comment has a stable dedupe key derived from the
+  task/run, target issue or PR, marker kind, and manifest identity. Replays must
+  update or reuse the same managed comment instead of minting duplicate terminal
+  markers.
+- **Redacted**: comment bodies and projection metadata must contain only compact
+  summaries, status/check results, safe GitHub URLs, and manifest identifiers. Do
+  not include secrets, provider identifiers, Telegram targets, raw session dumps,
+  or host-private paths.
+- **Replay-safe**: stale or mismatched manifests block projection. Replaying the
+  same manifest/comment key must not mutate terminal-outbox ACK state, advance a
+  notification cursor, infer read/visibility, or infer approval.
+- **Approval-separated**: PR/Done/Block/Start comments are evidence ledger entries
+  only. They are not operator approval for deploys, restarts, terminal ACK,
+  database mutation, repository visibility changes, releases, merges, or force
+  pushes.
+
+GitHub comments may satisfy requester-visible ledger evidence (receipt level 2),
+but they are not read receipts, operator-visible receipt, human-seen proof, or
+terminal ACK. Operator approval remains a separate explicit comment or decision
+record that names the approved action and scope.
+
+The fixture for this extension lives at:
+
+- `fixtures/terminal-evidence/github-comment-projection.json`
+
 ## Safety gates
 
 Terminal evidence must state whether the worker avoided:

@@ -7,6 +7,10 @@ const fixturePath = path.join(root, 'fixtures', 'terminal-evidence', 'accepted-s
 const fixtureText = fs.readFileSync(fixturePath, 'utf8');
 const fixture = JSON.parse(fixtureText);
 
+const githubProjectionFixturePath = path.join(root, 'fixtures', 'terminal-evidence', 'github-comment-projection.json');
+const githubProjectionFixtureText = fs.readFileSync(githubProjectionFixturePath, 'utf8');
+const githubProjectionFixture = JSON.parse(githubProjectionFixtureText);
+
 const secretLikePatterns = [
   /ghp_[A-Za-z0-9_]{20,}/,
   /github_pat_[A-Za-z0-9_]+/,
@@ -18,6 +22,24 @@ const secretLikePatterns = [
 
 for (const pattern of secretLikePatterns) {
   assert.ok(!pattern.test(fixtureText), `terminal evidence fixture matched forbidden pattern ${pattern}`);
+  assert.ok(!pattern.test(githubProjectionFixtureText), `github projection fixture matched forbidden pattern ${pattern}`);
+}
+
+const forbiddenBootstrapPaths = [
+  'AGENTS.md',
+  'SOUL.md',
+  'USER.md',
+  'TOOLS.md',
+  'HEARTBEAT.md',
+  'IDENTITY.md',
+  '.openclaw/',
+];
+
+for (const forbiddenPath of forbiddenBootstrapPaths) {
+  assert.ok(
+    !githubProjectionFixtureText.includes(forbiddenPath),
+    `github projection fixture must not include runtime/bootstrap context path ${forbiddenPath}`,
+  );
 }
 
 assert.equal(fixture.contract, 'contracts/compatibility/terminal-evidence-ack-boundary.md');
@@ -85,9 +107,53 @@ for (const [key, value] of Object.entries(fixture.safetyConfirmations)) {
   assert.equal(value, true, `safety confirmation ${key} must be true`);
 }
 
+assert.equal(githubProjectionFixture.schemaVersion, 'a2a.terminal-brief.github-comment-projection.v1');
+assert.equal(githubProjectionFixture.contract, 'contracts/a2a/terminal-semantics.md');
+assert.equal(githubProjectionFixture.extension?.terminalBriefExtension, true);
+assert.deepEqual(githubProjectionFixture.extension?.allowedTargets.sort(), [
+  'github_issue_comment',
+  'github_pull_request_comment',
+]);
+assert.equal(githubProjectionFixture.manifestBinding?.required, true);
+assert.equal(githubProjectionFixture.manifestBinding?.projectionMustReferenceManifestDigest, true);
+assert.ok(githubProjectionFixture.manifestBinding?.requiredFields?.includes('evidence'));
+assert.equal(githubProjectionFixture.idempotency?.required, true);
+assert.ok(githubProjectionFixture.idempotency?.dedupeKeyFields?.includes('manifestDigest'));
+assert.equal(githubProjectionFixture.idempotency?.mustNotCreateDuplicateTerminalMarkers, true);
+assert.equal(githubProjectionFixture.redaction?.required, true);
+assert.ok(githubProjectionFixture.redaction?.forbiddenContent?.includes('raw_session_dumps'));
+assert.equal(githubProjectionFixture.replaySafety?.required, true);
+assert.equal(githubProjectionFixture.replaySafety?.staleManifestPolicy, 'block_projection');
+assert.equal(githubProjectionFixture.replaySafety?.replayMustNotMutateTerminalAck, true);
+assert.equal(githubProjectionFixture.replaySafety?.replayMustNotInferApproval, true);
+assert.equal(githubProjectionFixture.receiptAndApprovalBoundary?.githubCommentReceiptLevel, 'requester-visible');
+assert.equal(githubProjectionFixture.receiptAndApprovalBoundary?.githubCommentIsTerminalAck, false);
+assert.equal(githubProjectionFixture.receiptAndApprovalBoundary?.githubCommentIsReadReceipt, false);
+assert.equal(githubProjectionFixture.receiptAndApprovalBoundary?.githubCommentIsVisibilityProof, false);
+assert.equal(githubProjectionFixture.receiptAndApprovalBoundary?.githubCommentIsOperatorApproval, false);
+assert.equal(githubProjectionFixture.receiptAndApprovalBoundary?.terminalOutboxAckMayBeRecorded, false);
+assert.equal(githubProjectionFixture.receiptAndApprovalBoundary?.operatorApprovalRequiredSeparately, true);
+assert.equal(githubProjectionFixture.exampleProjection?.safetyState?.noLiveProviderSend, true);
+assert.equal(githubProjectionFixture.exampleProjection?.safetyState?.terminalAck, 'not_attempted');
+assert.equal(githubProjectionFixture.exampleProjection?.safetyState?.operatorApproval, 'not_granted');
+
+for (const [key, value] of Object.entries(githubProjectionFixture.safetyConfirmations)) {
+  assert.equal(value, true, `github projection safety confirmation ${key} must be true`);
+}
+
 console.log(JSON.stringify({
   ok: true,
-  checkedFixture: 'fixtures/terminal-evidence/accepted-send-non-ack.json',
+  checkedFixtures: [
+    'fixtures/terminal-evidence/accepted-send-non-ack.json',
+    'fixtures/terminal-evidence/github-comment-projection.json',
+  ],
   nonAckScenarios: nonAckScenarioNames,
   ackSafeReceiptScenarios: ackSafeScenarioNames,
+  githubCommentProjection: {
+    manifestBound: githubProjectionFixture.manifestBinding.required,
+    idempotent: githubProjectionFixture.idempotency.required,
+    replaySafe: githubProjectionFixture.replaySafety.required,
+    terminalAck: githubProjectionFixture.receiptAndApprovalBoundary.githubCommentIsTerminalAck,
+    operatorApproval: githubProjectionFixture.receiptAndApprovalBoundary.githubCommentIsOperatorApproval,
+  },
 }));

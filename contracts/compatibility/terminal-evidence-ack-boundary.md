@@ -17,11 +17,14 @@ It is intentionally fixture-only: it does not perform live sends and does not mu
   - `current_session_visible`
 - Even when a fixture says terminal ACK may be recorded, the fixture itself must keep `terminalOutboxAckMutated: false`.
 
-## Fixture
+## Fixtures
 
-The independent fixture lives at:
+The independent fixtures live at:
 
 - `fixtures/terminal-evidence/accepted-send-non-ack.json`
+- `fixtures/terminal-evidence/github-comment-projection.json`
+
+`github-comment-projection.json` freezes the Terminal Brief GitHub issue/PR comment extension: GitHub comments are idempotent, manifest-bound, redacted, replay-safe evidence ledger entries. They are not terminal ACK/read/visibility proof and are not operator approval.
 
 The conformance check lives at:
 

@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 
 const repoRoot = dirname(dirname(fileURLToPath(import.meta.url)));
-const docPath = join(repoRoot, 'docs', 'validation', 'team1-source-public-approval-rehearsal-libero.md');
+const docPath = join(repoRoot, 'docs', 'validation', 'team1-yukson-source-public-approval-rehearsal-libero.md');
 const packetPath = join(repoRoot, 'fixtures', 'dry-run', 'source-public-approval-rehearsal-packet.json');
 const allowedDecisions = new Set(['GO_CANDIDATE', 'NO_GO', 'NEEDS_OPERATOR_APPROVAL']);
 

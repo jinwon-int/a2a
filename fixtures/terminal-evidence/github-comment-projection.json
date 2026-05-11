@@ -1,0 +1,100 @@
+{
+  "schemaVersion": "a2a.terminal-brief.github-comment-projection.v1",
+  "contract": "contracts/a2a/terminal-semantics.md",
+  "description": "First-class Terminal Brief extension for projecting redacted GitHub issue/PR comments as evidence ledger entries without treating them as ACK, read/visibility proof, or operator approval.",
+  "extension": {
+    "name": "github_comment_evidence_projection",
+    "terminalBriefExtension": true,
+    "allowedTargets": [
+      "github_issue_comment",
+      "github_pull_request_comment"
+    ],
+    "allowedMarkers": [
+      "Start",
+      "PR",
+      "Done",
+      "Block"
+    ]
+  },
+  "manifestBinding": {
+    "required": true,
+    "manifestPath": "artifacts/manifest.json",
+    "manifestDigest": "sha256:fixture-redacted-manifest-digest",
+    "requiredFields": [
+      "taskId",
+      "issueUrl",
+      "status",
+      "summary",
+      "evidence"
+    ],
+    "projectionMustReferenceManifestDigest": true
+  },
+  "idempotency": {
+    "required": true,
+    "dedupeKeyFields": [
+      "schemaVersion",
+      "taskId",
+      "runId",
+      "targetUrl",
+      "marker",
+      "manifestDigest"
+    ],
+    "duplicatePolicy": "update_or_reuse_existing_managed_comment",
+    "mustNotCreateDuplicateTerminalMarkers": true
+  },
+  "redaction": {
+    "required": true,
+    "forbiddenContent": [
+      "secret_values",
+      "authorization_headers",
+      "provider_identifiers",
+      "telegram_chat_ids",
+      "host_private_paths",
+      "raw_session_dumps",
+      "openclaw_runtime_bootstrap_context"
+    ],
+    "bodyBudget": "compact_summary_only"
+  },
+  "replaySafety": {
+    "required": true,
+    "replayMode": "manifest_digest_and_dedupe_key",
+    "staleManifestPolicy": "block_projection",
+    "commentEditPolicy": "only_managed_comment_for_same_dedupe_key",
+    "replayMustNotMutateTerminalAck": true,
+    "replayMustNotInferApproval": true
+  },
+  "receiptAndApprovalBoundary": {
+    "githubCommentReceiptLevel": "requester-visible",
+    "githubCommentIsTerminalAck": false,
+    "githubCommentIsReadReceipt": false,
+    "githubCommentIsVisibilityProof": false,
+    "githubCommentIsOperatorApproval": false,
+    "terminalOutboxAckMayBeRecorded": false,
+    "operatorApprovalRequiredSeparately": true
+  },
+  "exampleProjection": {
+    "taskId": "task-fixture-github-projection-001",
+    "runId": "a2a-terminal-brief-github-evidence-fixture",
+    "targetUrl": "https://github.com/jinwon-int/a2a-plane/issues/206",
+    "marker": "Done",
+    "managedCommentKey": "a2a:terminal-brief:github-comment-projection:fixture",
+    "manifestDigest": "sha256:fixture-redacted-manifest-digest",
+    "summary": "Redacted Done evidence projected to a GitHub issue comment. This is ledger evidence only.",
+    "safetyState": {
+      "noLiveProviderSend": true,
+      "terminalAck": "not_attempted",
+      "operatorApproval": "not_granted"
+    }
+  },
+  "safetyConfirmations": {
+    "noProductionDeployOrRestart": true,
+    "noGatewayBrokerWorkerRestart": true,
+    "noLiveProviderSend": true,
+    "noTerminalOutboxAckMutation": true,
+    "noProductionDatabaseMutation": true,
+    "noSecretOrVisibilityChange": true,
+    "noHistoryRewriteOrForcePush": true,
+    "noAutomaticMergeOrApproval": true,
+    "noRawSessionDump": true
+  }
+}

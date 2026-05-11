@@ -1,0 +1,105 @@
+{
+  "kind": "a2a.source-public-final-approval-packet-schema",
+  "run": "a2a-source-public-execution-orchestrator-20260511T023207Z",
+  "lane": "Team1 libero lane for yukson",
+  "issue": "https://github.com/jinwon-int/a2a-plane/issues/220",
+  "parentIssue": "https://github.com/jinwon-int/a2a-plane/issues/218",
+  "failClosed": true,
+  "defaultDecision": "NO_GO",
+  "sourcePublicExecution": "NO_GO",
+  "allowedModes": ["dry-run", "simulate"],
+  "decisionOutputs": [
+    "PLAN_READY_FOR_OPERATOR_REVIEW",
+    "NEEDS_OPERATOR_APPROVAL",
+    "NO_GO"
+  ],
+  "requiredInput": {
+    "approvalPacket": [
+      "packetId",
+      "decision=GO_CANDIDATE",
+      "sourcePublicExecution=NO_GO",
+      "blockers=[]",
+      "requiredGates with redacted evidence"
+    ],
+    "finalApproval": [
+      "operatorGate.status=GO for plan-ready output",
+      "operatorGate.evidence separate from approvalPacket gate evidence",
+      "idempotencyKey",
+      "requestedMode dry-run|simulate"
+    ],
+    "scannerHistoryBinding": [
+      "sourceCommit",
+      "scannerRunId",
+      "scannerDigest",
+      "historyRef",
+      "artifactManifestDigest"
+    ],
+    "rollbackAbortRunbook": [
+      "abortConditions",
+      "rollbackSteps",
+      "verificationSteps"
+    ]
+  },
+  "prohibitedActions": [
+    "approval execution",
+    "release publication",
+    "repository visibility change",
+    "live provider send",
+    "Telegram send",
+    "production deploy",
+    "Gateway restart",
+    "broker restart",
+    "worker restart",
+    "terminal ACK",
+    "production DB mutation",
+    "community post",
+    "force-push",
+    "automatic merge",
+    "automatic approval"
+  ],
+  "preflightChecks": [
+    {
+      "id": "runtimeBootstrapHygiene",
+      "failClosed": true,
+      "denyPaths": ["AGENTS.md", "SOUL.md", "USER.md", "TOOLS.md", "HEARTBEAT.md", "IDENTITY.md", ".openclaw/**"],
+      "blockedWhenMissing": "runtime/bootstrap hygiene must be checked before PR or artifact evidence"
+    },
+    {
+      "id": "approvalPacketIntegrity",
+      "failClosed": true,
+      "blockedWhenMissing": "approved rehearsal packet must be GO_CANDIDATE with no blockers and sourcePublicExecution=NO_GO"
+    },
+    {
+      "id": "scannerHistoryBinding",
+      "failClosed": true,
+      "blockedWhenMissing": "scanner run, scanner digest, history ref, source commit, and artifact manifest digest are required"
+    },
+    {
+      "id": "idempotencyReplayProtection",
+      "failClosed": true,
+      "blockedWhenMissing": "idempotency key and replay guard must be present and not previously used"
+    },
+    {
+      "id": "operatorExecutionGate",
+      "failClosed": true,
+      "blockedWhenMissing": "explicit operator gate is required; packet evidence alone is not approval to execute"
+    },
+    {
+      "id": "modeSafety",
+      "failClosed": true,
+      "blockedWhenMissing": "only dry-run and simulate modes may produce a plan in this repository"
+    },
+    {
+      "id": "rollbackAbortRunbook",
+      "failClosed": true,
+      "blockedWhenMissing": "abort conditions, rollback steps, and verification steps are required"
+    }
+  ],
+  "planSemantics": {
+    "executionState": "NOT_EXECUTED",
+    "operatorGated": true,
+    "deterministicPlanId": "sha256 over run, packet id, idempotency key, mode, scanner/history binding, and planned step ids",
+    "preflightFailure": "emit NO_GO, no executable steps, sourcePublicExecution remains NO_GO",
+    "replayFailure": "emit NO_GO when idempotency key or deterministic plan id is already present in replay history"
+  }
+}

@@ -26,11 +26,11 @@
     "scan:external-secrets": "node scripts/external-secret-scan.mjs",
     "libero:public-preflight-closeout": "node scripts/libero-public-preflight-closeout.mjs",
     "test": "npm run check",
-    "test:release-gate": "node --test scanner/readiness/fail-closed-gates.test.mjs scripts/check-compatibility-baselines.test.mjs scripts/libero-public-preflight-closeout.test.mjs scripts/check-no-diff-closeout-guidance.test.mjs scripts/check-quickstart-conformance.test.mjs scripts/check-message-id-ack-boundary.test.mjs scripts/check-team1-source-public-readiness-libero.test.mjs scripts/check-team1-evidence-nochange-hardening-libero.test.mjs scripts/check-team1-source-public-approval-packet-libero.test.mjs scripts/check-team1-source-dryrun-orchestrator-libero.test.mjs scripts/check-source-public-approval-rehearsal.test.mjs scripts/round-merge-preflight.test.mjs",
+    "test:release-gate": "node --test scanner/readiness/fail-closed-gates.test.mjs scripts/check-compatibility-baselines.test.mjs scripts/libero-public-preflight-closeout.test.mjs scripts/check-no-diff-closeout-guidance.test.mjs scripts/check-quickstart-conformance.test.mjs scripts/check-message-id-ack-boundary.test.mjs scripts/check-team1-source-public-readiness-libero.test.mjs scripts/check-team1-evidence-nochange-hardening-libero.test.mjs scripts/check-team1-source-public-approval-packet-libero.test.mjs scripts/check-team1-source-dryrun-orchestrator-libero.test.mjs scripts/check-team2-source-public-approval-rehearsal.test.mjs scripts/round-merge-preflight.test.mjs",
     "test:conformance": "node test/conformance/check-contract-fixtures.mjs && node test/conformance/check-terminal-evidence-ack-boundary.mjs",
     "round:merge-preflight": "node scripts/round-merge-preflight.mjs",
-    "a2a:source-approval-rehearsal": "node scripts/a2a-source-public-approval-rehearsal.mjs --spec docs/approval-rehearsal/source-public-approval-rehearsal-schema.json",
-    "a2a:source-approval-rehearsal:test": "node --test scripts/check-source-public-approval-rehearsal.test.mjs"
+    "a2a:team2-source-approval-rehearsal": "node scripts/a2a-team2-source-public-approval-rehearsal.mjs --spec docs/approval-rehearsal/team2-soonwook-source-public-approval-rehearsal-schema.json",
+    "a2a:team2-source-approval-rehearsal:test": "node --test scripts/check-team2-source-public-approval-rehearsal.test.mjs"
   },
   "license": "MIT"
 }

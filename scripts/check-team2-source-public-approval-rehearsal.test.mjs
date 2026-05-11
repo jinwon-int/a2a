@@ -5,8 +5,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
 
-const spec = 'docs/approval-rehearsal/source-public-approval-rehearsal-schema.json';
-const script = 'scripts/a2a-source-public-approval-rehearsal.mjs';
+const spec = 'docs/approval-rehearsal/team2-soonwook-source-public-approval-rehearsal-schema.json';
+const script = 'scripts/a2a-team2-source-public-approval-rehearsal.mjs';
 const requiredGateIds = [
   'approvalPacket',
   'integratedEvidenceBundle',

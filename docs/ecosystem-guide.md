@@ -78,7 +78,7 @@
 > [!NOTE]
 > 현재 4개 저장소 체제는 개발 라운드에 최적화되어 있습니다.
 > 사용자 경험 개선을 위해 **모노레포 통합**을 검토 중입니다.
-> 상세: [a2a-plane#239](https://github.com/jinwon-int/a2a-plane/issues/239)
+> 상세: [a2a-plane#240](https://github.com/jinwon-int/a2a-plane/issues/239)
 
 ## 라이선스
 

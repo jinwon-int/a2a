@@ -42,7 +42,7 @@ test('Team1 source-public approval rehearsal libero matrix preserves fail-closed
   assert.match(content, /source-public execution is still NO_GO/);
   assert.match(content, /source-public execution remains NO_GO/i);
   assert.match(content, /NO_GO for execution/);
-  assert.match(content, /Provider message ID\/send success is accepted-send evidence only/);
+  assert.match(content, /Provider message ID\/send success is not terminal ACK evidence; it is accepted-send evidence only/);
   assert.match(content, /no approval, release, or visibility change is executed/);
   assert.doesNotMatch(content, /public-readiness GO|Final GO|visibility change was performed|terminal ACK evidence from provider|raw session dump publication as evidence/i);
 });

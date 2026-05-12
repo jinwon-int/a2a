@@ -61,3 +61,41 @@ test("plugin config schema rejects unknown operatorEvents.notification propertie
   assert.equal(validate(config), false);
   assert.ok(validate.errors?.some((error) => error.instancePath === "/operatorEvents/notification" && error.keyword === "additionalProperties"));
 });
+
+test("plugin config schema accepts edgeSecret as string", async () => {
+  const validate = await loadValidator();
+  const config = {
+    baseUrl: "https://broker.example.test",
+    edgeSecret: "secret-value",
+  };
+
+  assert.equal(validate(config), true, JSON.stringify(validate.errors));
+});
+
+test("plugin config schema rejects edgeSecret as object", async () => {
+  const validate = await loadValidator();
+  const config = {
+    baseUrl: "https://broker.example.test",
+    edgeSecret: { value: "secret-value" },
+  };
+
+  assert.equal(validate(config), false);
+  assert.ok(
+    validate.errors?.some((error) => error.instancePath === "/edgeSecret" && error.keyword === "type"),
+    JSON.stringify(validate.errors),
+  );
+});
+
+test("plugin config schema rejects edgeSecret as number", async () => {
+  const validate = await loadValidator();
+  const config = {
+    baseUrl: "https://broker.example.test",
+    edgeSecret: 42,
+  };
+
+  assert.equal(validate(config), false);
+  assert.ok(
+    validate.errors?.some((error) => error.instancePath === "/edgeSecret" && error.keyword === "type"),
+    JSON.stringify(validate.errors),
+  );
+});

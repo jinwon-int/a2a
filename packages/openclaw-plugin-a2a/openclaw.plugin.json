@@ -62,10 +62,7 @@
         "pattern": "^[Hh][Tt][Tt][Pp][Ss]?://"
       },
       "edgeSecret": {
-        "type": [
-          "string",
-          "object"
-        ]
+        "type": "string"
       },
       "requester": {
         "type": "object",

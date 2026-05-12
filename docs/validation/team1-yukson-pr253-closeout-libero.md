@@ -1,9 +1,9 @@
 # Team1/yukson PR #253 closeout libero
 
-Parent: [a2a-plane#249](https://github.com/jinwon-int/a2a-plane/issues/249)  
-Lane: Team1/yukson, [a2a-plane#251](https://github.com/jinwon-int/a2a-plane/issues/251)  
-Subject PR: [a2a-plane#253](https://github.com/jinwon-int/a2a-plane/pull/253)  
-Compared PR: [a2a-plane#254](https://github.com/jinwon-int/a2a-plane/pull/254)  
+Parent: [a2a-plane#249](https://github.com/jinwon-int/a2a-plane/issues/249)
+Lane: Team1/yukson, [a2a-plane#251](https://github.com/jinwon-int/a2a-plane/issues/251)
+Subject PR: [a2a-plane#253](https://github.com/jinwon-int/a2a-plane/pull/253)
+Compared PR: [a2a-plane#254](https://github.com/jinwon-int/a2a-plane/pull/254)
 Snapshot: `2026-05-12T02:30:00Z`
 
 This closeout is source-only evidence. It does not deploy, restart Gateway/broker/worker services, send live provider or Telegram messages, ACK terminal-outbox rows, mutate production data, rotate or expose secrets, change repository visibility, rewrite history, force-push, release, or post community announcements.

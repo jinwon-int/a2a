@@ -51,6 +51,10 @@
     "operatorEvents.notification.threadId": {
       "label": "Operator Notification Thread ID",
       "help": "Optional thread/topic id for notification delivery."
+    },
+    "operatorEvents.crossBrokers": {
+      "label": "Cross-Broker Operator Event Sources",
+      "help": "Optional read-only broker endpoints to poll for terminal outbox/operator event parity validation. Each entry requires baseUrl and may include edgeSecret and label."
     }
   },
   "configSchema": {
@@ -134,6 +138,28 @@
                     "type": "number"
                   }
                 ]
+              }
+            }
+          },
+          "crossBrokers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "baseUrl"
+              ],
+              "properties": {
+                "baseUrl": {
+                  "type": "string",
+                  "pattern": "^[Hh][Tt][Tt][Pp][Ss]?://"
+                },
+                "edgeSecret": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                }
               }
             }
           }

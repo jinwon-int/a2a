@@ -44,6 +44,42 @@ test("plugin config schema accepts chatId alias for operatorEvents.notification 
   assert.equal(validate(config), true, JSON.stringify(validate.errors));
 });
 
+test("plugin config schema accepts operatorEvents.crossBrokers restart fixture", async () => {
+  const validate = await loadValidator();
+  const config = {
+    operatorEvents: {
+      enabled: true,
+      crossBrokers: [
+        {
+          baseUrl: "https://secondary-broker.example.test",
+          edgeSecret: "env:A2A_SECONDARY_EDGE_SECRET",
+          label: "secondary",
+        },
+      ],
+    },
+  };
+
+  assert.equal(validate(config), true, JSON.stringify(validate.errors));
+});
+
+test("plugin config schema rejects unknown operatorEvents.crossBrokers item properties", async () => {
+  const validate = await loadValidator();
+  const config = {
+    operatorEvents: {
+      enabled: true,
+      crossBrokers: [
+        {
+          baseUrl: "https://secondary-broker.example.test",
+          token: "must-not-be-accepted-here",
+        },
+      ],
+    },
+  };
+
+  assert.equal(validate(config), false);
+  assert.ok(validate.errors?.some((error) => error.instancePath === "/operatorEvents/crossBrokers/0" && error.keyword === "additionalProperties"));
+});
+
 test("plugin config schema rejects unknown operatorEvents.notification properties", async () => {
   const validate = await loadValidator();
   const config = {

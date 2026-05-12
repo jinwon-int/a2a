@@ -102,6 +102,17 @@ Relevant cross-repo guardrail docs:
 - `contracts/a2a/terminal-semantics.md` — Terminal ACK boundary.
 - `docs/r6-terminal-brief-openclaw-routing-synthesis.md` — R6 upstream gate and no-bypass rules.
 
+## R10 Team1/yukson public-readiness gate synthesis for #75/#294/#497
+
+Parent: [#75](https://github.com/jinwon-int/a2a-plane/issues/75).
+Roadmap: [a2a-broker#294](https://github.com/jinwon-int/a2a-broker/issues/294).
+Operational risk signal: [a2a-broker#497](https://github.com/jinwon-int/a2a-broker/issues/497).
+Lane: [#263](https://github.com/jinwon-int/a2a-plane/issues/263).
+
+Team1/yukson added a no-live gate synthesis at `docs/validation/team1-yukson-public-readiness-gate-synthesis.md`. The aggregate decision remains **NO-GO / Waiting**: provider message ids and send success are accepted-send evidence only; terminal evidence, replay-safe canary proof, scanner/readiness evidence, broker state-growth/backlog risk disposition, runtime/bootstrap artifact hygiene, and explicit operator approvals remain separate gates.
+
+This synthesis does not authorize repository visibility changes, live provider/Telegram sends, terminal ACKs, deploys/restarts, production DB mutation, secret changes, releases, or force-pushes.
+
 ## R7 public-readiness closeout refresh (post-merge)
 
 Bangtong lane closeout refresh after merged round `a2a-plane#92/#95`, `openclaw-plugin-a2a#235`, `a2a-broker#433/#434`.

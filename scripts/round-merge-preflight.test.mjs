@@ -29,3 +29,19 @@ test('release checklist requires merge-train preflight for multi-PR rounds', asy
   assert.match(checklist, /round:merge-preflight/);
   assert.match(checklist, /multi-PR/i);
 });
+
+test('Team2 plane/plugin merge-preflight artifact records the #249 blocker', async () => {
+  const artifact = await readFile(
+    join(repoRoot, 'docs', 'validation', 'team2-plane-plugin-merge-preflight-libero.md'),
+    'utf8',
+  );
+
+  assert.match(artifact, /a2a-plane#249/);
+  assert.match(artifact, /255 254 253/);
+  assert.match(artifact, /255 253 254/);
+  assert.match(artifact, /NO-GO \/ Blocked/);
+  assert.match(artifact, /package\.json/);
+  assert.match(artifact, /openclaw-plugin-a2a/);
+  assert.match(artifact, /AGENTS\.md/);
+  assert.match(artifact, /\.openclaw\/\*\*/);
+});

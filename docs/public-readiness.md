@@ -113,6 +113,17 @@ Team1/yukson added a no-live gate synthesis at `docs/validation/team1-yukson-pub
 
 This synthesis does not authorize repository visibility changes, live provider/Telegram sends, terminal ACKs, deploys/restarts, production DB mutation, secret changes, releases, or force-pushes.
 
+## R11 Team1/yukson #240 closeout route for #75/#94
+
+Parent: [#75](https://github.com/jinwon-int/a2a-plane/issues/75).  
+Compatibility follow-up: [#94](https://github.com/jinwon-int/a2a-plane/issues/94).  
+Ecosystem/monorepo clarity lane: [#240](https://github.com/jinwon-int/a2a-plane/issues/240).  
+Review lane: [#271](https://github.com/jinwon-int/a2a-plane/issues/271).
+
+Team1/yukson added `docs/validation/team1-yukson-240-closeout-to-75-94.md` as the checklist for reviewing #240 PRs [#267](https://github.com/jinwon-int/a2a-plane/pull/267) and [#268](https://github.com/jinwon-int/a2a-plane/pull/268) before citing them from #75 or #94.
+
+The route is deliberately narrow: #267/#268 may clarify component boundaries, migration risks, and issue/link hygiene for public-safe review. They do **not** provide terminal receipt, replay-safe canary proof, external scanner evidence, operator visibility approval, runtime readiness, live-send approval, or release approval.
+
 ## R7 public-readiness closeout refresh (post-merge)
 
 Bangtong lane closeout refresh after merged round `a2a-plane#92/#95`, `openclaw-plugin-a2a#235`, `a2a-broker#433/#434`.

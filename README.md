@@ -1,9 +1,10 @@
-> 📖 [A2A Ecosystem Guide](docs/ecosystem-guide.md) — 4개 저장소의 역할과 관계를 한눈에.
 # A2A Plane
 
 [![ci](https://github.com/jinwon-int/a2a-plane/actions/workflows/ci.yml/badge.svg)](https://github.com/jinwon-int/a2a-plane/actions/workflows/ci.yml)
 
 A2A Plane is the independent project name for this broker/worker task handoff plane. This private release candidate contains the broker, Docker runner, OpenClaw reference plugin, shared contracts, and public-safe examples used to evaluate A2A Plane from a fresh checkout.
+
+If you are trying to understand how the historical 4-repository A2A structure maps to this checkout, start with the [A2A Ecosystem Guide](docs/ecosystem-guide.md).
 
 > **Status:** private/public-readiness candidate. Do not make this repository public until every gate in [`docs/public-readiness.md`](docs/public-readiness.md) is closed and an operator explicitly approves the visibility change.
 

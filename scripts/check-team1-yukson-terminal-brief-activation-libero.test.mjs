@@ -11,21 +11,19 @@ async function doc() {
   return readFile(docPath, 'utf8');
 }
 
-test('Team1/yukson Terminal Brief activation libero covers re-dispatch run and sibling lanes', async () => {
+test('Team1/yukson Terminal Brief activation libero covers R11 run and sibling lanes', async () => {
   const content = await doc();
 
-  assert.match(content, /terminal-brief-activation-redisp-f17072e-20260511T085346Z/);
-  assert.match(content, /runner update from `2310f84` to `f17072e`/);
-  assert.match(content, /a2a-plane#241/);
-  assert.match(content, /a2a-plane#243/);
-  assert.match(content, /issuecomment-4418975435/);
+  assert.match(content, /a2a-r11-stability-activation-gates-20260513T231046Z/);
+  assert.match(content, /a2a-broker#539/);
+  assert.match(content, /a2a-plane#297/);
   for (const issue of [
-    'a2a-plane#242',
-    'openclaw-plugin-a2a#269',
-    'a2a-docker-runner#204',
-    'a2a-broker#493',
-    'a2a-docker-runner#205',
-    'a2a-plane#244',
+    'a2a-broker#593',
+    'a2a-broker#592',
+    'openclaw-plugin-a2a#303',
+    'a2a-broker#594',
+    'a2a-docker-runner#247',
+    'a2a-plane#298',
   ]) {
     assert.match(content, new RegExp(issue.replace('#', '#')));
   }
@@ -36,7 +34,7 @@ test('Team1/yukson activation matrix fails closed on refreshed Start-only eviden
 
   assert.match(content, /Decision: `NO-GO \/ Waiting`/);
   assert.match(content, /A Start marker proves work began; it is not activation evidence/);
-  assert.match(content, /Fresh Start evidence/);
+  assert.match(content, /Start marker/);
   assert.match(content, /Current state/);
   assert.match(content, /until refreshed terminal PR\/Done\/Block evidence lands/);
   assert.doesNotMatch(content, /Decision: `GO`|aggregate decision remains \*\*`GO`|Current status\. \| `GO`/i);
@@ -70,15 +68,14 @@ test('Team1/yukson activation matrix preserves one-shot and receipt/ACK boundari
   assert.doesNotMatch(content, /provider accepted-send is ACK|message id is receipt|Terminal Brief ACK completed/i);
 });
 
-test('Team1/yukson activation matrix includes rollback and previous canary failure evidence', async () => {
+test('Team1/yukson activation matrix includes rollback and safety evidence', async () => {
   const content = await doc();
 
   assert.match(content, /Rollback \/ abort procedure/);
   assert.match(content, /Stop\/remove only the Docker canary broker container/);
   assert.match(content, /Restore Gateway\/plugin state/);
-  assert.match(content, /Previous canary failure evidence/);
-  assert.match(content, /failed with `404` because the broker API was not running/);
-  assert.match(content, /Gateway\/provider success did not prove operator receipt/);
+  assert.match(content, /Do not ACK terminal-outbox rows from provider accepted-send/);
+  assert.match(content, /Verify no duplicate send/);
 });
 
 test('Team1/yukson activation matrix documents runtime context and redaction hygiene', async () => {

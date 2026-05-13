@@ -121,3 +121,42 @@ test('Team1/yukson plane gate packet preserves Terminal Brief and runtime artifa
 
   assert.doesNotMatch(content, /ghp_|github_pat_|Authorization:\s*Bearer|OPENCLAW_CACHE_BOUNDARY|Session ID:|chat_id\s*[:=]|\/root\//i);
 });
+
+test('Team1/yukson R7 addendum binds Stability R7 dispatch and deployment-readiness boundary', async () => {
+  const content = await doc();
+
+  for (const reference of [
+    'a2a-broker#548',
+    'a2a-plane#281',
+    'Terminal Brief deployment-readiness evidence',
+    'deployment-readiness approval boundary',
+    'Gate D',
+  ]) {
+    assert.match(content, new RegExp(escapeRegExp(reference)));
+  }
+
+  // R7 risk matrix must define residual risks
+  for (const risk of [
+    'Provider acceptance treated as ACK',
+    'Gateway outbound success mutated as receipt',
+    'Canary send without operator approval',
+    'Duplicate/replayed Terminal Brief events',
+  ]) {
+    assert.match(content, new RegExp(escapeRegExp(risk)));
+  }
+
+  // R7 deployment-readiness sub-gates
+  for (const subGate of ['D.1', 'D.2', 'D.3', 'D.4', 'D.5', 'D.6']) {
+    assert.match(content, new RegExp(subGate.replace('.', '\\.')));
+  }
+
+  // R7 must preserve pre-R7 gate references unchanged
+  assert.match(content, /a2a-broker#539/);
+  assert.match(content, /a2a-plane#275/);
+
+  // R7 aggregate decision must remain NO-GO
+  assert.match(content, /Terminal Brief live activation decision: `NO-GO \/ Waiting`/);
+
+  // No secrets or unsafe patterns
+  assert.doesNotMatch(content, /ghp_|github_pat_|Authorization:\s*Bearer|OPENCLAW_CACHE_BOUNDARY|Session ID:|chat_id\s*[:=]/i);
+});

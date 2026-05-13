@@ -12,6 +12,7 @@ const fixtureFiles = {
   evidence: 'terminal-evidence.json',
   githubEvidenceProjection: 'github-evidence-projection.json',
   crossBroker: 'gwakga-cross-broker-handoff.json',
+  parentTerminalBriefAggregation: 'parent-terminal-brief-aggregation.json',
   checkpointInterrupt: 'checkpoint-interrupt.json',
   publicPolicy: 'public-compatibility-policy.json',
   replayTrace: 'second-worker-replay-trace.json',
@@ -77,6 +78,7 @@ const {
   evidence,
   githubEvidenceProjection,
   crossBroker,
+  parentTerminalBriefAggregation,
   checkpointInterrupt,
   publicPolicy,
   replayTrace,
@@ -304,6 +306,110 @@ for (const [key, value] of Object.entries(crossBroker.safetyConfirmations)) {
   assert.equal(value, true, `cross-broker safety confirmation ${key} must be true`);
 }
 
+
+// Parent Terminal Brief aggregation validation
+assert.equal(
+  parentTerminalBriefAggregation.contract,
+  'contracts/a2a/parent-terminal-brief-aggregation.md',
+);
+assert.equal(parentTerminalBriefAggregation.parentIssue, 'https://github.com/jinwon-int/a2a-plane/issues/269');
+assert.equal(parentTerminalBriefAggregation.originBrokerId, 'gwakga');
+assert.equal(parentTerminalBriefAggregation.parentBrokerId, 'gwakga');
+assert.equal(parentTerminalBriefAggregation.handoffBrokerId, 'seoseo');
+assert.equal(parentTerminalBriefAggregation.childBrokerId, 'seoseo');
+assert.equal(parentTerminalBriefAggregation.brokerOfRecord, 'seoseo');
+assert.equal(parentTerminalBriefAggregation.canaryMode, 'no-live-synthetic-projection');
+
+const parentProjection = parentTerminalBriefAggregation.projection;
+for (const field of parentTerminalBriefAggregation.requiredProjectionFields) {
+  assert.ok(field in parentProjection, `parent projection must include ${field}`);
+}
+assert.equal(parentProjection.parentRoundId, parentTerminalBriefAggregation.parentRoundId);
+assert.equal(parentProjection.originBrokerId, 'gwakga');
+assert.equal(parentProjection.parentBrokerId, 'gwakga');
+assert.equal(parentProjection.handoffBrokerId, 'seoseo');
+assert.equal(parentProjection.childBrokerId, 'seoseo');
+assert.equal(parentProjection.terminalKind, 'pr');
+assert.equal(parentProjection.projectionState, 'projected');
+assert.equal(parentProjection.redacted, true);
+assert.equal(parentProjection.terminalOutboxAckMutated, false);
+assert.equal(parentProjection.liveProviderSend, false);
+assert.equal(parentProjection.isApproval, false);
+assert.equal(parentProjection.isTerminalAck, false);
+assert.equal(parentProjection.isReadReceipt, false);
+
+const parentLifecycleSteps = new Map(
+  parentTerminalBriefAggregation.metadataLifecycle.map((step) => [step.step, step]),
+);
+assert.equal(parentLifecycleSteps.get('mint-parent-round')?.ownerBrokerId, 'gwakga');
+assert.equal(parentLifecycleSteps.get('mint-parent-round')?.immutableAfterWrite, true);
+assert.equal(parentLifecycleSteps.get('handoff-envelope-created')?.destinationBrokerId, 'seoseo');
+assert.equal(parentLifecycleSteps.get('child-task-terminal-evidence')?.parentMetadataRewritten, false);
+assert.equal(parentLifecycleSteps.get('parent-projection-recorded')?.childLifecycleMutated, false);
+
+const parentAggregationScenarioByName = new Map(
+  parentTerminalBriefAggregation.scenarios.map((scenario) => [scenario.name, scenario]),
+);
+const metadataScenario = parentAggregationScenarioByName.get(
+  'gwakga-origin-metadata-is-carried-through-seoseo-handoff',
+);
+assert.equal(metadataScenario?.then.metadataCopiedToChildEnvelope, true);
+assert.equal(metadataScenario?.then.originBrokerIdRewritten, false);
+assert.equal(metadataScenario?.then.parentRoundIdRewritten, false);
+assert.equal(metadataScenario?.then.childBrokerOfRecord, 'seoseo');
+
+const projectedScenario = parentAggregationScenarioByName.get(
+  'parent-aggregates-child-terminal-evidence-as-redacted-projection',
+);
+assert.equal(projectedScenario?.then.projectionState, 'projected');
+assert.equal(projectedScenario?.then.parentBriefEntryCreated, true);
+assert.equal(projectedScenario?.then.redacted, true);
+assert.equal(projectedScenario?.then.terminalOutboxAckMutated, false);
+assert.equal(projectedScenario?.then.liveProviderSend, false);
+assert.equal(projectedScenario?.then.isApproval, false);
+assert.equal(projectedScenario?.then.isTerminalAck, false);
+assert.equal(projectedScenario?.then.isReadReceipt, false);
+
+const duplicateParentProjection = parentAggregationScenarioByName.get(
+  'duplicate-parent-projection-returns-existing-entry',
+);
+assert.equal(duplicateParentProjection?.then.status, 'deduplicated');
+assert.equal(duplicateParentProjection?.then.newProjectionCreated, false);
+assert.equal(duplicateParentProjection?.then.returnedExistingProjection, true);
+assert.equal(duplicateParentProjection?.then.liveProviderSend, false);
+assert.equal(duplicateParentProjection?.then.terminalOutboxAckMutated, false);
+
+const conflictParentProjection = parentAggregationScenarioByName.get(
+  'same-key-different-payload-conflicts',
+);
+assert.equal(conflictParentProjection?.then.status, 'conflict');
+assert.equal(conflictParentProjection?.then.newProjectionCreated, false);
+assert.equal(conflictParentProjection?.then.existingProjectionOverwritten, false);
+assert.equal(conflictParentProjection?.then.requiresOperatorReview, true);
+
+const unsafeParentProjection = parentAggregationScenarioByName.get(
+  'unsafe-child-evidence-becomes-redacted-block-projection',
+);
+assert.equal(unsafeParentProjection?.then.projectionState, 'blocked');
+assert.equal(unsafeParentProjection?.then.terminalKind, 'block');
+assert.equal(unsafeParentProjection?.then.unsafeEvidenceCopied, false);
+assert.equal(unsafeParentProjection?.then.blockerSummaryRedacted, true);
+assert.equal(unsafeParentProjection?.then.childTaskReplayed, false);
+assert.equal(unsafeParentProjection?.then.liveProviderSend, false);
+assert.equal(unsafeParentProjection?.then.terminalOutboxAckMutated, false);
+
+assert.equal(parentTerminalBriefAggregation.rollbackGuidance.rollbackType, 'metadata-only');
+assert.equal(parentTerminalBriefAggregation.rollbackGuidance.deleteChildEvidence, false);
+assert.equal(parentTerminalBriefAggregation.rollbackGuidance.overwriteExistingProjection, false);
+assert.equal(parentTerminalBriefAggregation.rollbackGuidance.createNewChildTaskForAggregationFailure, false);
+assert.equal(parentTerminalBriefAggregation.rollbackGuidance.markProjectionBlockedOrConflict, true);
+assert.equal(parentTerminalBriefAggregation.rollbackGuidance.preserveProjectionKey, true);
+assert.ok(
+  parentTerminalBriefAggregation.validationCommands.includes('node test/conformance/check-contract-fixtures.mjs'),
+);
+for (const [key, value] of Object.entries(parentTerminalBriefAggregation.safetyConfirmations)) {
+  assert.equal(value, true, `parent aggregation safety confirmation ${key} must be true`);
+}
 
 assert.equal(publicPolicy.sourceIssueUrl, 'https://github.com/jinwon-int/a2a-plane/issues/94');
 assert.equal(publicPolicy.reviewIssueUrl, 'https://github.com/jinwon-int/a2a-plane/issues/166');

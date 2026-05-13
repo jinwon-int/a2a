@@ -1,0 +1,229 @@
+{
+  "fixtureId": "a2a-plane.contract.parent-terminal-brief-aggregation.v1",
+  "contract": "contracts/a2a/parent-terminal-brief-aggregation.md",
+  "description": "Synthetic Gwakga-origin plus Seoseo-handoff canary for parent broker Terminal Brief aggregation.",
+  "parentIssue": "https://github.com/jinwon-int/a2a-plane/issues/269",
+  "parentRoundId": "round-gwakga-origin-seoseo-handoff-canary-001",
+  "originBrokerId": "gwakga",
+  "parentBrokerId": "gwakga",
+  "handoffBrokerId": "seoseo",
+  "childBrokerId": "seoseo",
+  "brokerOfRecord": "seoseo",
+  "team": "team2-soonwook",
+  "canaryMode": "no-live-synthetic-projection",
+  "metadataLifecycle": [
+    {
+      "step": "mint-parent-round",
+      "ownerBrokerId": "gwakga",
+      "writes": [
+        "parentRoundId",
+        "originBrokerId",
+        "parentBrokerId"
+      ],
+      "immutableAfterWrite": true
+    },
+    {
+      "step": "handoff-envelope-created",
+      "ownerBrokerId": "gwakga",
+      "copies": [
+        "parentRoundId",
+        "originBrokerId"
+      ],
+      "destinationBrokerId": "seoseo"
+    },
+    {
+      "step": "child-task-terminal-evidence",
+      "ownerBrokerId": "seoseo",
+      "appends": [
+        "childTaskId",
+        "childBrokerId",
+        "terminalEvidenceUrl",
+        "terminalKind"
+      ],
+      "parentMetadataRewritten": false
+    },
+    {
+      "step": "parent-projection-recorded",
+      "ownerBrokerId": "gwakga",
+      "projectionState": "projected",
+      "childLifecycleMutated": false
+    }
+  ],
+  "requiredProjectionFields": [
+    "projectionKey",
+    "parentRoundId",
+    "originBrokerId",
+    "parentBrokerId",
+    "handoffBrokerId",
+    "childBrokerId",
+    "childTaskId",
+    "childIssueUrl",
+    "terminalKind",
+    "terminalEvidenceUrl",
+    "terminalSummary",
+    "projectionState",
+    "redacted",
+    "projectedAt",
+    "terminalOutboxAckMutated",
+    "liveProviderSend",
+    "isApproval",
+    "isTerminalAck",
+    "isReadReceipt"
+  ],
+  "projection": {
+    "projectionKey": "round-gwakga-origin-seoseo-handoff-canary-001:gwakga:task-seoseo-child-canary-001:pr",
+    "parentRoundId": "round-gwakga-origin-seoseo-handoff-canary-001",
+    "originBrokerId": "gwakga",
+    "parentBrokerId": "gwakga",
+    "handoffBrokerId": "seoseo",
+    "childBrokerId": "seoseo",
+    "childTaskId": "task-seoseo-child-canary-001",
+    "childIssueUrl": "https://github.com/jinwon-int/a2a-plane/issues/269",
+    "terminalKind": "pr",
+    "terminalEvidenceUrl": "https://github.com/jinwon-int/a2a-plane/pull/0000",
+    "terminalSummary": "Synthetic child PR evidence projected into the Gwakga parent Terminal Brief aggregation ledger.",
+    "projectionState": "projected",
+    "redacted": true,
+    "projectedAt": "2026-05-13T01:30:00Z",
+    "terminalOutboxAckMutated": false,
+    "liveProviderSend": false,
+    "isApproval": false,
+    "isTerminalAck": false,
+    "isReadReceipt": false
+  },
+  "scenarios": [
+    {
+      "name": "gwakga-origin-metadata-is-carried-through-seoseo-handoff",
+      "given": {
+        "parentRoundId": "round-gwakga-origin-seoseo-handoff-canary-001",
+        "originBrokerId": "gwakga",
+        "handoffBrokerId": "seoseo"
+      },
+      "when": {
+        "operation": "handoff.create"
+      },
+      "then": {
+        "metadataCopiedToChildEnvelope": true,
+        "originBrokerIdRewritten": false,
+        "parentRoundIdRewritten": false,
+        "childBrokerOfRecord": "seoseo"
+      }
+    },
+    {
+      "name": "parent-aggregates-child-terminal-evidence-as-redacted-projection",
+      "given": {
+        "childTerminalKind": "pr",
+        "childEvidenceRedacted": true
+      },
+      "when": {
+        "operation": "parentTerminalBrief.project"
+      },
+      "then": {
+        "projectionState": "projected",
+        "projectionKey": "round-gwakga-origin-seoseo-handoff-canary-001:gwakga:task-seoseo-child-canary-001:pr",
+        "parentBriefEntryCreated": true,
+        "redacted": true,
+        "terminalOutboxAckMutated": false,
+        "liveProviderSend": false,
+        "isApproval": false,
+        "isTerminalAck": false,
+        "isReadReceipt": false
+      }
+    },
+    {
+      "name": "duplicate-parent-projection-returns-existing-entry",
+      "given": {
+        "existingProjectionKey": "round-gwakga-origin-seoseo-handoff-canary-001:gwakga:task-seoseo-child-canary-001:pr",
+        "existingTerminalEvidenceUrl": "https://github.com/jinwon-int/a2a-plane/pull/0000"
+      },
+      "when": {
+        "operation": "parentTerminalBrief.project",
+        "projectionKey": "round-gwakga-origin-seoseo-handoff-canary-001:gwakga:task-seoseo-child-canary-001:pr"
+      },
+      "then": {
+        "status": "deduplicated",
+        "newProjectionCreated": false,
+        "returnedExistingProjection": true,
+        "liveProviderSend": false,
+        "terminalOutboxAckMutated": false
+      }
+    },
+    {
+      "name": "same-key-different-payload-conflicts",
+      "given": {
+        "existingProjectionKey": "round-gwakga-origin-seoseo-handoff-canary-001:gwakga:task-seoseo-child-canary-001:pr",
+        "existingTerminalEvidenceUrl": "https://github.com/jinwon-int/a2a-plane/pull/0000"
+      },
+      "when": {
+        "operation": "parentTerminalBrief.project",
+        "projectionKey": "round-gwakga-origin-seoseo-handoff-canary-001:gwakga:task-seoseo-child-canary-001:pr",
+        "terminalEvidenceUrl": "https://github.com/jinwon-int/a2a-plane/pull/9999"
+      },
+      "then": {
+        "status": "conflict",
+        "newProjectionCreated": false,
+        "existingProjectionOverwritten": false,
+        "requiresOperatorReview": true
+      }
+    },
+    {
+      "name": "unsafe-child-evidence-becomes-redacted-block-projection",
+      "given": {
+        "childEvidenceWithinRedactionBoundary": false
+      },
+      "when": {
+        "operation": "parentTerminalBrief.project"
+      },
+      "then": {
+        "projectionState": "blocked",
+        "terminalKind": "block",
+        "unsafeEvidenceCopied": false,
+        "blockerSummaryRedacted": true,
+        "childTaskReplayed": false,
+        "liveProviderSend": false,
+        "terminalOutboxAckMutated": false
+      }
+    }
+  ],
+  "rollbackGuidance": {
+    "rollbackType": "metadata-only",
+    "deleteChildEvidence": false,
+    "overwriteExistingProjection": false,
+    "createNewChildTaskForAggregationFailure": false,
+    "markProjectionBlockedOrConflict": true,
+    "preserveProjectionKey": true
+  },
+  "evidenceRequirements": [
+    "contract document path",
+    "fixture path",
+    "local conformance output",
+    "parentRoundId and originBrokerId",
+    "projectionKey",
+    "redaction confirmation",
+    "no-live-send and no-ack confirmation",
+    "duplicate projection no-replay proof",
+    "rollback or block handling summary"
+  ],
+  "validationCommands": [
+    "node test/conformance/check-contract-fixtures.mjs",
+    "npm run test:conformance"
+  ],
+  "safetyConfirmations": {
+    "syntheticFixtureOnly": true,
+    "noProductionDeployOrRestart": true,
+    "noProductionDatabaseMutation": true,
+    "noLiveProviderSend": true,
+    "noTerminalOutboxAckMutation": true,
+    "noSecretRotationOrDisclosure": true,
+    "noHostSpecificPrivatePath": true,
+    "noChildWorkerLogProjection": true,
+    "noCrossWorkerRegistration": true,
+    "runtimeBootstrapHygieneRequiredBeforePublication": true
+  },
+  "v0Freeze": {
+    "frozenAt": "2026-05-13T01:30:00Z",
+    "round": "a2a-plane-269-parent-terminal-brief-aggregation",
+    "scope": "Gwakga-origin plus Seoseo-handoff parent Terminal Brief aggregation projection",
+    "nonAckBoundary": "parent projections are evidence ledger entries only, not approval, read receipt, or terminal ACK"
+  }
+}

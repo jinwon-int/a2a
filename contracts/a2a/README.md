@@ -14,6 +14,7 @@ Public-safe contract skeletons for A2A protocol and task lifecycle behavior.
 - [Worker registration and read-model assumptions](./worker-registration.md)
 - [Cancellation & idempotency](./cancellation-idempotency.md)
 - [Broker-to-broker handoff protocol](./broker-handoff-protocol.md)
+- [Parent Terminal Brief aggregation](./parent-terminal-brief-aggregation.md)
 - [Durable checkpoint & human interrupt](./checkpoint-interrupt.md)
 
 ## Compatibility
@@ -30,6 +31,7 @@ Machine-readable reference fixtures for broker/plugin/runner validation:
 - [Worker registration & capabilities](../../fixtures/contract/worker-registration-capabilities.json)
 - [Cancellation & idempotency scenarios](../../fixtures/contract/cancellation-idempotency.json)
 - [Terminal evidence examples](../../fixtures/contract/terminal-evidence.json)
+- [Parent Terminal Brief aggregation canary](../../fixtures/contract/parent-terminal-brief-aggregation.json)
 - [Checkpoint & human-interrupt scenarios](../../fixtures/contract/checkpoint-interrupt.json)
 
 ### Compatibility fixtures
@@ -38,7 +40,7 @@ Machine-readable reference fixtures for broker/plugin/runner validation:
 
 ## Conformance
 
-- `node test/conformance/check-contract-fixtures.mjs` — validates all five contract v0 fixtures
+- `node test/conformance/check-contract-fixtures.mjs` — validates contract v0 fixtures
 - `node test/conformance/check-terminal-evidence-ack-boundary.mjs` — validates accepted-send non-ACK fixture
 
 These documents intentionally avoid private endpoint names, provider identifiers, secret values, host-specific paths, and raw session evidence.

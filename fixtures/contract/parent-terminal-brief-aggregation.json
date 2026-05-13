@@ -1,7 +1,7 @@
 {
   "fixtureId": "a2a-plane.contract.parent-terminal-brief-aggregation.v1",
   "contract": "contracts/a2a/parent-terminal-brief-aggregation.md",
-  "description": "Synthetic Gwakga-origin plus Seoseo-handoff canary for parent broker Terminal Brief aggregation.",
+  "description": "Synthetic Gwakga-origin plus Seoseo-handoff canary for parent broker Terminal Brief aggregation, with broker-neutral concise title examples for Gwakga-origin and Seoseo-origin parent rounds.",
   "parentIssue": "https://github.com/jinwon-int/a2a-plane/issues/269",
   "parentRoundId": "round-gwakga-origin-seoseo-handoff-canary-001",
   "originBrokerId": "gwakga",
@@ -61,6 +61,7 @@
     "terminalKind",
     "terminalEvidenceUrl",
     "terminalSummary",
+    "terminalBriefTitle",
     "projectionState",
     "redacted",
     "projectedAt",
@@ -89,7 +90,16 @@
     "liveProviderSend": false,
     "isApproval": false,
     "isTerminalAck": false,
-    "isReadReceipt": false
+    "isReadReceipt": false,
+    "workerId": "dungae",
+    "roundProgress": {
+      "completed": 1,
+      "total": 7,
+      "totalKnown": true
+    },
+    "terminalBriefTitle": "A2A Terminal Brief 완료: dungae(1/7)",
+    "terminalBriefTitleOwnerBrokerId": "gwakga",
+    "terminalBriefTitleRenderedByParentBrokerOnly": true
   },
   "scenarios": [
     {
@@ -125,6 +135,81 @@
         "redacted": true,
         "terminalOutboxAckMutated": false,
         "liveProviderSend": false,
+        "isApproval": false,
+        "isTerminalAck": false,
+        "isReadReceipt": false
+      }
+    },
+    {
+      "name": "gwakga-origin-parent-brief-title-is-concise-parent-broker-only",
+      "given": {
+        "parentBrokerId": "gwakga",
+        "childBrokerId": "seoseo",
+        "workerId": "dungae",
+        "completed": 1,
+        "total": 7,
+        "statusLabel": "완료",
+        "originBrokerId": "gwakga",
+        "totalKnown": true
+      },
+      "when": {
+        "operation": "parentTerminalBrief.renderTitle"
+      },
+      "then": {
+        "terminalBriefTitle": "A2A Terminal Brief 완료: dungae(1/7)",
+        "rendererBrokerId": "gwakga",
+        "parentBrokerOnly": true,
+        "maxChars": 80,
+        "includesTaskId": false,
+        "includesChildIssueUrl": false,
+        "includesTerminalEvidenceUrl": false,
+        "includesTerminalSummary": false,
+        "includesChildBrokerId": false,
+        "includesHandoffBrokerId": false,
+        "includesReceiptOrAckState": false,
+        "liveProviderSend": false,
+        "terminalOutboxAckMutated": false,
+        "isApproval": false,
+        "isTerminalAck": false,
+        "isReadReceipt": false,
+        "titleOmitsUnknownDenominator": false,
+        "titleDoesNotContainUnknownDenominator": true,
+        "forbiddenUnknownDenominator": "(1/?)"
+      }
+    },
+    {
+      "name": "seoseo-origin-parent-brief-title-uses-unknown-total-fallback",
+      "given": {
+        "originBrokerId": "seoseo",
+        "parentBrokerId": "seoseo",
+        "handoffBrokerId": "gwakga",
+        "childBrokerId": "gwakga",
+        "workerId": "yukson",
+        "completed": 2,
+        "total": null,
+        "totalKnown": false,
+        "statusLabel": "완료"
+      },
+      "when": {
+        "operation": "parentTerminalBrief.renderTitle"
+      },
+      "then": {
+        "terminalBriefTitle": "A2A Terminal Brief 완료: yukson(2)",
+        "rendererBrokerId": "seoseo",
+        "parentBrokerOnly": true,
+        "maxChars": 80,
+        "titleOmitsUnknownDenominator": true,
+        "titleDoesNotContainUnknownDenominator": true,
+        "forbiddenUnknownDenominator": "(2/?)",
+        "includesTaskId": false,
+        "includesChildIssueUrl": false,
+        "includesTerminalEvidenceUrl": false,
+        "includesTerminalSummary": false,
+        "includesChildBrokerId": false,
+        "includesHandoffBrokerId": false,
+        "includesReceiptOrAckState": false,
+        "liveProviderSend": false,
+        "terminalOutboxAckMutated": false,
         "isApproval": false,
         "isTerminalAck": false,
         "isReadReceipt": false
@@ -199,6 +284,8 @@
     "local conformance output",
     "parentRoundId and originBrokerId",
     "projectionKey",
+    "concise parent-broker-only Terminal Brief title proof",
+    "Gwakga-origin and Seoseo-origin concise title examples, including unknown-total fallback proof",
     "redaction confirmation",
     "no-live-send and no-ack confirmation",
     "duplicate projection no-replay proof",
@@ -225,5 +312,109 @@
     "round": "a2a-plane-269-parent-terminal-brief-aggregation",
     "scope": "Gwakga-origin plus Seoseo-handoff parent Terminal Brief aggregation projection",
     "nonAckBoundary": "parent projections are evidence ledger entries only, not approval, read receipt, or terminal ACK"
-  }
+  },
+  "workerId": "dungae",
+  "roundProgress": {
+    "completed": 1,
+    "total": 7,
+    "totalKnown": true
+  },
+  "terminalBriefTitlePolicy": {
+    "scope": "parent-broker-only",
+    "rendererBrokerId": "gwakga",
+    "format": "Known total: A2A Terminal Brief <statusLabel>: <workerId>(<completed>/<total>); unknown total: A2A Terminal Brief <statusLabel>: <workerId>(<completed>)",
+    "exampleTitle": "A2A Terminal Brief 완료: dungae(1/7)",
+    "maxChars": 80,
+    "statusLabels": {
+      "success": "완료",
+      "failure": "실패",
+      "block": "차단",
+      "pr": "PR"
+    },
+    "sourceFields": [
+      "statusLabel",
+      "workerId",
+      "roundProgress.completed",
+      "roundProgress.total",
+      "roundProgress.totalKnown"
+    ],
+    "forbiddenTitleFields": [
+      "taskId",
+      "childIssueUrl",
+      "terminalEvidenceUrl",
+      "terminalSummary",
+      "childBrokerId",
+      "handoffBrokerId",
+      "providerMessageId",
+      "receiptStatus",
+      "ackStatus",
+      "rawLog",
+      "runtimeBootstrapPath"
+    ],
+    "parentBrokerOnly": true,
+    "liveProviderSend": false,
+    "terminalOutboxAckMutated": false,
+    "isApproval": false,
+    "isTerminalAck": false,
+    "isReadReceipt": false,
+    "knownTotalExampleTitle": "A2A Terminal Brief 완료: dungae(1/7)",
+    "unknownTotalExampleTitle": "A2A Terminal Brief 완료: yukson(2)",
+    "unknownTotalFallback": "omit the denominator when total is unknown; never render <completed>/?",
+    "unknownTotalDenominatorForbidden": true,
+    "coveredOriginBrokerIds": [
+      "gwakga",
+      "seoseo"
+    ]
+  },
+  "parentRoundTitleExamples": [
+    {
+      "name": "gwakga-origin-known-total-title",
+      "parentRoundId": "round-gwakga-origin-seoseo-handoff-canary-001",
+      "originBrokerId": "gwakga",
+      "parentBrokerId": "gwakga",
+      "handoffBrokerId": "seoseo",
+      "childBrokerId": "seoseo",
+      "workerId": "dungae",
+      "statusLabel": "완료",
+      "roundProgress": {
+        "completed": 1,
+        "total": 7,
+        "totalKnown": true
+      },
+      "terminalBriefTitle": "A2A Terminal Brief 완료: dungae(1/7)",
+      "rendererBrokerId": "gwakga",
+      "parentBrokerOnly": true,
+      "unknownTotalDenominatorRendered": false,
+      "liveProviderSend": false,
+      "terminalOutboxAckMutated": false,
+      "isApproval": false,
+      "isTerminalAck": false,
+      "isReadReceipt": false
+    },
+    {
+      "name": "seoseo-origin-unknown-total-title",
+      "parentRoundId": "round-seoseo-origin-gwakga-handoff-canary-001",
+      "originBrokerId": "seoseo",
+      "parentBrokerId": "seoseo",
+      "handoffBrokerId": "gwakga",
+      "childBrokerId": "gwakga",
+      "workerId": "yukson",
+      "statusLabel": "완료",
+      "roundProgress": {
+        "completed": 2,
+        "total": null,
+        "totalKnown": false
+      },
+      "terminalBriefTitle": "A2A Terminal Brief 완료: yukson(2)",
+      "rendererBrokerId": "seoseo",
+      "parentBrokerOnly": true,
+      "unknownTotalDenominatorRendered": false,
+      "forbiddenUnknownDenominator": "(2/?)",
+      "liveProviderSend": false,
+      "terminalOutboxAckMutated": false,
+      "isApproval": false,
+      "isTerminalAck": false,
+      "isReadReceipt": false
+    }
+  ]
 }

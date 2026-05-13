@@ -1,8 +1,8 @@
 # Parent Terminal Brief aggregation checklist
 
-Issue: [a2a-plane#269](https://github.com/jinwon-int/a2a-plane/issues/269)  
-Contract: `contracts/a2a/parent-terminal-brief-aggregation.md`  
-Fixture: `fixtures/contract/parent-terminal-brief-aggregation.json`  
+Issue: [a2a-plane#269](https://github.com/jinwon-int/a2a-plane/issues/269)
+Contract: `contracts/a2a/parent-terminal-brief-aggregation.md`
+Fixture: `fixtures/contract/parent-terminal-brief-aggregation.json`
 Canary: Gwakga-origin parent round with Seoseo handoff child task
 
 This checklist is for PR/Done/Block evidence on parent-broker Terminal Brief aggregation work. It is intentionally no-live: it does not deploy or restart services, send provider messages, mutate production databases, mutate terminal-outbox ACK rows, merge PRs, publish releases, or change repository visibility.

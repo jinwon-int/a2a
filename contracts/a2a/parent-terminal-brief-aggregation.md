@@ -51,7 +51,7 @@ Every parent aggregation projection must carry these fields:
 | `terminalKind` | One of `pr`, `done`, or `block`. |
 | `terminalEvidenceUrl` | URL of redacted PR/Done/Block evidence. |
 | `terminalSummary` | Bounded human-readable summary suitable for the parent Terminal Brief. |
-| `terminalBriefTitle` | Concise parent-broker-rendered title using `A2A Terminal Brief <상태>: <worker>(<completed>/<total>)`, for example `A2A Terminal Brief 완료: dungae(1/7)`. |
+| `terminalBriefTitle` | Concise parent-broker-rendered title. With a known total, use `A2A Terminal Brief <상태>: <worker>(<completed>/<total>)`, for example `A2A Terminal Brief 완료: dungae(1/7)`. If the round total is unknown, omit the denominator rather than rendering `?`, for example `A2A Terminal Brief 완료: yukson(2)`. |
 | `projectionState` | `pending`, `projected`, `blocked`, or `conflict`. |
 | `redacted` | Must be `true`. |
 | `projectedAt` | ISO-8601 timestamp when the parent projection was recorded. |
@@ -73,12 +73,15 @@ The aggregate Terminal Brief title is a parent-broker-only projection. The child
 
 Title gates:
 
-- format: `A2A Terminal Brief <상태>: <worker>(<completed>/<total>)`;
+- known-total format: `A2A Terminal Brief <상태>: <worker>(<completed>/<total>)`;
+- unknown-total fallback: `A2A Terminal Brief <상태>: <worker>(<completed>)`; the parent broker must never render an incorrect denominator such as `(2/?)`;
 - example success title: `A2A Terminal Brief 완료: dungae(1/7)`;
-- title source: parent broker ledger fields for terminal status, worker id, completed count, and total count;
+- title source: parent broker ledger fields for terminal status, worker id, completed count, and total count when known;
 - max length: 80 characters;
 - forbidden title content: task id, child issue URL, PR/Done/Block URL, terminal summary/body, child broker id, handoff broker id, provider message id, receipt status, ACK status, raw logs, secrets, private paths, and runtime/bootstrap file names;
 - the title is not proof of provider delivery, operator receipt, approval, or terminal-outbox ACK.
+
+The concise title policy is broker-neutral: both Gwakga-origin and Seoseo-origin parent rounds use the same parent-broker-only renderer and the same no-live/no-ACK gates. The canary fixture includes one known-total Gwakga-origin title and one unknown-total Seoseo-origin title to prevent regressions to verbose or ambiguous title text.
 
 ## Gwakga-origin + Seoseo-handoff canary contract
 

@@ -322,6 +322,9 @@ assert.equal(parentTerminalBriefAggregation.canaryMode, 'no-live-synthetic-proje
 assert.equal(parentTerminalBriefAggregation.terminalBriefTitlePolicy.scope, 'parent-broker-only');
 assert.equal(parentTerminalBriefAggregation.terminalBriefTitlePolicy.rendererBrokerId, parentTerminalBriefAggregation.parentBrokerId);
 assert.equal(parentTerminalBriefAggregation.terminalBriefTitlePolicy.exampleTitle, 'A2A Terminal Brief 완료: dungae(1/7)');
+assert.equal(parentTerminalBriefAggregation.terminalBriefTitlePolicy.knownTotalExampleTitle, 'A2A Terminal Brief 완료: dungae(1/7)');
+assert.equal(parentTerminalBriefAggregation.terminalBriefTitlePolicy.unknownTotalExampleTitle, 'A2A Terminal Brief 완료: yukson(2)');
+assert.equal(parentTerminalBriefAggregation.terminalBriefTitlePolicy.unknownTotalDenominatorForbidden, true);
 assert.equal(parentTerminalBriefAggregation.terminalBriefTitlePolicy.parentBrokerOnly, true);
 assert.equal(parentTerminalBriefAggregation.terminalBriefTitlePolicy.liveProviderSend, false);
 assert.equal(parentTerminalBriefAggregation.terminalBriefTitlePolicy.terminalOutboxAckMutated, false);
@@ -329,6 +332,7 @@ assert.equal(parentTerminalBriefAggregation.terminalBriefTitlePolicy.isApproval,
 assert.equal(parentTerminalBriefAggregation.terminalBriefTitlePolicy.isTerminalAck, false);
 assert.equal(parentTerminalBriefAggregation.terminalBriefTitlePolicy.isReadReceipt, false);
 assert.ok(parentTerminalBriefAggregation.terminalBriefTitlePolicy.forbiddenTitleFields.includes('runtimeBootstrapPath'));
+assert.deepEqual(parentTerminalBriefAggregation.terminalBriefTitlePolicy.coveredOriginBrokerIds, ['gwakga', 'seoseo']);
 
 const parentProjection = parentTerminalBriefAggregation.projection;
 for (const field of parentTerminalBriefAggregation.requiredProjectionFields) {
@@ -351,7 +355,7 @@ assert.equal(parentProjection.terminalBriefTitle, 'A2A Terminal Brief 완료: du
 assert.equal(parentProjection.terminalBriefTitleOwnerBrokerId, parentTerminalBriefAggregation.parentBrokerId);
 assert.equal(parentProjection.terminalBriefTitleRenderedByParentBrokerOnly, true);
 assert.equal(parentProjection.workerId, 'dungae');
-assert.deepEqual(parentProjection.roundProgress, { completed: 1, total: 7 });
+assert.deepEqual(parentProjection.roundProgress, { completed: 1, total: 7, totalKnown: true });
 assert.ok(parentProjection.terminalBriefTitle.length <= parentTerminalBriefAggregation.terminalBriefTitlePolicy.maxChars);
 assert.match(
   parentProjection.terminalBriefTitle,
@@ -370,6 +374,46 @@ for (const forbidden of [
     `parent title must not include verbose/sensitive projection field ${forbidden}`,
   );
 }
+
+const parentTitleExamplesByOrigin = new Map(
+  parentTerminalBriefAggregation.parentRoundTitleExamples.map((example) => [example.originBrokerId, example]),
+);
+assert.deepEqual([...parentTitleExamplesByOrigin.keys()].sort(), ['gwakga', 'seoseo']);
+for (const example of parentTerminalBriefAggregation.parentRoundTitleExamples) {
+  assert.equal(example.parentBrokerId, example.originBrokerId);
+  assert.equal(example.rendererBrokerId, example.parentBrokerId);
+  assert.equal(example.parentBrokerOnly, true);
+  assert.equal(example.liveProviderSend, false);
+  assert.equal(example.terminalOutboxAckMutated, false);
+  assert.equal(example.isApproval, false);
+  assert.equal(example.isTerminalAck, false);
+  assert.equal(example.isReadReceipt, false);
+  assert.equal(example.unknownTotalDenominatorRendered, false);
+  assert.ok(example.terminalBriefTitle.length <= parentTerminalBriefAggregation.terminalBriefTitlePolicy.maxChars);
+  assert.ok(
+    !/\(\d+\/\?\)/.test(example.terminalBriefTitle),
+    `${example.name} must not render an unknown denominator as ?`,
+  );
+  assert.ok(!example.terminalBriefTitle.includes(example.childBrokerId));
+  assert.ok(!example.terminalBriefTitle.includes(example.handoffBrokerId));
+  if (example.roundProgress.totalKnown) {
+    assert.match(
+      example.terminalBriefTitle,
+      /^A2A Terminal Brief (완료|실패|차단|PR): [a-z0-9_-]+\(\d+\/\d+\)$/,
+    );
+  } else {
+    assert.equal(example.roundProgress.total, null);
+    assert.match(
+      example.terminalBriefTitle,
+      /^A2A Terminal Brief (완료|실패|차단|PR): [a-z0-9_-]+\(\d+\)$/,
+    );
+  }
+}
+assert.equal(
+  parentTitleExamplesByOrigin.get('seoseo')?.terminalBriefTitle,
+  parentTerminalBriefAggregation.terminalBriefTitlePolicy.unknownTotalExampleTitle,
+);
+assert.equal(parentTitleExamplesByOrigin.get('seoseo')?.forbiddenUnknownDenominator, '(2/?)');
 
 const parentLifecycleSteps = new Map(
   parentTerminalBriefAggregation.metadataLifecycle.map((step) => [step.step, step]),
@@ -392,11 +436,13 @@ assert.equal(metadataScenario?.then.parentRoundIdRewritten, false);
 assert.equal(metadataScenario?.then.childBrokerOfRecord, 'seoseo');
 
 const titleScenario = parentAggregationScenarioByName.get(
-  'parent-brief-title-is-concise-parent-broker-only',
+  'gwakga-origin-parent-brief-title-is-concise-parent-broker-only',
 );
 assert.equal(titleScenario?.then.terminalBriefTitle, 'A2A Terminal Brief 완료: dungae(1/7)');
 assert.equal(titleScenario?.then.rendererBrokerId, parentTerminalBriefAggregation.parentBrokerId);
 assert.equal(titleScenario?.then.parentBrokerOnly, true);
+assert.equal(titleScenario?.then.titleDoesNotContainUnknownDenominator, true);
+assert.equal(titleScenario?.then.forbiddenUnknownDenominator, '(1/?)');
 assert.equal(titleScenario?.then.includesTaskId, false);
 assert.equal(titleScenario?.then.includesChildIssueUrl, false);
 assert.equal(titleScenario?.then.includesTerminalEvidenceUrl, false);
@@ -409,6 +455,26 @@ assert.equal(titleScenario?.then.terminalOutboxAckMutated, false);
 assert.equal(titleScenario?.then.isApproval, false);
 assert.equal(titleScenario?.then.isTerminalAck, false);
 assert.equal(titleScenario?.then.isReadReceipt, false);
+
+const seoseoOriginUnknownTotalTitleScenario = parentAggregationScenarioByName.get(
+  'seoseo-origin-parent-brief-title-uses-unknown-total-fallback',
+);
+assert.equal(seoseoOriginUnknownTotalTitleScenario?.given.originBrokerId, 'seoseo');
+assert.equal(seoseoOriginUnknownTotalTitleScenario?.given.parentBrokerId, 'seoseo');
+assert.equal(seoseoOriginUnknownTotalTitleScenario?.given.total, null);
+assert.equal(seoseoOriginUnknownTotalTitleScenario?.given.totalKnown, false);
+assert.equal(seoseoOriginUnknownTotalTitleScenario?.then.terminalBriefTitle, 'A2A Terminal Brief 완료: yukson(2)');
+assert.equal(seoseoOriginUnknownTotalTitleScenario?.then.rendererBrokerId, 'seoseo');
+assert.equal(seoseoOriginUnknownTotalTitleScenario?.then.parentBrokerOnly, true);
+assert.equal(seoseoOriginUnknownTotalTitleScenario?.then.titleOmitsUnknownDenominator, true);
+assert.equal(seoseoOriginUnknownTotalTitleScenario?.then.titleDoesNotContainUnknownDenominator, true);
+assert.equal(seoseoOriginUnknownTotalTitleScenario?.then.forbiddenUnknownDenominator, '(2/?)');
+assert.ok(!seoseoOriginUnknownTotalTitleScenario?.then.terminalBriefTitle.includes('(2/?)'));
+assert.equal(seoseoOriginUnknownTotalTitleScenario?.then.liveProviderSend, false);
+assert.equal(seoseoOriginUnknownTotalTitleScenario?.then.terminalOutboxAckMutated, false);
+assert.equal(seoseoOriginUnknownTotalTitleScenario?.then.isApproval, false);
+assert.equal(seoseoOriginUnknownTotalTitleScenario?.then.isTerminalAck, false);
+assert.equal(seoseoOriginUnknownTotalTitleScenario?.then.isReadReceipt, false);
 
 const projectedScenario = parentAggregationScenarioByName.get(
   'parent-aggregates-child-terminal-evidence-as-redacted-projection',

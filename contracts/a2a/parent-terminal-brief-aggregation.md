@@ -83,6 +83,42 @@ Title gates:
 
 The concise title policy is broker-neutral: both Gwakga-origin and Seoseo-origin parent rounds use the same parent-broker-only renderer and the same no-live/no-ACK gates. The canary fixture includes one known-total Gwakga-origin title and one unknown-total Seoseo-origin title to prevent regressions to verbose or ambiguous title text.
 
+## Body/evidence separation
+
+The aggregate Terminal Brief notification consists of two distinct, non-overlapping parts:
+
+- **Title**: the parent-broker-only, bounded, concise line defined in the Concise title semantics section above. The title is strictly limited to 80 characters, follows the known-total or unknown-total format, and must not include body content, terminal evidence URLs, terminal summary text, child broker IDs, handoff broker IDs, provider message IDs, receipt status, ACK status, or runtime/bootstrap file names.
+- **Body/evidence**: the redacted child terminal PR/Done/Block evidence payload, rendered separately from the title. The body may include issue/PR URLs, bounded summaries, changed-file counts, check names, and pass/fail status — but must not duplicate the title, re-render the parentRoundId as title text, or embed provider delivery details.
+
+Separation gates:
+
+1. The title and body/evidence must be stored, transmitted, and rendered as separate fields. A parent broker must not concatenate the title and body into a single text block.
+2. The title must not contain terminal summary text, terminal evidence URLs, child broker IDs, handoff broker IDs, provider message IDs, receipt status, or ACK status.
+3. The body/evidence must not contain the `terminalBriefTitle` field or re-render the round title as an evidence header.
+4. A body-only field with a blank or falling-back title is a projection error and must fail closed.
+5. Terminal Brief notifications dispatched through the parent broker must carry the title as a first-class metadata field, not embedded in the message body.
+
+This separation ensures the parent broker can independently compact/truncate the title for channel constraints (80 chars max) without touching evidence redaction, and cannot accidentally send evidence-identifying data in the notification title.
+
+## Parent-only notification ownership
+
+The aggregate Terminal Brief notification is owned and administered by the parent broker only. Child brokers, handoff brokers, and replay handlers must not:
+
+1. Send, update, or retract the parent-round aggregate Terminal Brief notification themselves.
+2. Render aggregate titles for a parent round they do not own.
+3. Override, overwrite, or mutate the `terminalBriefTitle` field on a parent projection.
+4. Dispatch a parent-round aggregate notification to any provider, including Telegram, without the parent broker's lifecycle routing.
+
+Ownership gates:
+
+1. The `terminalBriefTitle` may only be set by the broker whose `parentBrokerId` equals the projection's origin (`originBrokerId` in v0).
+2. A child or handoff broker that receives parent metadata must not render its own aggregate Terminal Brief notification for the parent round.
+3. Child evidence produced by a handoff broker flows into the parent aggregation ledger as evidence only; the handoff broker must not send its own parent-round title to any provider.
+4. Replay or re-projection of a parent aggregation must preserve the original `parentBrokerId` and must not change the title owner.
+5. If the parent broker becomes unavailable, no other broker may assume parent notification ownership without a contract version change that explicitly reassigns `originBrokerId`. This prevents silent ownership hijack during recovery.
+
+The only exception is a handoff broker acting as a pure evidence relay (projecting child evidence back to the parent ledger as projection input, not as parent-round notification).
+
 ## Gwakga-origin + Seoseo-handoff canary contract
 
 The v0 canary proves only this path:
@@ -102,6 +138,52 @@ This canary does not permit cross-worker registration, parent-broker worker disp
 - Do not rerun a child task just because parent aggregation failed. Create a new child task only with a new handoff/idempotency key and explicit operator scope.
 - Replaying parent aggregation with the same `projectionKey` must return the existing projection and evidence URL with `newProjectionCreated: false`.
 - A same-key/different-payload replay is a conflict and must fail closed.
+
+## R9 addition: 7-child parent round and activation gate
+
+### Fixture
+
+The R9 concise-brief runtime readiness round uses a 7-child parent round fixture with known-total and unknown-total fallback coverage. The fixture includes:
+
+1. **Direct Team1 children**: 3 direct child tasks with known total (completed=N/3), producing concise titles such as `A2A Terminal Brief 완료: yukson(1/3)`, `A2A Terminal Brief 완료: bangtong(2/3)`, `A2A Terminal Brief 완료: sogyo(3/3)`.
+2. **Cross-broker Team2 projected children**: 4 handoff child tasks projected back to the parent broker, with known total (completed=N/4), producing titles such as `A2A Terminal Brief 완료: dungae(1/4)`, `A2A Terminal Brief 완료: gwakga(2/4)`, `A2A Terminal Brief 완료: jingun(3/4)`, `A2A Terminal Brief 완료: soonwook(4/4)`.
+3. **Unknown-total fallback**: A scenario with `totalKnown: false` producing title `A2A Terminal Brief 완료: yukson(2)` (no denominator).
+
+### Activation plan (approval-gated, not executed)
+
+This contract does not authorize live activation. The following approval-gated steps are documented as the activation plan for future operator execution:
+
+| Step | Action | Requires operator approval? | Evidence required after execution |
+| --- | --- | --- | --- |
+| A1 | Verify concise title renderer code is deployed to the Gateway plugin or broker runtime that renders aggregate round titles. | No — read-only verification of already-merged code. | Run test output showing the 7-child fixture renders correct known-total and unknown-total titles. |
+| A2 | Verify body/evidence separation in the notification adapter: title and body are separate fields, no body content leaks into the title. | No — read-only verification of already-merged code. | Adapter schema snapshot or test confirming title is a separate wire field. |
+| A3 | Verify parent-only notification ownership: only the broker matching `originBrokerId` may send/update the aggregate notification. | No — read-only contract/code review. | Code or contract showing `parentBrokerId` must equal `originBrokerId` for notification dispatch. |
+| A4 | Enable the concise title renderer in a staging/isolated environment, connected to a non-production provider target. | Yes — separate operator approval naming the staging environment. | Approval comment URL; staging health check output. |
+| A5 | Execute one-shot canary: dispatch a synthetic 7-child parent round aggregate notification to the staging provider target. | Yes — approval must name the exact task id, round id, and staging target. | Run output showing all 7 titles rendered correctly; provider accepted-send evidence recorded as non-ACK. |
+| A6 | Verify no live provider send occurred outside the approved staging target, no terminal-outbox ACK was recorded, and no production database was mutated. | No — post-action read-only audit. | Outbox snapshot showing ACK column unchanged; no unapproved provider send logs. |
+| A7 | Restore staging environment to no-live default: disable the notification bridge, remove the staging allowlist, stop the staging container. | No — documented rollback step. | Restoration evidence showing staging disabled and no-live defaults active. |
+| A8 | Present GO decision for production activation with rollback evidence, operator approval, and all A1-A7 evidence linked. | Yes — explicit GO approval naming the exact production round, scope, and provider target. | GO approval comment URL; linked evidence for all sub-steps. |
+
+Activation plan safety gates:
+
+1. Steps A1-A3 may be executed in read-only mode without operator approval — they verify already-merged code.
+2. Step A4 requires a separate operator approval naming the staging environment. Staging must be isolated from production (different provider token, different broker instance, non-production database).
+3. Step A5 requires its own separate operator approval naming the exact task id, round id, and staging target. The same approval must not cover other actions.
+4. Staging provider send must be recorded as provider accepted-send evidence only (receipt level 1). It must not be treated as terminal-outbox ACK, operator-visible receipt, or GO approval.
+5. Step A8 requires yet another separate operator approval for production activation. The staging canary (step A5) approval must not be reused for production.
+6. No step may deploy to production, restart production Gateway/broker, mutate production database or terminal-outbox ACK rows, change production secrets, or modify repository visibility.
+
+### No-live proof requirement
+
+Before any activation step that involves provider send (A5, A8), the operator must prove that:
+
+1. The round dispatch carries `parentRoundId`, `originBrokerId`, `parentBrokerId`, and `handoffBrokerId` (when applicable) as required metadata.
+2. Each child projection in the 7-child round uses a stable `projectionKey` derived from `parentRoundId`, `originBrokerId`, `childTaskId`, and terminal kind.
+3. Replayed projection with the same key returns the existing entry and does not create a duplicate notification.
+4. The `terminalBriefTitle` is rendered by the parent broker only and follows the known-total or unknown-total format.
+5. Body/evidence is separated from the title: the title stays within 80 chars and contains no evidence URLs, broker IDs, task IDs, receipt status, or ACK status.
+6. No provider send occurs outside the approved staging or production target.
+7. Runtime/bootstrap hygiene is confirmed before any notification dispatch: `AGENTS.md`, `SOUL.md`, `USER.md`, `TOOLS.md`, `HEARTBEAT.md`, `IDENTITY.md`, and `.openclaw/**` must not enter the notification title, body, or evidence URLs.
 
 ## Evidence requirements
 

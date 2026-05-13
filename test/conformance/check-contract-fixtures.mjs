@@ -319,6 +319,16 @@ assert.equal(parentTerminalBriefAggregation.handoffBrokerId, 'seoseo');
 assert.equal(parentTerminalBriefAggregation.childBrokerId, 'seoseo');
 assert.equal(parentTerminalBriefAggregation.brokerOfRecord, 'seoseo');
 assert.equal(parentTerminalBriefAggregation.canaryMode, 'no-live-synthetic-projection');
+assert.equal(parentTerminalBriefAggregation.terminalBriefTitlePolicy.scope, 'parent-broker-only');
+assert.equal(parentTerminalBriefAggregation.terminalBriefTitlePolicy.rendererBrokerId, parentTerminalBriefAggregation.parentBrokerId);
+assert.equal(parentTerminalBriefAggregation.terminalBriefTitlePolicy.exampleTitle, 'A2A Terminal Brief 완료: dungae(1/7)');
+assert.equal(parentTerminalBriefAggregation.terminalBriefTitlePolicy.parentBrokerOnly, true);
+assert.equal(parentTerminalBriefAggregation.terminalBriefTitlePolicy.liveProviderSend, false);
+assert.equal(parentTerminalBriefAggregation.terminalBriefTitlePolicy.terminalOutboxAckMutated, false);
+assert.equal(parentTerminalBriefAggregation.terminalBriefTitlePolicy.isApproval, false);
+assert.equal(parentTerminalBriefAggregation.terminalBriefTitlePolicy.isTerminalAck, false);
+assert.equal(parentTerminalBriefAggregation.terminalBriefTitlePolicy.isReadReceipt, false);
+assert.ok(parentTerminalBriefAggregation.terminalBriefTitlePolicy.forbiddenTitleFields.includes('runtimeBootstrapPath'));
 
 const parentProjection = parentTerminalBriefAggregation.projection;
 for (const field of parentTerminalBriefAggregation.requiredProjectionFields) {
@@ -337,6 +347,29 @@ assert.equal(parentProjection.liveProviderSend, false);
 assert.equal(parentProjection.isApproval, false);
 assert.equal(parentProjection.isTerminalAck, false);
 assert.equal(parentProjection.isReadReceipt, false);
+assert.equal(parentProjection.terminalBriefTitle, 'A2A Terminal Brief 완료: dungae(1/7)');
+assert.equal(parentProjection.terminalBriefTitleOwnerBrokerId, parentTerminalBriefAggregation.parentBrokerId);
+assert.equal(parentProjection.terminalBriefTitleRenderedByParentBrokerOnly, true);
+assert.equal(parentProjection.workerId, 'dungae');
+assert.deepEqual(parentProjection.roundProgress, { completed: 1, total: 7 });
+assert.ok(parentProjection.terminalBriefTitle.length <= parentTerminalBriefAggregation.terminalBriefTitlePolicy.maxChars);
+assert.match(
+  parentProjection.terminalBriefTitle,
+  /^A2A Terminal Brief (완료|실패|차단|PR): [a-z0-9_-]+\(\d+\/\d+\)$/,
+);
+for (const forbidden of [
+  parentProjection.childTaskId,
+  parentProjection.childIssueUrl,
+  parentProjection.terminalEvidenceUrl,
+  parentProjection.terminalSummary,
+  parentProjection.childBrokerId,
+  parentProjection.handoffBrokerId,
+]) {
+  assert.ok(
+    !parentProjection.terminalBriefTitle.includes(forbidden),
+    `parent title must not include verbose/sensitive projection field ${forbidden}`,
+  );
+}
 
 const parentLifecycleSteps = new Map(
   parentTerminalBriefAggregation.metadataLifecycle.map((step) => [step.step, step]),
@@ -357,6 +390,25 @@ assert.equal(metadataScenario?.then.metadataCopiedToChildEnvelope, true);
 assert.equal(metadataScenario?.then.originBrokerIdRewritten, false);
 assert.equal(metadataScenario?.then.parentRoundIdRewritten, false);
 assert.equal(metadataScenario?.then.childBrokerOfRecord, 'seoseo');
+
+const titleScenario = parentAggregationScenarioByName.get(
+  'parent-brief-title-is-concise-parent-broker-only',
+);
+assert.equal(titleScenario?.then.terminalBriefTitle, 'A2A Terminal Brief 완료: dungae(1/7)');
+assert.equal(titleScenario?.then.rendererBrokerId, parentTerminalBriefAggregation.parentBrokerId);
+assert.equal(titleScenario?.then.parentBrokerOnly, true);
+assert.equal(titleScenario?.then.includesTaskId, false);
+assert.equal(titleScenario?.then.includesChildIssueUrl, false);
+assert.equal(titleScenario?.then.includesTerminalEvidenceUrl, false);
+assert.equal(titleScenario?.then.includesTerminalSummary, false);
+assert.equal(titleScenario?.then.includesChildBrokerId, false);
+assert.equal(titleScenario?.then.includesHandoffBrokerId, false);
+assert.equal(titleScenario?.then.includesReceiptOrAckState, false);
+assert.equal(titleScenario?.then.liveProviderSend, false);
+assert.equal(titleScenario?.then.terminalOutboxAckMutated, false);
+assert.equal(titleScenario?.then.isApproval, false);
+assert.equal(titleScenario?.then.isTerminalAck, false);
+assert.equal(titleScenario?.then.isReadReceipt, false);
 
 const projectedScenario = parentAggregationScenarioByName.get(
   'parent-aggregates-child-terminal-evidence-as-redacted-projection',

@@ -61,6 +61,7 @@
     "terminalKind",
     "terminalEvidenceUrl",
     "terminalSummary",
+    "terminalBriefTitle",
     "projectionState",
     "redacted",
     "projectedAt",
@@ -89,7 +90,15 @@
     "liveProviderSend": false,
     "isApproval": false,
     "isTerminalAck": false,
-    "isReadReceipt": false
+    "isReadReceipt": false,
+    "workerId": "dungae",
+    "roundProgress": {
+      "completed": 1,
+      "total": 7
+    },
+    "terminalBriefTitle": "A2A Terminal Brief 완료: dungae(1/7)",
+    "terminalBriefTitleOwnerBrokerId": "gwakga",
+    "terminalBriefTitleRenderedByParentBrokerOnly": true
   },
   "scenarios": [
     {
@@ -125,6 +134,38 @@
         "redacted": true,
         "terminalOutboxAckMutated": false,
         "liveProviderSend": false,
+        "isApproval": false,
+        "isTerminalAck": false,
+        "isReadReceipt": false
+      }
+    },
+    {
+      "name": "parent-brief-title-is-concise-parent-broker-only",
+      "given": {
+        "parentBrokerId": "gwakga",
+        "childBrokerId": "seoseo",
+        "workerId": "dungae",
+        "completed": 1,
+        "total": 7,
+        "statusLabel": "완료"
+      },
+      "when": {
+        "operation": "parentTerminalBrief.renderTitle"
+      },
+      "then": {
+        "terminalBriefTitle": "A2A Terminal Brief 완료: dungae(1/7)",
+        "rendererBrokerId": "gwakga",
+        "parentBrokerOnly": true,
+        "maxChars": 80,
+        "includesTaskId": false,
+        "includesChildIssueUrl": false,
+        "includesTerminalEvidenceUrl": false,
+        "includesTerminalSummary": false,
+        "includesChildBrokerId": false,
+        "includesHandoffBrokerId": false,
+        "includesReceiptOrAckState": false,
+        "liveProviderSend": false,
+        "terminalOutboxAckMutated": false,
         "isApproval": false,
         "isTerminalAck": false,
         "isReadReceipt": false
@@ -199,6 +240,7 @@
     "local conformance output",
     "parentRoundId and originBrokerId",
     "projectionKey",
+    "concise parent-broker-only Terminal Brief title proof",
     "redaction confirmation",
     "no-live-send and no-ack confirmation",
     "duplicate projection no-replay proof",
@@ -225,5 +267,48 @@
     "round": "a2a-plane-269-parent-terminal-brief-aggregation",
     "scope": "Gwakga-origin plus Seoseo-handoff parent Terminal Brief aggregation projection",
     "nonAckBoundary": "parent projections are evidence ledger entries only, not approval, read receipt, or terminal ACK"
+  },
+  "workerId": "dungae",
+  "roundProgress": {
+    "completed": 1,
+    "total": 7
+  },
+  "terminalBriefTitlePolicy": {
+    "scope": "parent-broker-only",
+    "rendererBrokerId": "gwakga",
+    "format": "A2A Terminal Brief <statusLabel>: <workerId>(<completed>/<total>)",
+    "exampleTitle": "A2A Terminal Brief 완료: dungae(1/7)",
+    "maxChars": 80,
+    "statusLabels": {
+      "success": "완료",
+      "failure": "실패",
+      "block": "차단",
+      "pr": "PR"
+    },
+    "sourceFields": [
+      "statusLabel",
+      "workerId",
+      "roundProgress.completed",
+      "roundProgress.total"
+    ],
+    "forbiddenTitleFields": [
+      "taskId",
+      "childIssueUrl",
+      "terminalEvidenceUrl",
+      "terminalSummary",
+      "childBrokerId",
+      "handoffBrokerId",
+      "providerMessageId",
+      "receiptStatus",
+      "ackStatus",
+      "rawLog",
+      "runtimeBootstrapPath"
+    ],
+    "parentBrokerOnly": true,
+    "liveProviderSend": false,
+    "terminalOutboxAckMutated": false,
+    "isApproval": false,
+    "isTerminalAck": false,
+    "isReadReceipt": false
   }
 }

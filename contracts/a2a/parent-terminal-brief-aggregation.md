@@ -1,14 +1,16 @@
-# Parent Terminal Brief Aggregation Contract (v0)
+# Parent Terminal Brief Aggregation Contract (v1)
 
-> **v0 (2026-05-13):** Parent-broker Terminal Brief aggregation is a projection contract, not a worker-dispatch, receipt, or ACK contract. It defines how a parent broker records redacted terminal PR/Done/Block evidence from child broker tasks for a shared parent round.
+> **v0 (2026-05-13):** Parent-broker Terminal Brief aggregation defined the Gwakga-origin + Seoseo-handoff canary path with the constraint `parentBrokerId == originBrokerId`. The v0 contract is preserved below; v1 lifts this constraint and defines symmetric origin-broker behavior.
+>
+> **v1 (2026-05-13, R12):** The origin-broker relationship is symmetric: any registered broker may be the origin broker, and a different broker may be the parent broker. The v0 constraint `parentBrokerId` must equal `originBrokerId` is removed. All v0 lifecycle rules, projection fields, redaction boundaries, title semantics, body/evidence separation, and safety gates remain in effect unless explicitly superseded by a v1 section.
 
-This contract covers the Gwakga-origin + Seoseo-handoff canary path: Gwakga owns the parent round and aggregation ledger, while Seoseo may own a handoff child task and publish redacted terminal evidence back to the parent aggregation view.
+This contract covers the Gwakga-origin + Seoseo-handoff canary path and its symmetric counterpart (Seoseo-origin + Gwakga-handoff). A broker owns the parent round and aggregation ledger, while a different broker may own a handoff child task and publish redacted terminal evidence back to the parent aggregation view. The relationship is symmetric: either broker can be the origin.
 
 ## Actors
 
-- **Parent broker**: broker that owns the parent round and renders the aggregate Terminal Brief. In the canary, this is `gwakga`.
-- **Origin broker**: broker that created the parent round metadata. For v0 aggregation it must equal the parent broker. In the canary, this is `gwakga`.
-- **Handoff broker**: broker that owns a child task created through handoff. In the canary, this is `seoseo`.
+- **Parent broker**: broker that owns the parent round and renders the aggregate Terminal Brief. In the Gwakga-origin canary, this is `gwakga`; in the Seoseo-origin canary, this is `seoseo`.
+- **Origin broker**: broker that created the parent round metadata. In v0 it must equal the parent broker; in v1 (symmetric) it may differ from the parent broker. For the Gwakga-origin canary the origin broker is `gwakga`; for the Seoseo-origin canary it is `seoseo`.
+- **Handoff broker**: broker that owns a child task created through handoff. In the Gwakga-origin canary, this is `seoseo`; in the Seoseo-origin canary, this is `gwakga`.
 - **Child task broker of record**: the broker that controls child task lifecycle, worker assignment, and terminal evidence production.
 - **Projection**: the parent broker's redacted, bounded record of the child terminal result.
 
@@ -43,7 +45,7 @@ Every parent aggregation projection must carry these fields:
 | `projectionKey` | Stable idempotency key derived from `parentRoundId`, `originBrokerId`, `childTaskId`, and terminal kind. |
 | `parentRoundId` | Stable parent round id minted by `originBrokerId`. |
 | `originBrokerId` | Broker that created the parent round; `gwakga` for the canary. |
-| `parentBrokerId` | Broker rendering the aggregate Terminal Brief; must equal `originBrokerId` in v0. |
+| `parentBrokerId` | Broker rendering the aggregate Terminal Brief. In v0 must equal `originBrokerId`; in v1 (symmetric) may differ from `originBrokerId`. |
 | `handoffBrokerId` | Broker that received/owns the child handoff; `seoseo` for the canary. |
 | `childBrokerId` | Broker of record for the child terminal task. |
 | `childTaskId` | Child task id under the child broker of record. |
@@ -81,7 +83,7 @@ Title gates:
 - forbidden title content: task id, child issue URL, PR/Done/Block URL, terminal summary/body, child broker id, handoff broker id, provider message id, receipt status, ACK status, raw logs, secrets, private paths, and runtime/bootstrap file names;
 - the title is not proof of provider delivery, operator receipt, approval, or terminal-outbox ACK.
 
-The concise title policy is broker-neutral: both Gwakga-origin and Seoseo-origin parent rounds use the same parent-broker-only renderer and the same no-live/no-ACK gates. The canary fixture includes one known-total Gwakga-origin title and one unknown-total Seoseo-origin title to prevent regressions to verbose or ambiguous title text.
+The concise title policy is broker-neutral and symmetric: both Gwakga-origin and Seoseo-origin parent rounds use the same parent-broker-only renderer and the same no-live/no-ACK gates, regardless of whether `parentBrokerId` equals `originBrokerId`. The canary fixture includes one known-total Gwakga-origin title, one unknown-total Seoseo-origin title, and one symmetric Seoseo-origin + Gwakga-parent title to prevent regressions to verbose or ambiguous title text.
 
 ## Body/evidence separation
 
@@ -111,7 +113,7 @@ The aggregate Terminal Brief notification is owned and administered by the paren
 
 Ownership gates:
 
-1. The `terminalBriefTitle` may only be set by the broker whose `parentBrokerId` equals the projection's origin (`originBrokerId` in v0).
+1. The `terminalBriefTitle` may only be set by the broker whose `parentBrokerId` equals the projection's broker of record. In v0, `parentBrokerId` must equal `originBrokerId`; in v1 (symmetric), `parentBrokerId` may differ from `originBrokerId`, and the title owner is determined by `parentBrokerId` alone.
 2. A child or handoff broker that receives parent metadata must not render its own aggregate Terminal Brief notification for the parent round.
 3. Child evidence produced by a handoff broker flows into the parent aggregation ledger as evidence only; the handoff broker must not send its own parent-round title to any provider.
 4. Replay or re-projection of a parent aggregation must preserve the original `parentBrokerId` and must not change the title owner.
@@ -119,9 +121,9 @@ Ownership gates:
 
 The only exception is a handoff broker acting as a pure evidence relay (projecting child evidence back to the parent ledger as projection input, not as parent-round notification).
 
-## Gwakga-origin + Seoseo-handoff canary contract
+## Gwakga-origin + Seoseo-handoff canary contract (v0)
 
-The v0 canary proves only this path:
+The v0 canary proves only this path (parent-broker-equals-origin):
 
 1. Gwakga mints `parentRoundId` and `originBrokerId` for a parent aggregation round.
 2. Gwakga creates a child handoff envelope for Seoseo that carries the parent metadata.
@@ -130,6 +132,49 @@ The v0 canary proves only this path:
 5. The aggregate brief links to the child terminal evidence but does not claim provider delivery, human receipt, approval, or ACK.
 
 This canary does not permit cross-worker registration, parent-broker worker dispatch on the child broker, provider sends, production database mutation, terminal-outbox ACK mutation, repository visibility changes, force-pushes, or automatic merges.
+
+## Seoseo-origin + Gwakga-handoff canary contract (v1 symmetric)
+
+The v1 symmetric canary proves the reverse path (origin-broker-differs-from-parent):
+
+1. Seoseo mints `parentRoundId` and `originBrokerId` for a parent aggregation round where Seoseo is the origin broker.
+2. Seoseo creates a child handoff envelope for Gwakga that carries the parent metadata.
+3. Gwakga owns the child task as broker of record and produces redacted terminal PR/Done/Block evidence.
+4. Seoseo records a single projection row in the parent Terminal Brief aggregation ledger.
+5. The aggregate brief links to the child terminal evidence but does not claim provider delivery, human receipt, approval, or ACK.
+6. `parentBrokerId` may equal `originBrokerId` (v0-style) or differ (v1 symmetric). When they differ, the parent broker is the broker rendering the aggregate Terminal Brief; the origin broker is the broker that created the parent round metadata. Title ownership, notification dispatch, and evidence projection follow the same v0 rules, with `parentBrokerId` replacing `originBrokerId` as the authoritative renderer.
+
+### Symmetric safe states
+
+| State | Meaning | Required conditions |
+| --- | --- | --- |
+| `symmetric_origin_only` | Origin broker created parent round metadata; no handoff child has been created yet. | `parentRoundId`, `originBrokerId`, `parentBrokerId` are set. `parentBrokerId` may equal `originBrokerId` or differ. |
+| `symmetric_handoff_created` | Origin broker created handoff child for the destination broker. | Handoff envelope carries `parentRoundId`, `originBrokerId`, `parentBrokerId`, `handoffBrokerId`. |
+| `symmetric_child_terminal` | Destination broker produced terminal child evidence and relayed it back to origin. | Terminal evidence is redacted, bounded, and linked to the parent projection. |
+| `symmetric_parent_projected` | Origin/parent broker recorded the child terminal evidence as a parent Terminal Brief projection. | Projection follows all v0 field requirements. |
+
+### Symmetric invariants
+
+1. `parentRoundId` is minted by the origin broker and remains stable across all child projections regardless of which broker is the parent.
+2. `originBrokerId` is immutable and must not be rewritten by the handoff broker or parent broker.
+3. `parentBrokerId` identifies the broker with notification dispatch authority. It may equal `originBrokerId` (v0) or differ (v1 symmetric).
+4. A symmetric handoff must copy `parentRoundId`, `originBrokerId`, and `parentBrokerId` into the handoff envelope metadata before task creation.
+5. The child broker must relay terminal evidence back to the origin broker's projection ledger, not to its own.
+6. Only the broker matching `parentBrokerId` may send or update the aggregate Terminal Brief notification.
+7. If `parentBrokerId != originBrokerId`, the notification must include `originBrokerId` metadata so recipients can distinguish the creator from the renderer.
+8. All safety gates (no-live, no-ACK, no DB mutation, no visibility change, no provider send, no secret disclosure, runtime/bootstrap hygiene) apply identically in symmetric mode.
+
+### Symmetric title examples
+
+When origin and parent differ, the parent broker renders a title that follows the same known-total or unknown-total format:
+
+| Origin | Parent | Handoff | Worker | Completed | Total | Title |
+| --- | --- | --- | --- | --- | --- | --- |
+| `gwakga` | `gwakga` | `seoseo` | `dungae` | 1 | 7 | `A2A Terminal Brief \uc644\ub8cc: dungae(1/7)` (v0 style, known-total) |
+| `seoseo` | `seoseo` | `gwakga` | `yukson` | 2 | unknown | `A2A Terminal Brief \uc644\ub8cc: yukson(2)` (v0 style, unknown-total) |
+| `seoseo` | `gwakga` | `seoseo` | `dungae` | 1 | 3 | `A2A Terminal Brief \uc644\ub8cc: dungae(1/3)` (v1 symmetric, origin differs from parent) |
+
+All titles must satisfy the same 80-char max, forbidden-content, and separation gates defined in the Concise title semantics section.
 
 ## Rollback and no-replay guidance
 
@@ -157,7 +202,7 @@ This contract does not authorize live activation. The following approval-gated s
 | --- | --- | --- | --- |
 | A1 | Verify concise title renderer code is deployed to the Gateway plugin or broker runtime that renders aggregate round titles. | No — read-only verification of already-merged code. | Run test output showing the 7-child fixture renders correct known-total and unknown-total titles. |
 | A2 | Verify body/evidence separation in the notification adapter: title and body are separate fields, no body content leaks into the title. | No — read-only verification of already-merged code. | Adapter schema snapshot or test confirming title is a separate wire field. |
-| A3 | Verify parent-only notification ownership: only the broker matching `originBrokerId` may send/update the aggregate notification. | No — read-only contract/code review. | Code or contract showing `parentBrokerId` must equal `originBrokerId` for notification dispatch. |
+| A3 | Verify parent-only notification ownership: only the broker matching `parentBrokerId` may send/update the aggregate notification. In v0 `parentBrokerId` equals `originBrokerId`; in v1 (symmetric) they may differ. | No — read-only contract/code review. | Code or contract showing `parentBrokerId` is the authoritative renderer for notification dispatch. |
 | A4 | Enable the concise title renderer in a staging/isolated environment, connected to a non-production provider target. | Yes — separate operator approval naming the staging environment. | Approval comment URL; staging health check output. |
 | A5 | Execute one-shot canary: dispatch a synthetic 7-child parent round aggregate notification to the staging provider target. | Yes — approval must name the exact task id, round id, and staging target. | Run output showing all 7 titles rendered correctly; provider accepted-send evidence recorded as non-ACK. |
 | A6 | Verify no live provider send occurred outside the approved staging target, no terminal-outbox ACK was recorded, and no production database was mutated. | No — post-action read-only audit. | Outbox snapshot showing ACK column unchanged; no unapproved provider send logs. |

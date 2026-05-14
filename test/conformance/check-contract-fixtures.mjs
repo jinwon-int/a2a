@@ -18,6 +18,7 @@ const fixtureFiles = {
   publicPolicy: 'public-compatibility-policy.json',
   replayTrace: 'second-worker-replay-trace.json',
   liveCanaryApprovalBoundary: 'live-canary-replay-approval-boundary.json',
+  stabilityGate: 'r20-stability-gate.json',
 };
 
 const forbiddenRuntimePaths = [
@@ -85,6 +86,7 @@ const {
   publicPolicy,
   replayTrace,
   liveCanaryApprovalBoundary,
+  stabilityGate,
 } = fixtures;
 
 assert.deepEqual(lifecycle.terminalStates.sort(), ['blocked', 'cancelled', 'done', 'pr']);
@@ -1050,6 +1052,105 @@ for (const scenario of checkpointInterrupt.scenarios) {
     }
   });
 }
+
+// R20 stability gate fixture validation
+assert.ok(stabilityGate.fixtureId, 'stabilityGate fixture must carry fixtureId');
+assert.equal(stabilityGate.contract, 'contracts/a2a/r20-stability-gate.md');
+assert.equal(
+  stabilityGate.parentIssue,
+  'https://github.com/jinwon-int/a2a-broker/issues/636',
+);
+assert.equal(
+  stabilityGate.issue,
+  'https://github.com/jinwon-int/a2a-plane/issues/327',
+);
+assert.equal(stabilityGate.originCoordinator, 'gwakga');
+assert.equal(stabilityGate.receivingBrokerId, 'seoseo');
+assert.equal(stabilityGate.team, 'team1-yukson');
+
+// Gate H1: hot-table persistence
+assert.ok(stabilityGate.hotTablePersistence, 'stabilityGate must contain hotTablePersistence');
+assert.equal(stabilityGate.hotTablePersistence.gateId, 'H1');
+const h1Diagnostics = stabilityGate.hotTablePersistence.boundedDiagnostics;
+for (const key of ['processMemoryRssHeap', 'activeTaskTableCount', 'terminalOutboxCounts', 'staleClaimedRunningWork', 'sqliteWalCheckpointPosture', 'snapshotSerializeFrequency']) {
+  assert.ok(h1Diagnostics[key], `H1 must include boundedDiagnostics.${key}`);
+  assert.equal(h1Diagnostics[key].required, true, `H1 boundedDiagnostics.${key}.required must be true`);
+}
+assert.ok(Array.isArray(stabilityGate.hotTablePersistence.memoryBoundInvariants) && stabilityGate.hotTablePersistence.memoryBoundInvariants.length >= 4);
+for (const invariant of stabilityGate.hotTablePersistence.memoryBoundInvariants) {
+  assert.ok(invariant.invariant, 'H1 memoryBoundInvariant must have invariant name');
+  assert.ok(invariant.passCondition, 'H1 memoryBoundInvariant must have passCondition');
+  assert.ok(invariant.failClosedCondition, 'H1 memoryBoundInvariant must have failClosedCondition');
+}
+for (const [key, value] of Object.entries(stabilityGate.hotTablePersistence.safetyConfirmations)) {
+  assert.equal(value, true, `H1 safety confirmation ${key} must be true`);
+}
+assert.equal(stabilityGate.hotTablePersistence.aggregateDecision, 'NO-GO/Waiting');
+
+// Gate Q1: queue/outbox hygiene
+assert.ok(stabilityGate.queueOutboxHygiene, 'stabilityGate must contain queueOutboxHygiene');
+assert.equal(stabilityGate.queueOutboxHygiene.gateId, 'Q1');
+const q1Processing = stabilityGate.queueOutboxHygiene.boundedProcessing;
+for (const key of ['perRunItemLimit', 'progressReporting', 'dryRunSafety', 'ageBasedStaleness', 'mutationApprovalGate']) {
+  assert.ok(q1Processing[key], `Q1 must include boundedProcessing.${key}`);
+  assert.equal(q1Processing[key].required, true, `Q1 boundedProcessing.${key}.required must be true`);
+}
+assert.ok(Array.isArray(stabilityGate.queueOutboxHygiene.hygieneInvariants) && stabilityGate.queueOutboxHygiene.hygieneInvariants.length >= 4);
+for (const invariant of stabilityGate.queueOutboxHygiene.hygieneInvariants) {
+  assert.ok(invariant.invariant, 'Q1 hygieneInvariant must have invariant name');
+  assert.ok(invariant.passCondition, 'Q1 hygieneInvariant must have passCondition');
+  assert.ok(invariant.failClosedCondition, 'Q1 hygieneInvariant must have failClosedCondition');
+}
+for (const [key, value] of Object.entries(stabilityGate.queueOutboxHygiene.safetyConfirmations)) {
+  assert.equal(value, true, `Q1 safety confirmation ${key} must be true`);
+}
+assert.equal(stabilityGate.queueOutboxHygiene.aggregateDecision, 'NO-GO/Waiting');
+
+// Gate C1: no-live canary boundary
+assert.ok(stabilityGate.noLiveCanaryBoundary, 'stabilityGate must contain noLiveCanaryBoundary');
+assert.equal(stabilityGate.noLiveCanaryBoundary.gateId, 'C1');
+assert.ok(Array.isArray(stabilityGate.noLiveCanaryBoundary.noLiveInvariants) && stabilityGate.noLiveCanaryBoundary.noLiveInvariants.length >= 5);
+for (const invariant of stabilityGate.noLiveCanaryBoundary.noLiveInvariants) {
+  assert.ok(invariant.invariant, 'C1 noLiveInvariant must have invariant name');
+  assert.ok(invariant.passCondition, 'C1 noLiveInvariant must have passCondition');
+  assert.ok(invariant.failClosedCondition, 'C1 noLiveInvariant must have failClosedCondition');
+}
+assert.ok(Array.isArray(stabilityGate.noLiveCanaryBoundary.canaryActivationPreconditions) && stabilityGate.noLiveCanaryBoundary.canaryActivationPreconditions.length >= 5);
+for (const precondition of stabilityGate.noLiveCanaryBoundary.canaryActivationPreconditions) {
+  assert.ok(precondition.precondition, 'C1 canaryActivationPrecondition must have name');
+  assert.ok(precondition.passCondition, 'C1 canaryActivationPrecondition must have passCondition');
+  assert.ok(precondition.failClosedCondition, 'C1 canaryActivationPrecondition must have failClosedCondition');
+}
+for (const [key, value] of Object.entries(stabilityGate.noLiveCanaryBoundary.safetyConfirmations)) {
+  assert.equal(value, true, `C1 safety confirmation ${key} must be true`);
+}
+assert.equal(stabilityGate.noLiveCanaryBoundary.aggregateDecision, 'NO-GO/Waiting');
+
+// Gate R14: stale R14 PR reconciliation
+assert.ok(stabilityGate.staleR14Reconciliation, 'stabilityGate must contain staleR14Reconciliation');
+assert.equal(stabilityGate.staleR14Reconciliation.gateId, 'R14');
+assert.ok(Array.isArray(stabilityGate.staleR14Reconciliation.policyActions) && stabilityGate.staleR14Reconciliation.policyActions.length >= 4);
+const r14Actions = new Set(stabilityGate.staleR14Reconciliation.policyActions.map((a) => a.action));
+for (const requiredAction of ['merge', 'supersede', 'close', 'keep-open']) {
+  assert.ok(r14Actions.has(requiredAction), `R14 policyActions must include ${requiredAction}`);
+}
+for (const action of stabilityGate.staleR14Reconciliation.policyActions) {
+  assert.ok(action.passCondition, `R14 action ${action.action} must have passCondition`);
+  assert.ok(action.failClosedCondition, `R14 action ${action.action} must have failClosedCondition`);
+}
+for (const [key, value] of Object.entries(stabilityGate.staleR14Reconciliation.safetyConfirmations)) {
+  assert.equal(value, true, `R14 safety confirmation ${key} must be true`);
+}
+assert.equal(stabilityGate.staleR14Reconciliation.aggregateDecision, 'NO-GO/Waiting');
+
+// Aggregate decision and global safety
+assert.equal(stabilityGate.aggregateGateDecision, 'NO-GO/Waiting');
+for (const [key, value] of Object.entries(stabilityGate.safetyConfirmations)) {
+  assert.equal(value, true, `stabilityGate safety confirmation ${key} must be true`);
+}
+assert.ok(Array.isArray(stabilityGate.validationCommands) && stabilityGate.validationCommands.length >= 1);
+assert.ok(stabilityGate.validationCommands.includes('node test/conformance/check-contract-fixtures.mjs'));
+assert.equal(stabilityGate.redacted, true);
 
 console.log(JSON.stringify({
   ok: true,

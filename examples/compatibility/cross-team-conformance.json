@@ -21,7 +21,8 @@
     "fixtures/contract/checkpoint-interrupt.json",
     "fixtures/contract/public-compatibility-policy.json",
     "fixtures/contract/second-worker-replay-trace.json",
-    "fixtures/contract/live-canary-replay-approval-boundary.json"
+    "fixtures/contract/live-canary-replay-approval-boundary.json",
+    "fixtures/contract/r20-stability-gate.json"
   ],
   "validationCommand": "node test/conformance/check-contract-fixtures.mjs",
   "intentionallyExcluded": [

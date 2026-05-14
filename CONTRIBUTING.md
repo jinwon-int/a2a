@@ -29,5 +29,8 @@ Templates live in `docs/spec-templates/`:
 - `a2a-feature-spec.md`
 - `a2a-plan.md`
 - `a2a-tasks.md`
+- `a2a-clarify.md`
+- `a2a-analyze.md`
+- `a2a-checklist.md`
 
-Issues or PRs for medium/large changes should link the completed spec and plan. Closeout must include evidence and must name approval-sensitive actions that were not performed.
+Issues or PRs for medium/large changes should link the completed spec and plan. If the spec is unclear, add clarify notes before planning; before execution, run an analysis pass; before implementation and closeout, use the quality checklist. Closeout must include evidence and must name approval-sensitive actions that were not performed.

@@ -15,7 +15,10 @@ See `docs/a2a-constitution.md` for classification rules and approval boundaries.
 - `a2a-feature-spec.md` — what to build, why, success criteria, safety boundaries, evidence contract.
 - `a2a-plan.md` — affected repos/components, execution lane, tests, rollout, rollback.
 - `a2a-tasks.md` — implementation checklist with evidence requirements.
+- `a2a-clarify.md` — minimum clarification questions before planning.
+- `a2a-analyze.md` — consistency, coverage, and safety analysis pass.
+- `a2a-checklist.md` — pre-implementation and pre-closeout quality checklist.
 
 ## Adoption rule
 
-New medium/large A2A work should link the completed spec and plan from the issue or PR before implementation starts. The first adoption phase is documentation-only and does not change runtime behavior.
+New medium/large A2A work should link the completed spec and plan from the issue or PR before implementation starts. Use `a2a-clarify.md` when the spec is underspecified, `a2a-analyze.md` before task execution, and `a2a-checklist.md` before implementation and closeout. The first adoption phases are documentation-only and do not change runtime behavior.

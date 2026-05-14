@@ -93,10 +93,13 @@ Requires `spec.md`, `plan.md`, `tasks.md`, and a detached execution lane such as
 
 1. Classify the change as Small, Medium, or Large.
 2. For Medium/Large, write a feature spec before implementation.
-3. Convert the accepted spec into an implementation plan.
-4. Convert the plan into tasks with evidence requirements.
-5. Execute in the smallest safe lane.
-6. Close out with evidence, safety boundary confirmation, and Wiki/runbook follow-up when reusable.
+3. Run a clarification pass when the spec is underspecified.
+4. Convert the accepted spec into an implementation plan.
+5. Run an analysis pass for consistency, coverage, and safety before task execution.
+6. Convert the plan into tasks with evidence requirements.
+7. Use the quality checklist before implementation and again before closeout.
+8. Execute in the smallest safe lane.
+9. Close out with evidence, safety boundary confirmation, and Wiki/runbook follow-up when reusable.
 
 ## References
 
@@ -105,3 +108,6 @@ Requires `spec.md`, `plan.md`, `tasks.md`, and a detached execution lane such as
 - A2A spec template: `docs/spec-templates/a2a-feature-spec.md`
 - A2A plan template: `docs/spec-templates/a2a-plan.md`
 - A2A task template: `docs/spec-templates/a2a-tasks.md`
+- A2A clarify template: `docs/spec-templates/a2a-clarify.md`
+- A2A analyze template: `docs/spec-templates/a2a-analyze.md`
+- A2A checklist template: `docs/spec-templates/a2a-checklist.md`

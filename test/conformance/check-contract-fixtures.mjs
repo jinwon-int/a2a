@@ -333,6 +333,16 @@ assert.equal(parentTerminalBriefAggregation.terminalBriefTitlePolicy.isTerminalA
 assert.equal(parentTerminalBriefAggregation.terminalBriefTitlePolicy.isReadReceipt, false);
 assert.ok(parentTerminalBriefAggregation.terminalBriefTitlePolicy.forbiddenTitleFields.includes('runtimeBootstrapPath'));
 assert.deepEqual(parentTerminalBriefAggregation.terminalBriefTitlePolicy.coveredOriginBrokerIds, ['gwakga', 'seoseo']);
+assert.equal(parentTerminalBriefAggregation.terminalBriefTitlePolicy.symmetricMode, true);
+assert.equal(parentTerminalBriefAggregation.terminalBriefTitlePolicy.parentBrokerMayDifferFromOrigin, true);
+assert.ok(parentTerminalBriefAggregation.v1Symmetric, 'v1Symmetric section must exist');
+assert.equal(parentTerminalBriefAggregation.v1Symmetric.parentBrokerMayDifferFromOrigin, true);
+assert.ok(
+  parentTerminalBriefAggregation.v1Symmetric.coveredSymmetricPairs.some(
+    (pair) => pair[0] === 'seoseo' && pair[1] === 'gwakga',
+  ),
+  'v1Symmetric must cover seoseo→gwakga pair',
+);
 
 const parentProjection = parentTerminalBriefAggregation.projection;
 for (const field of parentTerminalBriefAggregation.requiredProjectionFields) {
@@ -375,12 +385,25 @@ for (const forbidden of [
   );
 }
 
-const parentTitleExamplesByOrigin = new Map(
-  parentTerminalBriefAggregation.parentRoundTitleExamples.map((example) => [example.originBrokerId, example]),
-);
-assert.deepEqual([...parentTitleExamplesByOrigin.keys()].sort(), ['gwakga', 'seoseo']);
+const parentTitleExamplesByOrigin = new Map();
+const symmetricExamplesSeen = [];
 for (const example of parentTerminalBriefAggregation.parentRoundTitleExamples) {
-  assert.equal(example.parentBrokerId, example.originBrokerId);
+  if (example.originDiffersFromParent) {
+    symmetricExamplesSeen.push(example);
+  } else {
+    const existing = parentTitleExamplesByOrigin.get(example.originBrokerId);
+    if (!existing) parentTitleExamplesByOrigin.set(example.originBrokerId, example);
+  }
+}
+assert.deepEqual([...parentTitleExamplesByOrigin.keys()].sort(), ['gwakga', 'seoseo']);
+assert.ok(symmetricExamplesSeen.length >= 1, 'at least one symmetric origin-broker title example is required');
+for (const example of parentTerminalBriefAggregation.parentRoundTitleExamples) {
+  if (!example.originDiffersFromParent) {
+    assert.equal(example.parentBrokerId, example.originBrokerId);
+  } else {
+    assert.notEqual(example.parentBrokerId, example.originBrokerId,
+      `${example.name}: symmetric example must have different parentBrokerId and originBrokerId`);
+  }
   assert.equal(example.rendererBrokerId, example.parentBrokerId);
   assert.equal(example.parentBrokerOnly, true);
   assert.equal(example.liveProviderSend, false);
@@ -461,6 +484,35 @@ const seoseoOriginUnknownTotalTitleScenario = parentAggregationScenarioByName.ge
 );
 assert.equal(seoseoOriginUnknownTotalTitleScenario?.given.originBrokerId, 'seoseo');
 assert.equal(seoseoOriginUnknownTotalTitleScenario?.given.parentBrokerId, 'seoseo');
+assert.notEqual(seoseoOriginUnknownTotalTitleScenario?.given.parentBrokerId, 'gwakga',
+  'seoseo-origin non-symmetric scenario must have parentBrokerId equal originBrokerId');
+
+/* R12 symmetric origin-broker scenario: seoseo-origin, gwakga-parent with known total */
+const symmetricOriginBrokerTitleScenario = parentAggregationScenarioByName.get(
+  'symmetric-seoseo-origin-gwakga-parent-title-known-total',
+);
+assert.ok(symmetricOriginBrokerTitleScenario, 'symmetric-seoseo-origin-gwakga-parent-title-known-total scenario must exist');
+assert.equal(symmetricOriginBrokerTitleScenario?.given.originBrokerId, 'seoseo');
+assert.equal(symmetricOriginBrokerTitleScenario?.given.parentBrokerId, 'gwakga');
+assert.notEqual(symmetricOriginBrokerTitleScenario?.given.originBrokerId,
+  symmetricOriginBrokerTitleScenario?.given.parentBrokerId,
+  'symmetric scenario must have different originBrokerId and parentBrokerId');
+assert.equal(symmetricOriginBrokerTitleScenario?.given.total, 3);
+assert.equal(symmetricOriginBrokerTitleScenario?.given.totalKnown, true);
+assert.equal(symmetricOriginBrokerTitleScenario?.then.terminalBriefTitle, 'A2A Terminal Brief 완료: dungae(1/3)');
+assert.equal(symmetricOriginBrokerTitleScenario?.then.rendererBrokerId, 'gwakga');
+assert.equal(symmetricOriginBrokerTitleScenario?.then.parentBrokerOnly, true);
+assert.equal(symmetricOriginBrokerTitleScenario?.then.originDiffersFromParent, true);
+assert.equal(symmetricOriginBrokerTitleScenario?.then.originBrokerId, 'seoseo');
+assert.equal(symmetricOriginBrokerTitleScenario?.then.liveProviderSend, false);
+assert.equal(symmetricOriginBrokerTitleScenario?.then.terminalOutboxAckMutated, false);
+assert.equal(symmetricOriginBrokerTitleScenario?.then.isApproval, false);
+assert.equal(symmetricOriginBrokerTitleScenario?.then.isTerminalAck, false);
+assert.equal(symmetricOriginBrokerTitleScenario?.then.isReadReceipt, false);
+assert.ok(!symmetricOriginBrokerTitleScenario?.then.terminalBriefTitle.includes('seoseo'),
+  'title must not include childBrokerId (seoseo)');
+assert.ok(!symmetricOriginBrokerTitleScenario?.then.terminalBriefTitle.includes('gwakga'),
+  'title must not included handoffBrokerId (gwakga)');
 assert.equal(seoseoOriginUnknownTotalTitleScenario?.given.total, null);
 assert.equal(seoseoOriginUnknownTotalTitleScenario?.given.totalKnown, false);
 assert.equal(seoseoOriginUnknownTotalTitleScenario?.then.terminalBriefTitle, 'A2A Terminal Brief 완료: yukson(2)');

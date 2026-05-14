@@ -41,6 +41,27 @@ A peer missing the required scope fails closed before task creation or evidence 
 }
 ```
 
+### Parent Terminal Brief metadata (optional, symmetric)
+
+When the handoff is part of a parent Terminal Brief aggregation round, the envelope may carry parent
+metadata. These fields enable symmetric origin-broker flow where the origin broker and parent broker
+may be the same or different brokers:
+
+- `parentRoundId` — stable parent round id minted by the origin broker.
+- `originBrokerId` — broker that created the parent round; immutable after minting.
+- `parentBrokerId` — broker rendering the aggregate Terminal Brief notification.
+
+In the symmetric v1 contract (see `parent-terminal-brief-aggregation.md`), `parentBrokerId` may differ
+from `originBrokerId`. The handoff envelope carries both so the child broker can relay terminal
+evidence back to the correct parent projection ledger regardless of which broker owns the notification.
+
+Parent metadata invariants:
+
+1. When `parentRoundId` is present, `originBrokerId` and `parentBrokerId` are both required.
+2. `originBrokerId` must not be rewritten by the destination broker or replay handlers.
+3. The destination broker must relay terminal evidence to the parent broker identified by `parentBrokerId`,
+   not to its own aggregation ledger.
+
 `requestedTeamId` is the authenticated requesting/source team, not a grant to attach destination workers. The destination side remains defined by `destinationBrokerId` and `brokerOfRecord`; worker routing and terminal state mutation stay under the destination broker's own policy.
 
 Required invariants:
@@ -85,6 +106,7 @@ Allowed terminal kinds are PR, Done, and Block. Evidence relay does not ACK term
 - No repository visibility change, deploy, Gateway/broker/worker restart, production DB mutation, live provider/Telegram message, terminal-outbox ACK, secret rotation/disclosure, history rewrite, or force-push without explicit operator approval.
 - No cross-worker registration: Seoseo does not register Gwakga as a worker, Gwakga does not register Seoseo as a worker, and Team2 workers are not attached to the Seoseo broker.
 - Evidence must be redacted and bounded; no raw session dumps or OpenClaw runtime/bootstrap files.
+- Parent Terminal Brief metadata in handoff envelopes is symmetric: either broker may be the origin. The destination broker must respect `parentBrokerId` as the notification renderer, even when it differs from `originBrokerId`.
 
 ## Minimal test obligations
 

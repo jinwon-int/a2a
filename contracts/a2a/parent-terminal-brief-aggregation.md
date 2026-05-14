@@ -14,6 +14,28 @@ This contract covers the Gwakga-origin + Seoseo-handoff canary path and its symm
 - **Child task broker of record**: the broker that controls child task lifecycle, worker assignment, and terminal evidence production.
 - **Projection**: the parent broker's redacted, bounded record of the child terminal result.
 
+## Four-case parent-origin routing matrix
+
+For normal Seoseo/Team1 and Gwakga/Team2 Terminal Brief routing, the initiating broker is always the parent/origin broker and the only operator-facing Terminal Brief sender.
+
+| Case | Initiator | Requested scope | Parent/origin broker | Execution path | Operator-facing sender |
+| --- | --- | --- | --- | --- | --- |
+| 1 | `seoseo` | Team1 only | `seoseo` | Team1 local only | `seoseo` |
+| 2 | `seoseo` | Team1 + Team2 | `seoseo` | Team1 local + Team2 child/handoff through `gwakga` | `seoseo` |
+| 3 | `gwakga` | Team2 only | `gwakga` | Team2 local only | `gwakga` |
+| 4 | `gwakga` | Team1 + Team2 | `gwakga` | Team2 local + Team1 child/handoff through `seoseo` | `gwakga` |
+
+Routing gates:
+
+1. Team1-only work stays Seoseo-local; Gwakga is not involved.
+2. Team2-only work stays Gwakga-local; Seoseo is not involved.
+3. Cross-team work is parent-seeded: the opposite broker acts only as child/handoff broker and relays projections back to the initiating parent broker.
+4. A parentless child projection must fail closed with `missing_parent`; it must not create an implicit parent round.
+5. Relay success suppresses duplicate child-local parent notifications; relay failure may fall back to local operator notification as a failure-safety path, not as normal parent ownership.
+6. Provider accepted/send evidence is never a terminal ACK, read receipt, or approval.
+
+Machine-readable coverage lives in `fixtures/contract/terminal-brief-parent-origin-routing.json` and is enforced by `test/conformance/check-contract-fixtures.mjs`.
+
 ## Metadata lifecycle
 
 The parent broker creates these metadata fields before child dispatch:

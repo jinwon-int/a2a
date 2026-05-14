@@ -13,6 +13,7 @@ const fixtureFiles = {
   githubEvidenceProjection: 'github-evidence-projection.json',
   crossBroker: 'gwakga-cross-broker-handoff.json',
   parentTerminalBriefAggregation: 'parent-terminal-brief-aggregation.json',
+  terminalBriefParentOriginRouting: 'terminal-brief-parent-origin-routing.json',
   checkpointInterrupt: 'checkpoint-interrupt.json',
   publicPolicy: 'public-compatibility-policy.json',
   replayTrace: 'second-worker-replay-trace.json',
@@ -79,6 +80,7 @@ const {
   githubEvidenceProjection,
   crossBroker,
   parentTerminalBriefAggregation,
+  terminalBriefParentOriginRouting,
   checkpointInterrupt,
   publicPolicy,
   replayTrace,
@@ -580,6 +582,126 @@ assert.ok(
 for (const [key, value] of Object.entries(parentTerminalBriefAggregation.safetyConfirmations)) {
   assert.equal(value, true, `parent aggregation safety confirmation ${key} must be true`);
 }
+
+// Four-case parent-origin Terminal Brief routing matrix (#634)
+assert.equal(
+  terminalBriefParentOriginRouting.contract,
+  'contracts/a2a/parent-terminal-brief-aggregation.md',
+);
+assert.equal(terminalBriefParentOriginRouting.issue, 'https://github.com/jinwon-int/a2a-broker/issues/634');
+assert.equal(
+  terminalBriefParentOriginRouting.invariant,
+  'initiating broker == parentBrokerId == originBrokerId == operatorFacingTerminalBriefSender',
+);
+assert.deepEqual(terminalBriefParentOriginRouting.allowedTeamScopes.sort(), ['team1+team2', 'team1-only', 'team2-only']);
+const registeredBrokerById = new Map(
+  terminalBriefParentOriginRouting.registeredBrokers.map((broker) => [broker.brokerId, broker]),
+);
+assert.equal(registeredBrokerById.get('seoseo')?.teamId, 'team1');
+assert.equal(registeredBrokerById.get('gwakga')?.teamId, 'team2');
+assert.equal(terminalBriefParentOriginRouting.routingCases.length, 4, 'exactly four routing cases are required');
+const routingCaseById = new Map(
+  terminalBriefParentOriginRouting.routingCases.map((routingCase) => [routingCase.caseId, routingCase]),
+);
+for (const requiredCase of [
+  'seoseo-team1-local',
+  'seoseo-allteams-gwakga-child',
+  'gwakga-team2-local',
+  'gwakga-allteams-seoseo-child',
+]) {
+  assert.ok(routingCaseById.has(requiredCase), `missing routing case ${requiredCase}`);
+}
+for (const routingCase of terminalBriefParentOriginRouting.routingCases) {
+  assert.equal(routingCase.parentBrokerId, routingCase.initiatingBrokerId, `${routingCase.caseId}: parent broker must be initiator`);
+  assert.equal(routingCase.originBrokerId, routingCase.initiatingBrokerId, `${routingCase.caseId}: origin broker must be initiator`);
+  assert.equal(
+    routingCase.operatorFacingTerminalBriefSender,
+    routingCase.initiatingBrokerId,
+    `${routingCase.caseId}: operator-facing sender must be initiator`,
+  );
+  assert.equal(routingCase.terminalBriefNotification.senderBrokerId, routingCase.parentBrokerId);
+  assert.equal(routingCase.terminalBriefNotification.parentBrokerOnly, true);
+  for (const [key, value] of Object.entries(routingCase.safety)) {
+    assert.equal(value, false, `${routingCase.caseId}: safety ${key} must be false`);
+  }
+  assert.ok(['local-only', 'local-plus-cross-team-child-projection'].includes(routingCase.expectedPath));
+}
+const seoseoTeam1 = routingCaseById.get('seoseo-team1-local');
+assert.equal(seoseoTeam1.requestedTeamScope, 'team1-only');
+assert.deepEqual(seoseoTeam1.localTeamIds, ['team1']);
+assert.equal(seoseoTeam1.handoffBrokerId, null);
+assert.equal(seoseoTeam1.childProjectionRequired, false);
+assert.equal(seoseoTeam1.parentSeedRequired, false);
+assert.ok(seoseoTeam1.forbiddenBrokerInvolvement.includes('gwakga'));
+
+const gwakgaTeam2 = routingCaseById.get('gwakga-team2-local');
+assert.equal(gwakgaTeam2.requestedTeamScope, 'team2-only');
+assert.deepEqual(gwakgaTeam2.localTeamIds, ['team2']);
+assert.equal(gwakgaTeam2.handoffBrokerId, null);
+assert.equal(gwakgaTeam2.childProjectionRequired, false);
+assert.equal(gwakgaTeam2.parentSeedRequired, false);
+assert.ok(gwakgaTeam2.forbiddenBrokerInvolvement.includes('seoseo'));
+
+const seoseoAllTeams = routingCaseById.get('seoseo-allteams-gwakga-child');
+assert.equal(seoseoAllTeams.requestedTeamScope, 'team1+team2');
+assert.deepEqual(seoseoAllTeams.localTeamIds, ['team1']);
+assert.equal(seoseoAllTeams.handoffBrokerId, 'gwakga');
+assert.deepEqual(seoseoAllTeams.handoffTeamIds, ['team2']);
+assert.equal(seoseoAllTeams.projectionDestinationBrokerId, 'seoseo');
+assert.equal(seoseoAllTeams.childProjectionRequired, true);
+assert.equal(seoseoAllTeams.parentSeedRequired, true);
+assert.equal(seoseoAllTeams.terminalBriefNotification.childLocalNotificationSuppressed, true);
+assert.equal(seoseoAllTeams.terminalBriefNotification.relaySuccessSuppressesChildLocalNotification, true);
+assert.equal(seoseoAllTeams.terminalBriefNotification.relayFailureFallsBackToLocalNotification, true);
+
+const gwakgaAllTeams = routingCaseById.get('gwakga-allteams-seoseo-child');
+assert.equal(gwakgaAllTeams.requestedTeamScope, 'team1+team2');
+assert.deepEqual(gwakgaAllTeams.localTeamIds, ['team2']);
+assert.equal(gwakgaAllTeams.handoffBrokerId, 'seoseo');
+assert.deepEqual(gwakgaAllTeams.handoffTeamIds, ['team1']);
+assert.equal(gwakgaAllTeams.projectionDestinationBrokerId, 'gwakga');
+assert.equal(gwakgaAllTeams.childProjectionRequired, true);
+assert.equal(gwakgaAllTeams.parentSeedRequired, true);
+assert.equal(gwakgaAllTeams.terminalBriefNotification.childLocalNotificationSuppressed, true);
+assert.equal(gwakgaAllTeams.terminalBriefNotification.relaySuccessSuppressesChildLocalNotification, true);
+assert.equal(gwakgaAllTeams.terminalBriefNotification.relayFailureFallsBackToLocalNotification, true);
+
+assert.equal(terminalBriefParentOriginRouting.parentlessProjectionPolicy.status, 'missing_parent');
+assert.equal(terminalBriefParentOriginRouting.parentlessProjectionPolicy.acceptProjection, false);
+assert.equal(terminalBriefParentOriginRouting.parentlessProjectionPolicy.createParentImplicitly, false);
+assert.equal(terminalBriefParentOriginRouting.parentlessProjectionPolicy.localFallbackAllowedOnRelayFailure, true);
+assert.equal(terminalBriefParentOriginRouting.parentlessProjectionPolicy.terminalOutboxAckMutated, false);
+assert.equal(terminalBriefParentOriginRouting.parentlessProjectionPolicy.liveProviderSend, false);
+for (const field of [
+  'teamScope',
+  'initiatingBrokerId',
+  'originBrokerId',
+  'parentBrokerId',
+  'parentRoundId',
+  'parentRoundOrder',
+  'parentRoundTotal',
+  'handoffBrokerId',
+  'childBrokerId',
+]) {
+  assert.ok(terminalBriefParentOriginRouting.requiredMetadataFields.includes(field));
+}
+for (const forbidden of [
+  'originBrokerId means child broker',
+  'Team2-only work routes through Seoseo',
+  'Team1-only work routes through Gwakga',
+  'provider accepted/send evidence must be treated as non-ACK only',
+  'child broker sends an operator-facing parent Terminal Brief after relay success',
+  'parentless child projection creates an implicit parent',
+]) {
+  assert.ok(terminalBriefParentOriginRouting.forbiddenInterpretations.includes(forbidden));
+}
+assert.ok(
+  terminalBriefParentOriginRouting.validationCommands.includes('node test/conformance/check-contract-fixtures.mjs'),
+);
+for (const [key, value] of Object.entries(terminalBriefParentOriginRouting.safetyConfirmations)) {
+  assert.equal(value, true, `parent-origin routing safety confirmation ${key} must be true`);
+}
+assert.ok(terminalBriefParentOriginRouting.v1Freeze, 'terminal brief parent-origin routing v1 freeze marker must exist');
 
 assert.equal(publicPolicy.sourceIssueUrl, 'https://github.com/jinwon-int/a2a-plane/issues/94');
 assert.equal(publicPolicy.reviewIssueUrl, 'https://github.com/jinwon-int/a2a-plane/issues/166');

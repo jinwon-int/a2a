@@ -1,0 +1,272 @@
+{
+  "fixtureId": "a2a-plane.contract.r20-stability-gate.v0",
+  "contract": "contracts/a2a/r20-stability-gate.md",
+  "description": "Machine-readable fixture for the R20 stability gate contract: hot-table persistence bounded diagnostics, queue/outbox hygiene, no-live canary boundary, and stale R14 PR reconciliation policy.",
+  "parentIssue": "https://github.com/jinwon-int/a2a-broker/issues/636",
+  "issue": "https://github.com/jinwon-int/a2a-plane/issues/327",
+  "originCoordinator": "gwakga",
+  "receivingBrokerId": "seoseo",
+  "team": "team1-yukson",
+  "snapshot": "2026-05-15T08:18Z",
+  "v0Freeze": {
+    "frozenAt": "2026-05-15",
+    "round": "a2a-stability-r20-20260515T0818Z",
+    "note": "R20 stability gate acceptance criteria, bounded diagnostics, no-live canary boundary, hot-table persistence invariants, queue/outbox hygiene requirements, and stale R14 PR reconciliation policy are frozen as the Contract v0 stability gate baseline."
+  },
+  "references": [
+    "contracts/a2a/terminal-semantics.md",
+    "contracts/a2a/task-lifecycle.md",
+    "contracts/a2a/cancellation-idempotency.md",
+    "contracts/a2a/github-evidence-projection.md",
+    "docs/release-gate.md"
+  ],
+
+  "hotTablePersistence": {
+    "gateId": "H1",
+    "boundedDiagnostics": {
+      "processMemoryRssHeap": {
+        "required": true,
+        "measurementIntervalRequired": true,
+        "failClosedCondition": "raw /proc/*/status or host-specific paths in evidence"
+      },
+      "activeTaskTableCount": {
+        "required": true,
+        "growthRateOrTrendRequired": true,
+        "failClosedCondition": "unbounded table count without bound or diagnostic"
+      },
+      "terminalOutboxCounts": {
+        "required": true,
+        "subcountsRequired": ["total", "acked", "unacked"],
+        "failClosedCondition": "missing acked/unacked breakdown"
+      },
+      "staleClaimedRunningWork": {
+        "required": true,
+        "stalenessThresholdRequired": true,
+        "failClosedCondition": "stale items reported without threshold"
+      },
+      "sqliteWalCheckpointPosture": {
+        "required": true,
+        "failClosedCondition": "WAL state omitted from diagnostics"
+      },
+      "snapshotSerializeFrequency": {
+        "required": true,
+        "failClosedCondition": "snapshot frequency absent from evidence"
+      }
+    },
+    "memoryBoundInvariants": [
+      {
+        "invariant": "no unbounded full-task materialization",
+        "passCondition": "lazy/paged access, incremental persistence, or equivalent memory-bounded pattern",
+        "failClosedCondition": "full historical task/audit/outbox materialization on startup or each hot-row mutation"
+      },
+      {
+        "invariant": "startup heap bounded",
+        "passCondition": "representative row count does not require proportional startup heap",
+        "failClosedCondition": "startup heap required proportional to total rows"
+      },
+      {
+        "invariant": "WAL size bounded",
+        "passCondition": "WAL checkpoint or journal mode keeps size bounded under sustained load",
+        "failClosedCondition": "journal/WAL grows without bound under load"
+      },
+      {
+        "invariant": "no OOM regression",
+        "passCondition": "memory stays under documented threshold for representative workloads",
+        "failClosedCondition": "OOM or unbounded growth observed"
+      }
+    ],
+    "safetyConfirmations": {
+      "readOnlyDiagnostics": true,
+      "noSecretsOrRawSessionDumps": true,
+      "syntheticOrObservableEvidenceOnly": true,
+      "deployRestartPruneWALMutationBlocked": true,
+      "operatorApprovalRequiredForMutation": true
+    },
+    "aggregateDecision": "NO-GO/Waiting"
+  },
+
+  "queueOutboxHygiene": {
+    "gateId": "Q1",
+    "boundedProcessing": {
+      "perRunItemLimit": {
+        "required": true,
+        "passCondition": "maximum items processed per cycle is documented and finite",
+        "failClosedCondition": "unbounded outbox processing cycle"
+      },
+      "progressReporting": {
+        "required": true,
+        "passCondition": "cycle reports processed, skipped, and remaining counts",
+        "failClosedCondition": "no progress reporting"
+      },
+      "dryRunSafety": {
+        "required": true,
+        "passCondition": "dry-run mode reports what would be processed without mutation",
+        "failClosedCondition": "dry-run does not exist or mutates state"
+      },
+      "ageBasedStaleness": {
+        "required": true,
+        "passCondition": "stale unacked items exceeding documented threshold are identified",
+        "failClosedCondition": "stale items processed or silently skipped without identification"
+      },
+      "mutationApprovalGate": {
+        "required": true,
+        "passCondition": "any mutation path requires explicit operator approval",
+        "failClosedCondition": "mutation proceeds without approval gate"
+      }
+    },
+    "hygieneInvariants": [
+      {
+        "invariant": "no stale claimed/running work",
+        "passCondition": "no tasks stuck in claimed/running past documented timeout",
+        "failClosedCondition": "stale tasks in claimed/running without detection"
+      },
+      {
+        "invariant": "no unbounded backlog",
+        "passCondition": "total queued items bounded, throughput meets demand",
+        "failClosedCondition": "queue grows without bound with no diagnostic"
+      },
+      {
+        "invariant": "fail-closed mutation guard",
+        "passCondition": "outbox mutation commands fail in dry-run mode unless approval present",
+        "failClosedCondition": "dry-run mode silently permits mutation"
+      },
+      {
+        "invariant": "terminal ACK not forged from accepted-send",
+        "passCondition": "provider accepted-send never promoted to terminal-outbox ACK",
+        "failClosedCondition": "code or documentation describes path from sendStatus: accepted to terminal-outbox ACK"
+      }
+    ],
+    "safetyConfirmations": {
+      "dryRunOnlyNoSideEffects": true,
+      "stalenessReportsOnlyMutationRequiresApproval": true,
+      "noTerminalOutboxAckMutationByDiagnostics": true,
+      "noLiveProviderSendFromQueueProcessing": true,
+      "noDbMutationWithoutApproval": true
+    },
+    "aggregateDecision": "NO-GO/Waiting"
+  },
+
+  "noLiveCanaryBoundary": {
+    "gateId": "C1",
+    "noLiveInvariants": [
+      {
+        "invariant": "provider accepted-send is non-ACK",
+        "passCondition": "providerMessageId, providerAccepted, sendStatus:accepted, sendStatus:sent are accepted-send only",
+        "failClosedCondition": "any code/contract promotes these to terminal ACK"
+      },
+      {
+        "invariant": "GitHub comment projection is non-ACK",
+        "passCondition": "evidence comments carry isApproval:false, isTerminalAck:false, isReadReceipt:false",
+        "failClosedCondition": "any evidence comment omits or falsifies these flags"
+      },
+      {
+        "invariant": "Terminal Brief is non-ACK",
+        "passCondition": "Terminal Brief evidence is receipt level 2 (requester-visible) at most",
+        "failClosedCondition": "Terminal Brief described as terminal-outbox ACK or read receipt"
+      },
+      {
+        "invariant": "live provider send blocked by default",
+        "passCondition": "any live notification path disabled by default, requires explicit allowlisting",
+        "failClosedCondition": "default configuration permits live sends"
+      },
+      {
+        "invariant": "no-live mode for stability validation",
+        "passCondition": "stability validation runs in no-live mode; evidence contains no live send data",
+        "failClosedCondition": "stability evidence includes live provider send data"
+      }
+    ],
+    "canaryActivationPreconditions": [
+      {
+        "precondition": "one-shot allowlist",
+        "passCondition": "live canary disabled by default; requires explicit allowlist entry for fresh task/outbox id",
+        "failClosedCondition": "no allowlist guard; approval covers multiple actions"
+      },
+      {
+        "precondition": "replay/idempotency protection",
+        "passCondition": "evidence key deduplication and projection key idempotency prevent duplicate notifications",
+        "failClosedCondition": "same evidence key produces multiple sends or ACK mutations"
+      },
+      {
+        "precondition": "bounded receipt evidence",
+        "passCondition": "post-send evidence captures accepted-send only; explicitly separates ACK",
+        "failClosedCondition": "post-send evidence claims terminal ACK or read receipt"
+      },
+      {
+        "precondition": "restoration evidence",
+        "passCondition": "post-canary evidence proves no-live defaults restored",
+        "failClosedCondition": "no restoration step recorded; default remains allowlisted"
+      },
+      {
+        "precondition": "explicit operator approval",
+        "passCondition": "separate operator comment names exact canary scope, fresh task/outbox id, and allowlist entry",
+        "failClosedCondition": "approval comment missing, covers multiple actions, or references stale/replayed ids"
+      }
+    ],
+    "safetyConfirmations": {
+      "noLiveModeIsDefault": true,
+      "evidenceContainsNoLiveProviderSendData": true,
+      "canaryPreconditionChecklistIsReviewNotApproval": true,
+      "aggregateDecisionIsNoGoWaitingWithoutSeparateApproval": true
+    },
+    "aggregateDecision": "NO-GO/Waiting"
+  },
+
+  "staleR14Reconciliation": {
+    "gateId": "R14",
+    "policyActions": [
+      {
+        "action": "merge",
+        "passCondition": "PR passes current-main validation (build, contract fixtures, release gate) and has no unresolved review comments",
+        "failClosedCondition": "PR merged without validation"
+      },
+      {
+        "action": "supersede",
+        "passCondition": "PR explicitly closed as superseded with a comment referencing the superseding PR or issue",
+        "failClosedCondition": "PR closed as superseded without explanation or reference"
+      },
+      {
+        "action": "close",
+        "passCondition": "PR intentionally abandoned with a comment explaining why",
+        "failClosedCondition": "PR closed without explanation"
+      },
+      {
+        "action": "keep-open",
+        "passCondition": "PR blocked on external dependency; left open with comment documenting dependency",
+        "failClosedCondition": "PR left open without comment or tracking issue"
+      }
+    ],
+    "safetyConfirmations": {
+      "noForcePushOrHistoryRewrite": true,
+      "noRepoVisibilityChange": true,
+      "mergeRequiresFullReleaseGate": true,
+      "noProductionDeployOrRestartImplied": true,
+      "noLiveProviderSendImplied": true
+    },
+    "aggregateDecision": "NO-GO/Waiting"
+  },
+
+  "aggregateGateDecision": "NO-GO/Waiting",
+
+  "safetyConfirmations": {
+    "noProductionDeployOrRestart": true,
+    "noLiveProviderTelegramSend": true,
+    "noTerminalOutboxAckMutation": true,
+    "noProductionDbMutationPruneMigrationOrWalOperation": true,
+    "noSecretRotationOrDisclosure": true,
+    "noRawSessionDumpOrHostPrivatePath": true,
+    "noRepositoryVisibilityChange": true,
+    "noForcePushOrHistoryRewrite": true,
+    "noAutomaticMergeOrReleasePublication": true,
+    "isApprovalFalse": true,
+    "isTerminalAckFalse": true,
+    "isReadReceiptFalse": true
+  },
+
+  "validationCommands": [
+    "node test/conformance/check-contract-fixtures.mjs",
+    "npm run check:layout",
+    "npm run release-gate"
+  ],
+
+  "redacted": true
+}

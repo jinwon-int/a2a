@@ -12,5 +12,6 @@ Fixture set:
 - `parent-terminal-brief-aggregation.json` — synthetic Gwakga-origin plus Seoseo-handoff canary proof for parent broker Terminal Brief aggregation; it covers parent round metadata lifecycle, required projection fields, redaction, rollback, and no-replay behavior.
 - `public-compatibility-policy.json` — issue #94/#166 policy proof that public compatibility claims are validated from contracts, synthetic fixtures, and the compatibility matrix rather than private Seoseo-only assumptions.
 - `second-worker-replay-trace.json` — public-safe second-reference-worker replay proof showing a replay returns existing terminal evidence with zero duplicate sends, zero duplicate ACKs, and compact redacted trace fields.
+- `a2a-spec-first-taskflow-bridge.json` — design fixture for mapping a spec-first A2A packet into managed TaskFlow state without enabling runtime automation.
 
 Do not add secrets, host-specific paths, OpenClaw runtime/bootstrap files, raw session dumps, live provider payloads, or terminal ACK mutation records to these fixtures.

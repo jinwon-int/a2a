@@ -1,0 +1,87 @@
+{
+  "contract": "docs/taskflow/a2a-spec-first-bridge.md",
+  "issue": "https://github.com/jinwon-int/a2a-plane/issues/322",
+  "protocol": "a2a-spec-first",
+  "version": 1,
+  "runtimeAutomationEnabled": false,
+  "exampleFlow": {
+    "controllerId": "a2a-plane/spec-first-taskflow-bridge",
+    "goal": "A2A spec-first: Terminal Brief parent-origin routing contract",
+    "currentStep": "plan_ready",
+    "stateJson": {
+      "protocol": "a2a-spec-first",
+      "version": 1,
+      "source": {
+        "issueUrl": "https://github.com/jinwon-int/a2a-broker/issues/634",
+        "specPath": "docs/specs/a2a-terminal-brief-parent-origin-routing/spec.md",
+        "planPath": "docs/specs/a2a-terminal-brief-parent-origin-routing/plan.md",
+        "tasksPath": "docs/specs/a2a-terminal-brief-parent-origin-routing/tasks.md"
+      },
+      "classification": {
+        "size": "large",
+        "reason": "cross-repo Terminal Brief routing contract"
+      },
+      "ownership": {
+        "brokerOfRecord": "gwakga",
+        "finalizer": "gwakga",
+        "humanApprovalOwner": "operator"
+      },
+      "affectedRepos": [
+        "a2a-plane",
+        "a2a-broker",
+        "openclaw-plugin-a2a"
+      ],
+      "approvalBoundaries": {
+        "deploy": "not-approved",
+        "restart": "not-approved",
+        "liveCanary": "not-approved",
+        "dbMutation": "blocked",
+        "terminalAckReplay": "blocked",
+        "releaseTag": "not-approved",
+        "secretMovement": "blocked"
+      },
+      "evidence": {
+        "prs": [],
+        "tests": [],
+        "ci": [],
+        "wiki": [],
+        "blockers": []
+      },
+      "closeout": {
+        "decision": null,
+        "summary": null,
+        "closedBy": null,
+        "closedAt": null
+      }
+    }
+  },
+  "lifecycleStates": [
+    "spec_draft",
+    "plan_ready",
+    "tasks_ready",
+    "dispatching",
+    "collecting_evidence",
+    "awaiting_approval",
+    "ready_for_closeout",
+    "blocked",
+    "closed"
+  ],
+  "approvalSensitiveActions": [
+    "productionDeploy",
+    "gatewayBrokerWorkerRestart",
+    "liveCanaryProviderSend",
+    "dbOutboxMutation",
+    "manualTerminalAckReplay",
+    "releaseTag",
+    "secretMovement",
+    "forcePushHistoryRewrite"
+  ],
+  "phaseOneManualBoundaries": {
+    "automaticIssueScanning": false,
+    "automaticRuntimeExecution": false,
+    "automaticDeployRestartCanary": false,
+    "automaticDbOutboxCleanup": false,
+    "automaticTerminalAckReplay": false,
+    "secretBearingState": false
+  }
+}

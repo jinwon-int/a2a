@@ -1,0 +1,212 @@
+{
+  "fixtureId": "a2a-plane.contract.terminal-brief-parent-origin-routing.v1",
+  "contract": "contracts/a2a/parent-terminal-brief-aggregation.md",
+  "issue": "https://github.com/jinwon-int/a2a-broker/issues/634",
+  "description": "Four-case parent-origin Terminal Brief routing matrix. The initiating broker owns the parent/origin round and is the only operator-facing Terminal Brief sender; cross-team work is represented only as child/handoff projections relayed back to the initiating parent broker.",
+  "invariant": "initiating broker == parentBrokerId == originBrokerId == operatorFacingTerminalBriefSender",
+  "allowedTeamScopes": [
+    "team1-only",
+    "team2-only",
+    "team1+team2"
+  ],
+  "registeredBrokers": [
+    {
+      "brokerId": "seoseo",
+      "teamId": "team1"
+    },
+    {
+      "brokerId": "gwakga",
+      "teamId": "team2"
+    }
+  ],
+  "routingCases": [
+    {
+      "caseId": "seoseo-team1-local",
+      "initiatingBrokerId": "seoseo",
+      "requestedTeamScope": "team1-only",
+      "parentBrokerId": "seoseo",
+      "originBrokerId": "seoseo",
+      "operatorFacingTerminalBriefSender": "seoseo",
+      "localTeamIds": [
+        "team1"
+      ],
+      "handoffBrokerId": null,
+      "childProjectionRequired": false,
+      "parentSeedRequired": false,
+      "forbiddenBrokerInvolvement": [
+        "gwakga"
+      ],
+      "expectedPath": "local-only",
+      "terminalBriefNotification": {
+        "senderBrokerId": "seoseo",
+        "parentBrokerOnly": true,
+        "childLocalNotificationSuppressed": false,
+        "relaySuccessSuppressesChildLocalNotification": false,
+        "relayFailureFallsBackToLocalNotification": false
+      },
+      "safety": {
+        "liveProviderSend": false,
+        "terminalOutboxAckMutated": false,
+        "dbMutationRequiredForContract": false,
+        "isApproval": false,
+        "isTerminalAck": false,
+        "isReadReceipt": false
+      }
+    },
+    {
+      "caseId": "seoseo-allteams-gwakga-child",
+      "initiatingBrokerId": "seoseo",
+      "requestedTeamScope": "team1+team2",
+      "parentBrokerId": "seoseo",
+      "originBrokerId": "seoseo",
+      "operatorFacingTerminalBriefSender": "seoseo",
+      "localTeamIds": [
+        "team1"
+      ],
+      "handoffBrokerId": "gwakga",
+      "handoffTeamIds": [
+        "team2"
+      ],
+      "childProjectionRequired": true,
+      "parentSeedRequired": true,
+      "projectionDestinationBrokerId": "seoseo",
+      "expectedPath": "local-plus-cross-team-child-projection",
+      "terminalBriefNotification": {
+        "senderBrokerId": "seoseo",
+        "parentBrokerOnly": true,
+        "childLocalNotificationSuppressed": true,
+        "relaySuccessSuppressesChildLocalNotification": true,
+        "relayFailureFallsBackToLocalNotification": true
+      },
+      "safety": {
+        "liveProviderSend": false,
+        "terminalOutboxAckMutated": false,
+        "dbMutationRequiredForContract": false,
+        "isApproval": false,
+        "isTerminalAck": false,
+        "isReadReceipt": false
+      }
+    },
+    {
+      "caseId": "gwakga-team2-local",
+      "initiatingBrokerId": "gwakga",
+      "requestedTeamScope": "team2-only",
+      "parentBrokerId": "gwakga",
+      "originBrokerId": "gwakga",
+      "operatorFacingTerminalBriefSender": "gwakga",
+      "localTeamIds": [
+        "team2"
+      ],
+      "handoffBrokerId": null,
+      "childProjectionRequired": false,
+      "parentSeedRequired": false,
+      "forbiddenBrokerInvolvement": [
+        "seoseo"
+      ],
+      "expectedPath": "local-only",
+      "terminalBriefNotification": {
+        "senderBrokerId": "gwakga",
+        "parentBrokerOnly": true,
+        "childLocalNotificationSuppressed": false,
+        "relaySuccessSuppressesChildLocalNotification": false,
+        "relayFailureFallsBackToLocalNotification": false
+      },
+      "safety": {
+        "liveProviderSend": false,
+        "terminalOutboxAckMutated": false,
+        "dbMutationRequiredForContract": false,
+        "isApproval": false,
+        "isTerminalAck": false,
+        "isReadReceipt": false
+      }
+    },
+    {
+      "caseId": "gwakga-allteams-seoseo-child",
+      "initiatingBrokerId": "gwakga",
+      "requestedTeamScope": "team1+team2",
+      "parentBrokerId": "gwakga",
+      "originBrokerId": "gwakga",
+      "operatorFacingTerminalBriefSender": "gwakga",
+      "localTeamIds": [
+        "team2"
+      ],
+      "handoffBrokerId": "seoseo",
+      "handoffTeamIds": [
+        "team1"
+      ],
+      "childProjectionRequired": true,
+      "parentSeedRequired": true,
+      "projectionDestinationBrokerId": "gwakga",
+      "expectedPath": "local-plus-cross-team-child-projection",
+      "terminalBriefNotification": {
+        "senderBrokerId": "gwakga",
+        "parentBrokerOnly": true,
+        "childLocalNotificationSuppressed": true,
+        "relaySuccessSuppressesChildLocalNotification": true,
+        "relayFailureFallsBackToLocalNotification": true
+      },
+      "safety": {
+        "liveProviderSend": false,
+        "terminalOutboxAckMutated": false,
+        "dbMutationRequiredForContract": false,
+        "isApproval": false,
+        "isTerminalAck": false,
+        "isReadReceipt": false
+      }
+    }
+  ],
+  "parentlessProjectionPolicy": {
+    "status": "missing_parent",
+    "acceptProjection": false,
+    "createParentImplicitly": false,
+    "localFallbackAllowedOnRelayFailure": true,
+    "terminalOutboxAckMutated": false,
+    "liveProviderSend": false
+  },
+  "requiredMetadataFields": [
+    "teamScope",
+    "initiatingBrokerId",
+    "originBrokerId",
+    "parentBrokerId",
+    "parentRoundId",
+    "parentRoundOrder",
+    "parentRoundTotal",
+    "handoffBrokerId",
+    "childBrokerId"
+  ],
+  "forbiddenInterpretations": [
+    "originBrokerId means child broker",
+    "Team2-only work routes through Seoseo",
+    "Team1-only work routes through Gwakga",
+    "provider accepted/send evidence is a Terminal ACK",
+    "child broker sends an operator-facing parent Terminal Brief after relay success",
+    "parentless child projection creates an implicit parent"
+  ],
+  "validationCommands": [
+    "node test/conformance/check-contract-fixtures.mjs",
+    "npm run test:conformance"
+  ],
+  "safetyConfirmations": {
+    "syntheticFixtureOnly": true,
+    "noProductionDeployOrRestart": true,
+    "noProductionDatabaseMutation": true,
+    "noLiveProviderSend": true,
+    "noTerminalOutboxAckMutation": true,
+    "noTerminalAckReplay": true,
+    "noSecretRotationOrDisclosure": true,
+    "noHostSpecificPrivatePath": true,
+    "noCrossWorkerRegistration": true,
+    "operatorApprovalNotInferred": true
+  },
+  "v0Freeze": {
+    "frozenAt": "2026-05-15T02:20:00+09:00",
+    "round": "a2a-broker-634-parent-origin-four-case-routing",
+    "scope": "Four-case Terminal Brief parent-origin routing matrix for Seoseo/Team1 and Gwakga/Team2",
+    "nonAckBoundary": "routing cases define ownership and projection flow only; provider accepted/send evidence remains non-ACK"
+  },
+  "v1Freeze": {
+    "frozenAt": "2026-05-15T02:20:00+09:00",
+    "round": "a2a-broker-634-parent-origin-four-case-routing",
+    "scope": "Four-case Terminal Brief parent-origin routing matrix for Seoseo/Team1 and Gwakga/Team2"
+  }
+}

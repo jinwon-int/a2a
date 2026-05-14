@@ -20,7 +20,7 @@ As order 4 of 7 in this round:
 A2A Terminal Brief 완료: yukson(4/7)
 ```
 
-This follows the known-total format defined in `contracts/a2a/parent-terminal-brief-aggregation.md` (Concise title semantics). The title is rendered only by the parent broker (`seoseo`) from the parent aggregation ledger. It is not proof of provider delivery, operator receipt, approval, or terminal-outbox ACK.
+This follows the known-total format defined in `contracts/a2a/parent-terminal-brief-aggregation.md` (Concise title semantics). The denominator is not a global constant: it is the broker-assigned child task total for the parent round / dispatch scope. R13 uses `/7` because Seoseo assigned seven child tasks in this specific round. The compact title is per-child terminal evidence sent/emitted to the origin/commanding broker, not proof of provider delivery, operator receipt, approval, or terminal-outbox ACK.
 
 ## Evidence snapshot
 
@@ -36,7 +36,7 @@ This follows the known-total format defined in `contracts/a2a/parent-terminal-br
 | Gate | Pass condition | Fail / NO-GO condition | Current status |
 | --- | --- | --- | --- |
 | G1. Parent aggregation metadata in child dispatch | Every R13 child carries `parentRoundId=a2a-r13-terminal-brief-realround-20260514T013556Z`, `originBrokerId=seoseo`, `parentRoundTotal=7`, and order field. Team2 handoff children carry explicit `crossBrokerHandoff` tuple. | Missing, rewritten, or inconsistent metadata across children; handoff metadata cannot be joined to parent round. | Pass: parent-terminal-brief-aggregation.md contract defines metadata lifecycle; R13 dispatch enforces parent metadata. |
-| G2. Compact title — known-total format | Aggregate Terminal Brief title follows `A2A Terminal Brief <상태>: <worker>(n/7)` for all 7 children. Title ≤80 chars; forbidden content excluded. | Title exceeds 80 chars; uses wrong total; includes task ids, child issue URLs, evidence URLs, broker IDs, receipt/ACK status, or runtime/bootstrap file names. | Pass: contract defines known-total format with examples; target title `A2A Terminal Brief 완료: yukson(4/7)` is within constraints. |
+| G2. Per-child compact title — dynamic assigned total | Each child terminal transition (`succeeded`/`failed`/`cancelled`/`blocked`) emits/sends a compact Terminal Brief to the origin/commanding broker using `A2A Terminal Brief <상태>: <worker>(n/<assignedChildTaskTotal>)`. For R13, `<assignedChildTaskTotal>` is 7 because the broker assigned seven child tasks. Title ≤80 chars; forbidden content excluded. | Title exceeds 80 chars; treats 7 as a global constant; uses wrong assigned total/order; includes task ids, child issue URLs, evidence URLs, broker IDs, receipt/ACK status, or runtime/bootstrap file names. | Pass: contract defines known-total format with examples; target title `A2A Terminal Brief 완료: yukson(4/7)` is within constraints for this R13 dispatch. |
 | G3. Seoseo-origin parent Terminal Brief ownership | Parent broker `seoseo` renders the aggregate Terminal Brief title for the R13 round. Handoff/execution brokers (Gwakga) must not send their own parent round notification. | Gwakga sends a Seoseo-origin parent notification; title ownership ambiguous or split across brokers. | Pass: parent-terminal-brief-aggregation.md sections "Parent-only notification ownership" and symmetric rules define ownership by `originBrokerId`. |
 | G4. Body/evidence separation | Title and body are separate fields. Title contains no evidence body content, child issue URLs, broker IDs, or ACK state. Body does not contain `terminalBriefTitle`. | Concatenated title+body block; title leaking evidence content; body-only notification with blank title. | Pass: contract Body/evidence separation section defines 4 gates; fixture proves separate rendering. |
 | G5. Receipt/ACK boundary | 4-level receipt vocabulary is frozen at v0. Provider accepted-send is non-ACK. Terminal Brief title, GitHub comments, PR/Done/Block URLs remain evidence inputs, not receipt/ACK/approval. | Any contract change or code path promotes `providerAccepted` or `messageId` or Terminal Brief title to ACK, conflation of receipt levels, or terminal-outbox ACK without operator approval. | Pass: terminal-semantics.md v0 freeze; accepted-send non-ACK fixture; prior validation matrices enforce separation. |
@@ -56,18 +56,18 @@ This follows the known-total format defined in `contracts/a2a/parent-terminal-br
 
 ### Current aggregate decision
 
-**Decision: `GO_CANDIDATE / Needs operator approval` for the acceptance matrix. The R13 parent aggregation (Seoseo finalizer) may close only after all 7 child lanes submit terminal PR/Done/Block evidence.**
+**Decision: `GO_CANDIDATE / Needs finalizer closeout` for the acceptance matrix. This lane verifies the per-child Terminal Brief semantics for yukson(4/7): every child terminal transition must emit/send its own compact Terminal Brief to the origin/commanding broker. Parent/final summary closeout is separate from these per-child terminal emits.**
 
 The R13 Team1/yukson acceptance matrix is documented and locally validated. Parent metadata propagation, compact title format, Seoseo-origin routing symmetry, and receipt/ACK boundary are verified from existing contracts, fixtures, and validation artifacts. The primary guard (a2a-broker#598) fail-closed condition is met: `parentRoundId`, `originBrokerId`, and known total metadata are present in the R13 dispatch.
 
-The parent broker (Seoseo) may render the aggregate Terminal Brief title `A2A Terminal Brief 완료: yukson(4/7)` after all 7 lanes submit terminal evidence and the parent aggregation ledger confirms the completed count.
+For this lane, the compact per-child Terminal Brief title is `A2A Terminal Brief 완료: yukson(4/7)`. The `/7` denominator is the R13 broker-assigned child task total, not an absolute/global value. This per-child terminal emit is separate from any parent/final summary.
 
 ## R13 residual risk matrix
 
 | Risk area | Required R13 proof | Current risk posture | Fail-closed condition |
 | --- | --- | --- | --- |
 | Parent metadata propagation | Every child includes `parentRoundId=a2a-r13-terminal-brief-realround-20260514T013556Z`, `originBrokerId=seoseo`, `parentRoundTotal=7`, and order. Team2 handoff children include explicit `crossBrokerHandoff` tuple. | Verified via contract and dispatch definition; runtime enforcement depends on broker implementation. | Dispatch missing any required field, rewrites origin, or accepts partial metadata across lanes. |
-| Compact title correctness | All 7 aggregate titles follow known-total format, ≤80 chars, forbidden content excluded. | Contract defines format; target title `A2A Terminal Brief 완료: yukson(4/7)` is documented and within constraints. | Title exceeds 80 chars, contains forbidden content, or uses wrong total/format. |
+| Compact title correctness | Per-child titles follow known-total format with a dynamic denominator sourced from broker parent-round assignment metadata. For R13 that assigned total is 7. | Contract defines format; target title `A2A Terminal Brief 완료: yukson(4/7)` is documented and within constraints. | Title exceeds 80 chars, contains forbidden content, treats denominator as a global constant, or uses wrong assigned total/order. |
 | Seoseo-origin parent ownership | Parent Terminal Brief owner is `seoseo` (origin broker). Gwakga handoff/execution lane must not render its own parent notification. | Contract and symmetric rules define origin-based ownership. | Gwakga renders Seoseo-origin parent notification; ownership ambiguous or split. |
 | Receipt/ACK separation | Provider accepted-send, message ID, GitHub comments, Terminal Brief titles, and PR/Done/Block URLs remain evidence inputs only, not receipt/ACK/approval. | Frozen contract and fixtures; no live canary or ACK attempted by this lane. | Any `accepted`, `sent`, provider `messageId`, GitHub comment, or Terminal Brief title promoted to receipt, ACK, or approval. |
 | Replay/stale suppression | Same origin/handoff/evidence tuple is idempotent; historical outbox rows not replayed; no duplicate parent Terminal Brief rows. | Not executed in this lane; approval-gated future work only. | Duplicate projection, stale/backlog replay, terminal-outbox ACK mutation, or retry from historical rows without fresh explicit operator approval. |
@@ -75,7 +75,7 @@ The parent broker (Seoseo) may render the aggregate Terminal Brief title `A2A Te
 
 ## 7-child parent round title proof (synthetic, no-live)
 
-The following table proves the synthetic title format for all 7 children in the R13 round. No provider send, DB mutation, or terminal-outbox ACK was performed.
+The following table illustrates the synthetic title format for the seven children assigned in the R13 round. The denominator comes from this round's broker assignment count; another round may have a different denominator. No provider send, DB mutation, or terminal-outbox ACK was performed.
 
 | Order | Worker | Team | Broker of record | Title |
 | --- | --- | --- | --- | --- |
@@ -154,4 +154,4 @@ git status --short --ignored
 
 ## Closeout boundary
 
-This lane publishes PR evidence for the acceptance matrix document. It must not claim R13 activation GO, live canary authorization, deploy/reload approval, terminal ACK/read receipt, parent broker aggregation completion before all 7 lanes submit terminal evidence, or source-public/visibility approval.
+This lane publishes PR evidence for the acceptance matrix document. It must not claim R13 activation GO, live canary authorization, deploy/reload approval, terminal ACK/read receipt, or source-public/visibility approval. It also must not treat `/7` as a global constant; it is only the R13 broker-assigned child task total.

@@ -73,6 +73,7 @@ Store only minimal resumable state in `stateJson`.
     "deploy": "not-approved",
     "restart": "not-approved",
     "liveCanary": "not-approved",
+    "providerSend": "not-approved",
     "dbMutation": "blocked",
     "terminalAckReplay": "blocked",
     "releaseTag": "not-approved",
@@ -203,6 +204,32 @@ The first implementation of this bridge should remain conservative:
 - no automatic DB/outbox cleanup;
 - no automatic terminal ACK/replay;
 - no secret-bearing state.
+
+## Dry-run runtime rehearsal
+
+The first runtime-shaped implementation is a deterministic rehearsal command, not a live automation switch:
+
+```bash
+npm run a2a:taskflow-runtime -- --input fixtures/contract/a2a-spec-first-taskflow-runtime-dryrun.json
+```
+
+It validates a spec-first packet and emits a managed TaskFlow draft containing:
+
+- `controllerId` and goal;
+- `currentStep`;
+- minimal `stateJson`;
+- optional `waitJson` for operator approval;
+- child evidence lane plans;
+- exactly-one-finalizer closeout expectation;
+- revision-safe mutation order.
+
+The command remains fail-closed:
+
+- `runtimeAutomationEnabled=true` is blocked;
+- `--mode execute` is unsupported;
+- approval-sensitive actions are blocked or represented as `awaiting_approval` waits;
+- source-public execution remains `NO_GO`;
+- secrets, raw session dumps, runtime bootstrap paths, and private paths are rejected.
 
 ## Future implementation notes
 

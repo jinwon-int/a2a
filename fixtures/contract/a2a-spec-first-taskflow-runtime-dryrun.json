@@ -1,0 +1,92 @@
+{
+  "protocol": "a2a-spec-first",
+  "runtimeAutomationEnabled": false,
+  "controllerId": "a2a-plane/spec-first-taskflow-bridge",
+  "goal": "A2A spec-first: Terminal Brief parent-origin routing runtime dry-run",
+  "source": {
+    "issueUrl": "https://github.com/jinwon-int/a2a-broker/issues/634",
+    "specPath": "docs/specs/a2a-terminal-brief-parent-origin-routing/spec.md",
+    "planPath": "docs/specs/a2a-terminal-brief-parent-origin-routing/plan.md",
+    "tasksPath": "docs/specs/a2a-terminal-brief-parent-origin-routing/tasks.md"
+  },
+  "classification": {
+    "size": "large",
+    "reason": "cross-repo Terminal Brief routing contract"
+  },
+  "ownership": {
+    "brokerOfRecord": "gwakga",
+    "finalizer": "gwakga",
+    "humanApprovalOwner": "operator"
+  },
+  "affectedRepos": [
+    "a2a-plane",
+    "a2a-broker",
+    "openclaw-plugin-a2a"
+  ],
+  "approvalBoundaries": {
+    "deploy": "not-approved",
+    "restart": "not-approved",
+    "liveCanary": "not-approved",
+    "providerSend": "not-approved",
+    "dbMutation": "blocked",
+    "terminalAckReplay": "blocked",
+    "releaseTag": "not-approved",
+    "secretMovement": "blocked",
+    "forcePushHistoryRewrite": "blocked"
+  },
+  "lanes": [
+    {
+      "id": "plane-contract-lane",
+      "repo": "a2a-plane",
+      "task": "Validate the four-case parent-origin routing contract and TaskFlow state projection.",
+      "expectedEvidence": [
+        "contract fixture diff",
+        "release-gate result",
+        "GitHub Actions check"
+      ]
+    },
+    {
+      "id": "broker-routing-lane",
+      "repo": "a2a-broker",
+      "task": "Implement or review parent-origin routing helper and metadata preservation.",
+      "expectedEvidence": [
+        "unit test result",
+        "PR link",
+        "routing matrix evidence"
+      ]
+    },
+    {
+      "id": "plugin-relay-lane",
+      "repo": "openclaw-plugin-a2a",
+      "task": "Validate relay success duplicate-suppression and relay failure local fallback behavior.",
+      "expectedEvidence": [
+        "operator-event bridge test result",
+        "cross-broker relay test result",
+        "PR link"
+      ]
+    },
+    {
+      "id": "libero-validation-lane",
+      "repo": "a2a-plane",
+      "task": "Collect final validation evidence and prepare GO/NO-GO closeout for one finalizer.",
+      "expectedEvidence": [
+        "merged PR list",
+        "CI status",
+        "approval-sensitive actions not performed statement"
+      ]
+    }
+  ],
+  "evidence": {
+    "prs": [],
+    "tests": [],
+    "ci": [],
+    "wiki": [],
+    "blockers": []
+  },
+  "closeout": {
+    "decision": null,
+    "summary": null,
+    "closedBy": null,
+    "closedAt": null
+  }
+}

@@ -122,3 +122,10 @@ npm run check
 ```
 
 The check script validates layout, package metadata, and public-readiness scan rules.
+
+
+## Spec-first A2A changes
+
+A2A Plane uses a lightweight spec-first protocol for medium and large development/operations changes. Start with `docs/a2a-constitution.md`, then use the templates in `docs/spec-templates/` for feature specs, implementation plans, and task/evidence checklists.
+
+This process is documentation-only in its initial adoption phase and does not change runtime behavior or authorize deploy/restart/canary/DB/replay/release actions.

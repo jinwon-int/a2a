@@ -1,0 +1,114 @@
+name: A2A spec-first change
+about: Track a medium/large A2A change with spec, plan, tasks, and evidence gates
+labels: [enhancement, safety-gate]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template for A2A changes that are Medium or Large under `docs/a2a-constitution.md`.
+
+        Keep this issue public-safe: no secrets, private endpoints, provider IDs, Telegram IDs, raw session dumps, production data, or OpenClaw runtime/bootstrap files.
+
+  - type: input
+    id: summary
+    attributes:
+      label: Change summary
+      description: One sentence describing the A2A change.
+      placeholder: Add parent-origin Terminal Brief routing contract
+    validations:
+      required: true
+
+  - type: dropdown
+    id: size
+    attributes:
+      label: Size classification
+      description: Use docs/a2a-constitution.md. Small changes normally do not need this template.
+      options:
+        - Medium — spec + plan required
+        - Large — spec + plan + tasks + detached evidence lane required
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / operator need
+      description: What problem are we solving and for whom?
+      placeholder: |
+        Operators need ...
+        Brokers/workers need ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: List in-scope and out-of-scope items.
+      placeholder: |
+        In scope:
+        - ...
+
+        Out of scope:
+        - deploy/restart/canary unless separately approved
+        - DB/outbox mutation unless separately approved
+    validations:
+      required: true
+
+  - type: textarea
+    id: spec_plan_tasks
+    attributes:
+      label: Spec-first packet
+      description: Link the spec/plan/tasks. If tasks are not required yet, explain why.
+      placeholder: |
+        Spec: docs/specs/<name>/spec.md or PR/issue link
+        Clarify: docs/specs/<name>/clarify.md or N/A
+        Plan: docs/specs/<name>/plan.md
+        Analyze: docs/specs/<name>/analyze.md or pending
+        Tasks: docs/specs/<name>/tasks.md or required before implementation
+        Checklist: docs/specs/<name>/checklist.md or pending
+    validations:
+      required: true
+
+  - type: textarea
+    id: affected_components
+    attributes:
+      label: Affected repos/components
+      description: Name every repo/component that may be touched.
+      placeholder: |
+        - a2a-plane:
+        - a2a-broker:
+        - a2a-docker-runner:
+        - openclaw-plugin-a2a:
+        - worker/node config:
+        - Wiki/runbooks:
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence / validation contract
+      description: What evidence is required for closeout?
+      placeholder: |
+        - focused tests:
+        - full checks:
+        - CI:
+        - mergeability/conflict evidence:
+        - finalizer decision:
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety / approval boundaries
+      options:
+        - label: This issue does not itself approve production deploys, Gateway/broker/worker restarts, live canaries/provider sends, DB/outbox mutation, manual Terminal Brief ACK/replay, release/tag, secret movement, visibility changes, history rewrite, or force push.
+          required: true
+        - label: Any approval-sensitive action will be requested separately with exact scope and rollback/cleanup notes.
+          required: true
+        - label: Evidence will be redacted and will not include secrets, private endpoints, provider IDs, Telegram IDs, production data, raw session dumps, or OpenClaw runtime/bootstrap files.
+          required: true
+        - label: Exactly one broker/finalizer will own final closeout judgment.
+          required: true

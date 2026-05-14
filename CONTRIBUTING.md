@@ -34,3 +34,5 @@ Templates live in `docs/spec-templates/`:
 - `a2a-checklist.md`
 
 Issues or PRs for medium/large changes should link the completed spec and plan. If the spec is unclear, add clarify notes before planning; before execution, run an analysis pass; before implementation and closeout, use the quality checklist. Closeout must include evidence and must name approval-sensitive actions that were not performed.
+
+Use the **A2A spec-first change** issue template for Medium/Large work. Pull requests should fill the spec-first packet section in `.github/pull_request_template.md`; Small PRs may mark spec/plan fields as N/A only when the change is short, reversible, single-repo, and outside approval-sensitive boundaries.

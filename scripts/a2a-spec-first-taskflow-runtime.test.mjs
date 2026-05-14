@@ -204,10 +204,11 @@ test('missing lanes fails closed', () => {
 });
 
 test('unsafe state strings are blocked', () => {
+  const unsafeTokenShape = ['TOKEN=', 'ghp_', 'abcdefghijklmnopqrstuvwxyz123456'].join('');
   const input = validPacket({
     evidence: {
       prs: [],
-      tests: ['TOKEN=ghp_abcdefghijklmnopqrstuvwxyz123456'],
+      tests: [unsafeTokenShape],
       ci: [],
       wiki: [],
       blockers: [],

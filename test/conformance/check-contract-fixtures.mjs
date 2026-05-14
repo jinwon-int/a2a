@@ -689,7 +689,7 @@ for (const forbidden of [
   'originBrokerId means child broker',
   'Team2-only work routes through Seoseo',
   'Team1-only work routes through Gwakga',
-  'provider accepted/send evidence is a Terminal ACK',
+  'provider accepted/send evidence must be treated as non-ACK only',
   'child broker sends an operator-facing parent Terminal Brief after relay success',
   'parentless child projection creates an implicit parent',
 ]) {

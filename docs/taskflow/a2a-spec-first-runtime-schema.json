@@ -1,0 +1,72 @@
+{
+  "name": "A2A Spec-First TaskFlow Runtime Rehearsal",
+  "contract": "docs/taskflow/a2a-spec-first-bridge.md",
+  "issue": "https://github.com/jinwon-int/a2a-plane/issues/324",
+  "protocol": "a2a-spec-first",
+  "version": 1,
+  "failClosed": true,
+  "runtimeAutomationEnabled": false,
+  "defaultDecision": "NO_GO",
+  "decisionOutputs": [
+    "NO_GO",
+    "TASKFLOW_DRY_RUN_READY",
+    "NEEDS_OPERATOR_APPROVAL"
+  ],
+  "executionModes": [
+    "dry-run",
+    "simulate"
+  ],
+  "sourcePublicExecution": "NO_GO",
+  "requiredStateFields": [
+    "protocol",
+    "source",
+    "classification",
+    "ownership",
+    "affectedRepos",
+    "approvalBoundaries",
+    "evidence",
+    "closeout"
+  ],
+  "lifecycleStates": [
+    "spec_draft",
+    "plan_ready",
+    "tasks_ready",
+    "dispatching",
+    "collecting_evidence",
+    "awaiting_approval",
+    "ready_for_closeout",
+    "blocked",
+    "closed"
+  ],
+  "approvalSensitiveActions": [
+    "deploy",
+    "restart",
+    "liveCanary",
+    "providerSend",
+    "dbMutation",
+    "terminalAckReplay",
+    "releaseTag",
+    "secretMovement",
+    "forcePushHistoryRewrite"
+  ],
+  "phaseOneRuntimeBoundaries": {
+    "automaticIssueScanning": false,
+    "automaticRuntimeExecution": false,
+    "automaticDeployRestartCanary": false,
+    "automaticDbOutboxCleanup": false,
+    "automaticTerminalAckReplay": false,
+    "secretBearingState": false
+  },
+  "requiredApprovalBoundaryStatuses": [
+    "not-approved",
+    "blocked"
+  ],
+  "childLaneRequirements": [
+    "lane id",
+    "target repo/component",
+    "task summary",
+    "expected evidence",
+    "dryRunSafe=true",
+    "mutatesRuntime=false"
+  ]
+}

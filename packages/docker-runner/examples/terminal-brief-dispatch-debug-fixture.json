@@ -1,0 +1,446 @@
+{
+  "$schema": "a2a-runner-terminal-brief-dispatch-debug-v1",
+  "description": "R23 team1-bangtong Terminal Brief spec-first acceptance contract: dispatch debug fixture. Validates the complete terminal evidence dispatch lifecycle (evidence building, ACK boundary, debug metadata) through the spec-first acceptance contract, using the dokcer-runner integration seam. Synthetic only: no live broker, Telegram, Gateway, or GitHub writes.",
+  "issue": "https://github.com/jinwon-int/a2a-plane/issues/336",
+  "run": "a2a-r23-terminal-brief-spec-taskflow-monorepo-debug",
+  "worker": "bangtong",
+  "emittedAt": "2026-05-15T05:55:26.000Z",
+  "dispatchDebugMetadata": {
+    "traceId": "a2a-r23-terminal-brief-spec-taskflow-monorepo-debug",
+    "dispatchedAt": "2026-05-15T05:55:26.000Z",
+    "dispatchMode": "spec-first-acceptance",
+    "evidenceSchema": "a2a.runner.terminal-evidence.v1",
+    "ackSchema": "a2a.runner.terminal-ack.v1",
+    "noLiveProviderSend": true,
+    "terminalOutboxAckPerformed": false
+  },
+  "safetyState": {
+    "noLiveProviderSend": true,
+    "terminalAck": "requires_operator_receipt",
+    "providerSendIsReceiptEvidence": false,
+    "noRawSessionDump": true,
+    "noBootstrapArtifactInBranch": true
+  },
+  "mustNotContain": [
+    "AGENTS.md",
+    "SOUL.md",
+    "USER.md",
+    "TOOLS.md",
+    "HEARTBEAT.md",
+    "IDENTITY.md",
+    ".openclaw",
+    "Authorization",
+    "Bearer",
+    "x-access-token",
+    "/root/",
+    "/home/",
+    "/synthetic/",
+    "raw stdout",
+    "raw stderr",
+    "synthetic stdout",
+    "synthetic stderr"
+  ],
+  "cases": [
+    {
+      "name": "debug-dispatch-PR-evidence-builds-correctly",
+      "description": "PR evidence built from runner output with dispatch debug metadata traces correctly",
+      "handlerTask": {
+        "id": "r23-bangtong-dispatch-debug-pr-336",
+        "intent": "propose_patch",
+        "payload": {
+          "mode": "github-propose-patch",
+          "repo": "jinwon-int/a2a-plane",
+          "issue": "336",
+          "issueUrl": "https://github.com/jinwon-int/a2a-plane/issues/336",
+          "title": "Terminal Brief spec-first acceptance contract",
+          "focus": "Add terminal brief dispatch debug fixture for spec-first acceptance contract"
+        }
+      },
+      "runnerOutput": {
+        "ok": true,
+        "taskId": "r23-bangtong-dispatch-debug-pr-336",
+        "status": "completed",
+        "workDir": "/synthetic/not-forwarded-dispatch-debug/pr",
+        "exitCode": 0,
+        "signal": null,
+        "stdout": "synthetic stdout omitted from terminal evidence dispatch",
+        "stderr": "",
+        "artifacts": ["artifacts/manifest.json"],
+        "resultSummary": {
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "stdout": "dispatch debug PR fixture: ok",
+          "stderr": "",
+          "stdoutTruncated": false,
+          "stderrTruncated": false,
+          "artifactCount": 1,
+          "manifestPath": "artifacts/manifest.json",
+          "runnerBuild": {
+            "version": "0.1.0",
+            "source": "https://github.com/jinwon-int/a2a-plane",
+            "revision": "synthetic-r23-dispatch-debug",
+            "builtAt": "2026-05-15T00:00:00.000Z",
+            "image": "ghcr.io/jinwon-int/a2a-docker-runner:r23-dispatch-debug"
+          }
+        },
+        "github": {
+          "prUrl": "https://github.com/jinwon-int/a2a-plane/pull/336",
+          "prNumber": "336"
+        }
+      },
+      "expectedEvidence": {
+        "schemaVersion": "a2a.runner.terminal-evidence.v1",
+        "taskId": "r23-bangtong-dispatch-debug-pr-336",
+        "status": "succeeded",
+        "evidenceKind": "PR",
+        "worker": "bangtong",
+        "repo": "jinwon-int/a2a-plane",
+        "issue": "https://github.com/jinwon-int/a2a-plane/issues/336",
+        "issueUrl": "https://github.com/jinwon-int/a2a-plane/issues/336",
+        "issueTitle": "Terminal Brief spec-first acceptance contract",
+        "prUrl": "https://github.com/jinwon-int/a2a-plane/pull/336",
+        "doneUrl": null,
+        "blockUrl": null,
+        "safetyState": {
+          "noLiveProviderSend": true,
+          "terminalAck": "requires_operator_receipt",
+          "providerSendIsReceiptEvidence": false
+        },
+        "testSummary": {
+          "label": "a2a-docker-runner completed; PR evidence; exit=0; timedOut=false; artifacts=1",
+          "exitCode": 0,
+          "timedOut": false,
+          "artifactCount": 1,
+          "stdoutTruncated": false,
+          "stderrTruncated": false
+        }
+      }
+    },
+    {
+      "name": "debug-dispatch-Done-evidence-includes-issueUrl-when-available",
+      "description": "Done evidence with explicit issue URL is correctly projected in dispatch",
+      "handlerTask": {
+        "id": "r23-bangtong-dispatch-debug-done-336",
+        "intent": "apply_local_change",
+        "payload": {
+          "mode": "github-propose-patch",
+          "repo": "jinwon-int/a2a-plane",
+          "issue": "336",
+          "issueUrl": "https://github.com/jinwon-int/a2a-plane/issues/336",
+          "title": "Terminal Brief spec-first acceptance contract",
+          "focus": "Dispatch debug Done evidence for terminal brief acceptance contract"
+        }
+      },
+      "runnerOutput": {
+        "ok": true,
+        "taskId": "r23-bangtong-dispatch-debug-done-336",
+        "status": "completed",
+        "workDir": "/synthetic/not-forwarded-dispatch-debug/done",
+        "exitCode": 0,
+        "signal": null,
+        "stdout": "done dispatch debug: no code change needed",
+        "stderr": "",
+        "artifacts": [],
+        "resultSummary": {
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "stdout": "dispatch debug Done fixture: ok",
+          "stderr": "",
+          "stdoutTruncated": false,
+          "stderrTruncated": false,
+          "artifactCount": 0,
+          "manifestPath": "artifacts/manifest.json",
+          "runnerBuild": {
+            "version": "0.1.0",
+            "source": "https://github.com/jinwon-int/a2a-plane",
+            "revision": "synthetic-r23-dispatch-debug",
+            "builtAt": "2026-05-15T00:00:00.000Z",
+            "image": "ghcr.io/jinwon-int/a2a-docker-runner:r23-dispatch-debug"
+          }
+        },
+        "github": {
+          "doneCommentUrl": "https://github.com/jinwon-int/a2a-plane/issues/336#issuecomment-r23-dispatch-debug-done"
+        }
+      },
+      "expectedEvidence": {
+        "schemaVersion": "a2a.runner.terminal-evidence.v1",
+        "taskId": "r23-bangtong-dispatch-debug-done-336",
+        "status": "succeeded",
+        "evidenceKind": "Done",
+        "worker": "bangtong",
+        "repo": "jinwon-int/a2a-plane",
+        "issue": "https://github.com/jinwon-int/a2a-plane/issues/336",
+        "issueUrl": "https://github.com/jinwon-int/a2a-plane/issues/336",
+        "issueTitle": "Terminal Brief spec-first acceptance contract",
+        "prUrl": null,
+        "doneUrl": "https://github.com/jinwon-int/a2a-plane/issues/336#issuecomment-r23-dispatch-debug-done",
+        "blockUrl": null,
+        "safetyState": {
+          "noLiveProviderSend": true,
+          "terminalAck": "requires_operator_receipt",
+          "providerSendIsReceiptEvidence": false
+        },
+        "testSummary": {
+          "label": "a2a-docker-runner completed; Done evidence; exit=0; timedOut=false; artifacts=0",
+          "exitCode": 0,
+          "timedOut": false,
+          "artifactCount": 0,
+          "stdoutTruncated": false,
+          "stderrTruncated": false
+        }
+      }
+    },
+    {
+      "name": "debug-dispatch-Block-evidence-preserves-blockUrl",
+      "description": "Block evidence preserves blockUrl through dispatch and does not leak raw logs",
+      "handlerTask": {
+        "id": "r23-bangtong-dispatch-debug-block-336",
+        "intent": "analyze",
+        "payload": {
+          "mode": "github-propose-patch",
+          "repo": "jinwon-int/a2a-plane",
+          "issue": "336",
+          "issueUrl": "https://github.com/jinwon-int/a2a-plane/issues/336",
+          "title": "Terminal Brief spec-first acceptance contract",
+          "focus": "Dispatch debug block evidence for terminal brief acceptance contract"
+        }
+      },
+      "runnerOutput": {
+        "ok": false,
+        "taskId": "r23-bangtong-dispatch-debug-block-336",
+        "status": "failed",
+        "workDir": "/synthetic/not-forwarded-dispatch-debug/block",
+        "exitCode": 1,
+        "signal": null,
+        "stdout": "",
+        "stderr": "synthetic stderr omitted from terminal evidence dispatch",
+        "artifacts": [],
+        "resultSummary": {
+          "exitCode": 1,
+          "signal": null,
+          "timedOut": false,
+          "stdout": "",
+          "stderr": "dispatch debug Block fixture: assignment unsafe",
+          "stdoutTruncated": false,
+          "stderrTruncated": false,
+          "artifactCount": 0,
+          "manifestPath": "artifacts/manifest.json",
+          "runnerBuild": {
+            "version": "0.1.0",
+            "source": "https://github.com/jinwon-int/a2a-plane",
+            "revision": "synthetic-r23-dispatch-debug",
+            "builtAt": "2026-05-15T00:00:00.000Z",
+            "image": "ghcr.io/jinwon-int/a2a-docker-runner:r23-dispatch-debug"
+          }
+        },
+        "github": {
+          "blockCommentUrl": "https://github.com/jinwon-int/a2a-plane/issues/336#issuecomment-r23-dispatch-debug-block"
+        }
+      },
+      "expectedEvidence": {
+        "schemaVersion": "a2a.runner.terminal-evidence.v1",
+        "taskId": "r23-bangtong-dispatch-debug-block-336",
+        "status": "blocked",
+        "evidenceKind": "Block",
+        "worker": "bangtong",
+        "repo": "jinwon-int/a2a-plane",
+        "issue": "https://github.com/jinwon-int/a2a-plane/issues/336",
+        "issueUrl": "https://github.com/jinwon-int/a2a-plane/issues/336",
+        "issueTitle": "Terminal Brief spec-first acceptance contract",
+        "prUrl": null,
+        "doneUrl": null,
+        "blockUrl": "https://github.com/jinwon-int/a2a-plane/issues/336#issuecomment-r23-dispatch-debug-block",
+        "safetyState": {
+          "noLiveProviderSend": true,
+          "terminalAck": "requires_operator_receipt",
+          "providerSendIsReceiptEvidence": false
+        },
+        "testSummary": {
+          "label": "a2a-docker-runner completed; Block evidence; exit=1; timedOut=false; artifacts=0",
+          "exitCode": 1,
+          "timedOut": false,
+          "artifactCount": 0,
+          "stdoutTruncated": false,
+          "stderrTruncated": false
+        }
+      }
+    },
+    {
+      "name": "debug-dispatch-ack-decision-rejects-provider-send-only",
+      "description": "Provider send success without operator-visible receipt is rejected at ACK boundary",
+      "handlerTask": {
+        "id": "r23-bangtong-dispatch-debug-ack-pr-336",
+        "intent": "propose_patch",
+        "payload": {
+          "mode": "github-propose-patch",
+          "repo": "jinwon-int/a2a-plane",
+          "issue": "336",
+          "issueUrl": "https://github.com/jinwon-int/a2a-plane/issues/336",
+          "title": "Terminal Brief spec-first acceptance contract",
+          "focus": "Test ACK boundary rejection of provider-send-only evidence"
+        }
+      },
+      "runnerOutput": {
+        "ok": true,
+        "taskId": "r23-bangtong-dispatch-debug-ack-pr-336",
+        "status": "completed",
+        "workDir": "/synthetic/not-forwarded-dispatch-debug/ack",
+        "exitCode": 0,
+        "signal": null,
+        "stdout": "synthetic stdout omitted from terminal evidence dispatch",
+        "stderr": "",
+        "artifacts": ["artifacts/manifest.json"],
+        "resultSummary": {
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "stdout": "dispatch debug ACK fixture: ok",
+          "stderr": "",
+          "stdoutTruncated": false,
+          "stderrTruncated": false,
+          "artifactCount": 1,
+          "manifestPath": "artifacts/manifest.json"
+        },
+        "github": {
+          "prUrl": "https://github.com/jinwon-int/a2a-plane/pull/336"
+        }
+      },
+      "receipt": {
+        "operatorVisible": false,
+        "channel": "broker-sse",
+        "receiptId": "sse-send-only-r23-336"
+      },
+      "expectedAck": {
+        "acknowledged": false,
+        "cursorComplete": false,
+        "reason": "operator-visible receipt required before terminal ack"
+      }
+    },
+    {
+      "name": "debug-dispatch-ack-decision-accepts-operator-visible-receipt",
+      "description": "Operator-visible receipt allows terminal ACK to proceed",
+      "handlerTask": {
+        "id": "r23-bangtong-dispatch-debug-ack-pr-336",
+        "intent": "propose_patch",
+        "payload": {
+          "mode": "github-propose-patch",
+          "repo": "jinwon-int/a2a-plane",
+          "issue": "336",
+          "issueUrl": "https://github.com/jinwon-int/a2a-plane/issues/336",
+          "title": "Terminal Brief spec-first acceptance contract",
+          "focus": "Test ACK boundary acceptance with operator-visible receipt"
+        }
+      },
+      "runnerOutput": {
+        "ok": true,
+        "taskId": "r23-bangtong-dispatch-debug-ack-pr-336",
+        "status": "completed",
+        "workDir": "/synthetic/not-forwarded-dispatch-debug/ack",
+        "exitCode": 0,
+        "signal": null,
+        "stdout": "synthetic stdout omitted from terminal evidence dispatch",
+        "stderr": "",
+        "artifacts": ["artifacts/manifest.json"],
+        "resultSummary": {
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "stdout": "dispatch debug ACK fixture: ok",
+          "stderr": "",
+          "stdoutTruncated": false,
+          "stderrTruncated": false,
+          "artifactCount": 1,
+          "manifestPath": "artifacts/manifest.json"
+        },
+        "github": {
+          "prUrl": "https://github.com/jinwon-int/a2a-plane/pull/336"
+        }
+      },
+      "receipt": {
+        "operatorVisible": true,
+        "channel": "broker-sse",
+        "receiptId": "sse-receipt-r23-336",
+        "url": "https://github.com/jinwon-int/a2a-plane/issues/336#issuecomment-r23-ack",
+        "deliveredAt": "2026-05-15T05:55:27.000Z"
+      },
+      "expectedAck": {
+        "acknowledged": true,
+        "cursorComplete": true,
+        "reason": "terminal evidence has operator-visible receipt"
+      }
+    },
+    {
+      "name": "debug-dispatch-evidence-does-not-contain-forbidden-content",
+      "description": "Dispatch debug evidence payload must not contain OpenClaw bootstrap files, raw logs, secrets, or private paths",
+      "handlerTask": {
+        "id": "r23-bangtong-dispatch-debug-safe-336",
+        "intent": "analyze",
+        "payload": {
+          "mode": "github-propose-patch",
+          "repo": "jinwon-int/a2a-plane",
+          "issue": "336",
+          "issueUrl": "https://github.com/jinwon-int/a2a-plane/issues/336"
+        }
+      },
+      "runnerOutput": {
+        "ok": false,
+        "taskId": "r23-bangtong-dispatch-debug-safe-336",
+        "status": "failed",
+        "workDir": "/synthetic/not-forwarded/block",
+        "exitCode": 1,
+        "signal": null,
+        "stdout": "",
+        "stderr": "synthetic stderr omitted from terminal evidence dispatch",
+        "artifacts": [],
+        "resultSummary": {
+          "exitCode": 1,
+          "signal": null,
+          "timedOut": false,
+          "stdout": "",
+          "stderr": "dispatch debug safety fixture",
+          "stdoutTruncated": false,
+          "stderrTruncated": false,
+          "artifactCount": 0,
+          "manifestPath": "artifacts/manifest.json"
+        },
+        "github": {
+          "blockCommentUrl": "https://github.com/jinwon-int/a2a-plane/issues/336#issuecomment-r23-block-safe"
+        }
+      },
+      "expectedEvidence": {
+        "schemaVersion": "a2a.runner.terminal-evidence.v1",
+        "taskId": "r23-bangtong-dispatch-debug-safe-336",
+        "worker": "bangtong",
+        "repo": "jinwon-int/a2a-plane",
+        "issueUrl": "https://github.com/jinwon-int/a2a-plane/issues/336"
+      }
+    }
+  ],
+  "authAndRateLimitSafety": [
+    "Fixture uses synthetic PR/comment URLs only and performs no GitHub or Telegram writes.",
+    "Terminal alert body is compact; dedupeKey is stable for broker replay/dedupe.",
+    "No token, secret, raw stdout/stderr, or host-specific path is present in the evidence payload.",
+    "No OpenClaw runtime/bootstrap context file is referenced in any fixture field."
+  ],
+  "operatorRunbook": [
+    "1. Run integration tests: node --test packages/docker-runner/src/integration.test.ts",
+    "2. Confirm PR/Done/Block dispatch debug evidence builds correctly.",
+    "3. Confirm provider-send-only ACK rejection and operator-receipt ACK acceptance.",
+    "4. Confirm no forbidden content leaks into terminal evidence dispatch.",
+    "5. Validate against real broker SSE/webhook dispatch before enabling for team1-bangtong."
+  ],
+  "safetyConfirmations": {
+    "syntheticFixtureOnly": true,
+    "noLiveProviderSend": true,
+    "noTerminalOutboxAckMutation": true,
+    "noSecretRotationOrDisclosure": true,
+    "noRawSessionDump": true,
+    "noHostSpecificPrivatePath": true,
+    "noOpenClawRuntimeBootstrapArtifact": true,
+    "noProductionDeployOrRestart": true,
+    "noGatewayBrokerWorkerRestart": true,
+    "noProductionDatabaseMutation": true
+  }
+}

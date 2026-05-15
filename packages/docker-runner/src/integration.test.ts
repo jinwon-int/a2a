@@ -2087,3 +2087,340 @@ test("R1 smoke fixture: terminal ack requires operator-visible receipt, not prov
   assert.equal(receiptConfirmed.cursorComplete, true);
   assert.equal(receiptConfirmed.reason, "operator-visible receipt confirmed");
 });
+
+// ── Terminal Brief Dispatch Debug Fixture (Spec-First Acceptance Contract) ───
+
+interface TerminalBriefDispatchDebugScenario {
+  name: string;
+  description: string;
+  handlerTask: HandlerTask;
+  runnerOutput: RawRunnerOutput;
+  receipt?: { operatorVisible: boolean; channel?: string; receiptId?: string; url?: string; deliveredAt?: string };
+  expectedEvidence: Partial<TerminalEvidenceEvent>;
+  expectedAck?: { acknowledged: boolean; cursorComplete: boolean; reason: string };
+}
+
+interface TerminalBriefDispatchDebugFixture {
+  description: string;
+  issue: string;
+  run: string;
+  worker: string;
+  emittedAt: string;
+  dispatchDebugMetadata: {
+    traceId: string;
+    dispatchedAt: string;
+    dispatchMode: string;
+    evidenceSchema: string;
+    ackSchema: string;
+    noLiveProviderSend: boolean;
+    terminalOutboxAckPerformed: boolean;
+  };
+  safetyState: {
+    noLiveProviderSend: boolean;
+    terminalAck: string;
+    providerSendIsReceiptEvidence: boolean;
+    noRawSessionDump: boolean;
+    noBootstrapArtifactInBranch: boolean;
+  };
+  mustNotContain: string[];
+  cases: TerminalBriefDispatchDebugScenario[];
+  safetyConfirmations: Record<string, boolean>;
+}
+
+function loadTerminalBriefDispatchDebugFixture(): TerminalBriefDispatchDebugFixture {
+  const raw = readFileSync(new URL("../examples/terminal-brief-dispatch-debug-fixture.json", import.meta.url), "utf8");
+  return JSON.parse(raw) as TerminalBriefDispatchDebugFixture;
+}
+
+test("dispatch debug fixture: PR evidence builds with correct eventId and dedupeKey", () => {
+  const fixture = loadTerminalBriefDispatchDebugFixture();
+  const prCase = fixture.cases.find((c) => c.name === "debug-dispatch-PR-evidence-builds-correctly");
+  assert.ok(prCase, "fixture must include PR evidence case");
+
+  const parsed = parseRunnerOutput(JSON.stringify(prCase.runnerOutput));
+  const event = buildTerminalEvidenceEvent(parsed, prCase.handlerTask, fixture.worker, fixture.emittedAt);
+
+  assert.equal(event.schemaVersion, "a2a.runner.terminal-evidence.v1");
+  assert.equal(event.taskId, prCase.runnerOutput.taskId);
+  assert.equal(event.status, "succeeded");
+  assert.equal(event.evidenceKind, "PR");
+  assert.equal(event.worker, fixture.worker);
+  assert.ok(event.dedupeKey.startsWith("a2a-terminal:"), "dedupeKey must start with a2a-terminal:");
+  assert.equal(event.dedupeKey, event.eventId, "dedupeKey must equal eventId");
+  assert.equal(event.prUrl, "https://github.com/jinwon-int/a2a-plane/pull/336");
+  assert.equal(event.doneUrl, undefined);
+  assert.equal(event.blockUrl, undefined);
+  assert.equal(event.reason, "PR evidence is available for operator review.");
+  assert.ok(event.alert.body.length <= 360, "alert body must be compact");
+  assert.equal(event.testSummary.exitCode, 0);
+  assert.equal(event.testSummary.timedOut, false);
+  assert.equal(event.safetyState.noLiveProviderSend, true);
+  assert.equal(event.safetyState.terminalAck, "requires_operator_receipt");
+  assert.equal(event.safetyState.providerSendIsReceiptEvidence, false);
+
+  const serialized = JSON.stringify(event);
+  for (const forbidden of fixture.mustNotContain) {
+    assert.ok(!serialized.includes(forbidden), `PR evidence leaked forbidden value: ${forbidden}`);
+  }
+});
+
+test("dispatch debug fixture: Done evidence includes issueUrl and doneUrl", () => {
+  const fixture = loadTerminalBriefDispatchDebugFixture();
+  const doneCase = fixture.cases.find((c) => c.name === "debug-dispatch-Done-evidence-includes-issueUrl-when-available");
+  assert.ok(doneCase, "fixture must include Done evidence case");
+
+  const parsed = parseRunnerOutput(JSON.stringify(doneCase.runnerOutput));
+  const event = buildTerminalEvidenceEvent(parsed, doneCase.handlerTask, fixture.worker, fixture.emittedAt);
+
+  assert.equal(event.evidenceKind, "Done");
+  assert.equal(event.status, "succeeded");
+  assert.equal(event.repo, "jinwon-int/a2a-plane");
+  assert.equal(event.issue, "https://github.com/jinwon-int/a2a-plane/issues/336");
+  assert.equal(event.issueUrl, "https://github.com/jinwon-int/a2a-plane/issues/336");
+  assert.ok(event.doneUrl, "doneUrl must be present");
+  assert.ok(event.doneUrl!.includes("#issuecomment-r23-dispatch-debug-done"));
+  assert.equal(event.prUrl, undefined);
+  assert.equal(event.blockUrl, undefined);
+
+  const serialized = JSON.stringify(event);
+  for (const forbidden of fixture.mustNotContain) {
+    assert.ok(!serialized.includes(forbidden), `Done evidence leaked forbidden value: ${forbidden}`);
+  }
+});
+
+test("dispatch debug fixture: Block evidence preserves blockUrl without raw logs", () => {
+  const fixture = loadTerminalBriefDispatchDebugFixture();
+  const blockCase = fixture.cases.find((c) => c.name === "debug-dispatch-Block-evidence-preserves-blockUrl");
+  assert.ok(blockCase, "fixture must include Block evidence case");
+
+  const parsed = parseRunnerOutput(JSON.stringify(blockCase.runnerOutput));
+  const event = buildTerminalEvidenceEvent(parsed, blockCase.handlerTask, fixture.worker, fixture.emittedAt);
+
+  assert.equal(event.evidenceKind, "Block");
+  assert.equal(event.status, "blocked");
+  assert.ok(event.blockUrl, "blockUrl must be present");
+  assert.ok(event.blockUrl!.includes("#issuecomment-r23-dispatch-debug-block"));
+  assert.equal(event.prUrl, undefined);
+  assert.equal(event.doneUrl, undefined);
+  assert.equal(event.testSummary.exitCode, 1);
+  assert.ok(event.reason, "reason must be present for Block evidence");
+  assert.ok(event.reason.length <= 180, "Block reason must be compact");
+
+  const serialized = JSON.stringify(event);
+  assert.ok(!serialized.includes("synthetic stderr"), "Block evidence must not contain raw stderr");
+  assert.ok(!serialized.includes("/synthetic/"), "Block evidence must not contain host paths");
+  for (const forbidden of fixture.mustNotContain) {
+    assert.ok(!serialized.includes(forbidden), `Block evidence leaked forbidden value: ${forbidden}`);
+  }
+});
+
+test("dispatch debug fixture: provider-send-only ACK rejection at boundary", () => {
+  const fixture = loadTerminalBriefDispatchDebugFixture();
+  const ackRejectCase = fixture.cases.find((c) => c.name === "debug-dispatch-ack-decision-rejects-provider-send-only");
+  assert.ok(ackRejectCase, "fixture must include ACK rejection case");
+
+  const parsed = parseRunnerOutput(JSON.stringify(ackRejectCase.runnerOutput));
+  const event = buildTerminalEvidenceEvent(parsed, ackRejectCase.handlerTask, fixture.worker, fixture.emittedAt);
+
+  const decision = buildTerminalAckDecision(event, ackRejectCase.receipt);
+  assert.equal(decision.acknowledged, false);
+  assert.equal(decision.cursorComplete, false);
+  assert.match(decision.reason, /operator-visible receipt required/);
+  assert.equal(decision.evidenceKind, "PR");
+  assert.equal(decision.taskId, ackRejectCase.runnerOutput.taskId);
+  assert.equal(decision.receipt, undefined, "rejected ACK must not include receipt");
+});
+
+test("dispatch debug fixture: operator-visible receipt allows terminal ACK", () => {
+  const fixture = loadTerminalBriefDispatchDebugFixture();
+  const ackAcceptCase = fixture.cases.find((c) => c.name === "debug-dispatch-ack-decision-accepts-operator-visible-receipt");
+  assert.ok(ackAcceptCase, "fixture must include ACK acceptance case");
+
+  const parsed = parseRunnerOutput(JSON.stringify(ackAcceptCase.runnerOutput));
+  const event = buildTerminalEvidenceEvent(parsed, ackAcceptCase.handlerTask, fixture.worker, fixture.emittedAt);
+
+  const decision = buildTerminalAckDecision(event, ackAcceptCase.receipt);
+  assert.equal(decision.acknowledged, true);
+  assert.equal(decision.cursorComplete, true);
+  assert.equal(decision.reason, "terminal evidence has operator-visible receipt");
+  assert.equal(decision.evidenceKind, "PR");
+  assert.ok(decision.receipt, "accepted ACK must include receipt metadata");
+  assert.equal(decision.receipt!.channel, "broker-sse");
+  assert.equal(decision.receipt!.receiptId, "sse-receipt-r23-336");
+  assert.ok(decision.receipt!.url, "receipt must include url");
+  assert.ok(decision.receipt!.deliveredAt, "receipt must include deliveredAt");
+});
+
+test("dispatch debug fixture: evidence must not contain forbidden content", () => {
+  const fixture = loadTerminalBriefDispatchDebugFixture();
+
+  for (const scenario of fixture.cases) {
+    const parsed = parseRunnerOutput(JSON.stringify(scenario.runnerOutput));
+    const event = buildTerminalEvidenceEvent(parsed, scenario.handlerTask, fixture.worker, fixture.emittedAt);
+    const serialized = JSON.stringify(event);
+
+    for (const forbidden of fixture.mustNotContain) {
+      assert.ok(!serialized.includes(forbidden), `${scenario.name} leaked forbidden value: ${forbidden}`);
+    }
+
+    // Verify safe dispatch metadata invariants
+    assert.ok(!serialized.includes("/synthetic/"), `${scenario.name} must not leak synthetic workDir paths`);
+    assert.ok(event.alert.body.length <= 360, `${scenario.name} alert body must be <= 360 chars`);
+  }
+});
+
+test("dispatch debug fixture: safety confirmations are present and correct", () => {
+  const fixture = loadTerminalBriefDispatchDebugFixture();
+
+  assert.equal(fixture.safetyConfirmations.syntheticFixtureOnly, true);
+  assert.equal(fixture.safetyConfirmations.noLiveProviderSend, true);
+  assert.equal(fixture.safetyConfirmations.noTerminalOutboxAckMutation, true);
+  assert.equal(fixture.safetyConfirmations.noSecretRotationOrDisclosure, true);
+  assert.equal(fixture.safetyConfirmations.noRawSessionDump, true);
+  assert.equal(fixture.safetyConfirmations.noHostSpecificPrivatePath, true);
+  assert.equal(fixture.safetyConfirmations.noOpenClawRuntimeBootstrapArtifact, true);
+  assert.equal(fixture.safetyConfirmations.noProductionDeployOrRestart, true);
+  assert.equal(fixture.safetyConfirmations.noGatewayBrokerWorkerRestart, true);
+
+  // Dispatch debug metadata must match the run context
+  assert.equal(fixture.dispatchDebugMetadata.traceId, "a2a-r23-terminal-brief-spec-taskflow-monorepo-debug");
+  assert.equal(fixture.dispatchDebugMetadata.dispatchMode, "spec-first-acceptance");
+  assert.equal(fixture.dispatchDebugMetadata.noLiveProviderSend, true);
+  assert.equal(fixture.dispatchDebugMetadata.terminalOutboxAckPerformed, false);
+
+  // Safety state must reject bootstrap files in branch
+  assert.equal(fixture.safetyState.noBootstrapArtifactInBranch, true);
+});
+
+test("dispatch debug fixture: handlerResult correctly dispatches PR evidence", () => {
+  const fixture = loadTerminalBriefDispatchDebugFixture();
+  const prCase = fixture.cases.find((c) => c.name === "debug-dispatch-PR-evidence-builds-correctly");
+  assert.ok(prCase, "fixture must include PR evidence case");
+
+  const parsed = parseRunnerOutput(JSON.stringify(prCase.runnerOutput));
+  const handlerResult = buildHandlerResult(parsed, prCase.handlerTask, fixture.worker);
+
+  assert.equal(handlerResult.status, "pr_opened");
+  assert.equal(handlerResult.prUrl, "https://github.com/jinwon-int/a2a-plane/pull/336");
+  assert.equal(handlerResult.terminalEvidence.eventId, handlerResult.terminalEvidence.dedupeKey);
+  assert.equal(handlerResult.terminalEvidence.status, "succeeded");
+  assert.equal(handlerResult.terminalEvidence.evidenceKind, "PR");
+  assert.equal(handlerResult.terminalEvidence.worker, fixture.worker);
+  assert.ok(handlerResult.runnerRaw, "handlerResult must include runnerRaw for debugging");
+  assert.ok(handlerResult.risks.length === 0, "clean PR should have no risks");
+});
+
+test("dispatch debug fixture: handlerResult correctly dispatches Block evidence", () => {
+  const fixture = loadTerminalBriefDispatchDebugFixture();
+  const blockCase = fixture.cases.find((c) => c.name === "debug-dispatch-Block-evidence-preserves-blockUrl");
+  assert.ok(blockCase, "fixture must include Block evidence case");
+
+  const parsed = parseRunnerOutput(JSON.stringify(blockCase.runnerOutput));
+  const handlerResult = buildHandlerResult(parsed, blockCase.handlerTask, fixture.worker);
+
+  assert.equal(handlerResult.status, "blocked");
+  assert.equal(handlerResult.blockCommentUrl, "https://github.com/jinwon-int/a2a-plane/issues/336#issuecomment-r23-dispatch-debug-block");
+  assert.equal(handlerResult.terminalEvidence.status, "blocked");
+  assert.equal(handlerResult.terminalEvidence.evidenceKind, "Block");
+  assert.ok(handlerResult.risks.length > 0, "Block should include risks");
+  assert.ok(handlerResult.risks.length > 0, "Block should include risks");
+});
+
+test("dispatch debug fixture: handlerResult correctly dispatches Done evidence", () => {
+  const fixture = loadTerminalBriefDispatchDebugFixture();
+  const doneCase = fixture.cases.find((c) => c.name === "debug-dispatch-Done-evidence-includes-issueUrl-when-available");
+  assert.ok(doneCase, "fixture must include Done evidence case");
+
+  const parsed = parseRunnerOutput(JSON.stringify(doneCase.runnerOutput));
+  const handlerResult = buildHandlerResult(parsed, doneCase.handlerTask, fixture.worker);
+
+  assert.equal(handlerResult.status, "done");
+  assert.equal(handlerResult.doneCommentUrl, "https://github.com/jinwon-int/a2a-plane/issues/336#issuecomment-r23-dispatch-debug-done");
+  assert.equal(handlerResult.terminalEvidence.status, "succeeded");
+  assert.equal(handlerResult.terminalEvidence.evidenceKind, "Done");
+});
+
+test("dispatch debug fixture: OperatorTaskReportEvidence preserves dispatch fields", () => {
+  const fixture = loadTerminalBriefDispatchDebugFixture();
+  const prCase = fixture.cases.find((c) => c.name === "debug-dispatch-PR-evidence-builds-correctly");
+  assert.ok(prCase, "fixture must include PR evidence case");
+
+  const parsed = parseRunnerOutput(JSON.stringify(prCase.runnerOutput));
+  const handlerResult = buildHandlerResult(parsed, prCase.handlerTask, fixture.worker);
+  const report = buildOperatorTaskReportEvidence(handlerResult);
+
+  assert.equal(report.schemaVersion, "a2a.runner.operator-task-report.v1");
+  assert.equal(report.taskId, prCase.runnerOutput.taskId);
+  assert.equal(report.evidenceKind, "PR");
+  assert.equal(report.worker, fixture.worker);
+  assert.equal(report.repo, "jinwon-int/a2a-plane");
+  assert.equal(report.issue, "https://github.com/jinwon-int/a2a-plane/issues/336");
+  assert.ok(report.url, "report must include url");
+  assert.ok(report.dedupeKey, "report must include dedupeKey");
+  assert.ok(report.runnerBuild, "report must include runnerBuild");
+  assert.ok(report.summary, "report must include summary");
+  assert.equal(Array.isArray(report.tests), true);
+
+  const serialized = JSON.stringify(report);
+  for (const forbidden of fixture.mustNotContain) {
+    assert.ok(!serialized.includes(forbidden), `OperatorTaskReportEvidence leaked forbidden value: ${forbidden}`);
+  }
+});
+
+test("dispatch debug fixture: dedupeKey stability is maintained across PR/Done/Block cases", () => {
+  const fixture = loadTerminalBriefDispatchDebugFixture();
+
+  const acKcases = fixture.cases.filter((c) => c.name.startsWith("debug-dispatch-"));
+  for (const scenario of acKcases) {
+    if (!scenario.runnerOutput?.taskId) continue;
+    const parsed = parseRunnerOutput(JSON.stringify(scenario.runnerOutput));
+    const event = buildTerminalEvidenceEvent(parsed, scenario.handlerTask, fixture.worker, fixture.emittedAt);
+
+    assert.equal(event.dedupeKey, event.eventId, `${scenario.name}: dedupeKey must equal eventId`);
+    assert.ok(event.eventId.startsWith("a2a-terminal:"), `${scenario.name}: eventId must start with a2a-terminal:`);
+    assert.ok(event.eventId.includes(scenario.runnerOutput.taskId), `${scenario.name}: eventId must include taskId`);
+
+    // Build twice from the same input to verify deterministic results
+    const event2 = buildTerminalEvidenceEvent(parsed, scenario.handlerTask, fixture.worker, fixture.emittedAt);
+    assert.equal(event2.eventId, event.eventId, `${scenario.name}: eventId must be deterministic`);
+    assert.equal(event2.dedupeKey, event.dedupeKey, `${scenario.name}: dedupeKey must be deterministic`);
+  }
+});
+
+test("dispatch debug fixture: safety rejections for missing or mismatched receipt", () => {
+  const fixture = loadTerminalBriefDispatchDebugFixture();
+  const ackCase = fixture.cases.find((c) => c.name === "debug-dispatch-ack-decision-accepts-operator-visible-receipt");
+  assert.ok(ackCase, "fixture must include ACK acceptance case");
+
+  const parsed = parseRunnerOutput(JSON.stringify(ackCase.runnerOutput));
+  const event = buildTerminalEvidenceEvent(parsed, ackCase.handlerTask, fixture.worker, fixture.emittedAt);
+
+  // Missing receipt → no ACK
+  const noReceipt = buildTerminalAckDecision(event, undefined);
+  assert.equal(noReceipt.acknowledged, false);
+  assert.equal(noReceipt.cursorComplete, false);
+  assert.match(noReceipt.reason, /operator-visible receipt required/);
+
+  // Mismatched eventId → no ACK
+  const wrongReceipt = { ...ackCase.receipt!, eventId: "wrong-event-id" };
+  const mismatchedReceipt = decideTerminalEvidenceAck(event, wrongReceipt);
+  assert.equal(mismatchedReceipt.ack, false);
+  assert.match(mismatchedReceipt.reason, /eventId mismatch/);
+
+  // operatorVisible=false → no ACK
+  const notVisibleReceipt = { ...ackCase.receipt!, operatorVisible: false };
+  const notVisibleDecision = buildTerminalAckDecision(event, notVisibleReceipt);
+  assert.equal(notVisibleDecision.acknowledged, false);
+  assert.match(notVisibleDecision.reason, /operator-visible receipt/);
+});
+
+test("dispatch debug fixture: issue description links reference correct run context", () => {
+  const fixture = loadTerminalBriefDispatchDebugFixture();
+
+  assert.equal(fixture.issue, "https://github.com/jinwon-int/a2a-plane/issues/336");
+  assert.equal(fixture.run, "a2a-r23-terminal-brief-spec-taskflow-monorepo-debug");
+  assert.equal(fixture.dispatchDebugMetadata.dispatchMode, "spec-first-acceptance");
+  assert.ok(fixture.description.includes("spec-first acceptance contract"), "description must reference spec-first");
+  assert.ok(fixture.description.includes("dispatch debug"), "description must reference dispatch debug");
+  assert.equal(fixture.safetyState.noBootstrapArtifactInBranch, true);
+});

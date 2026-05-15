@@ -12,6 +12,7 @@ A2A Plane is an alpha integration candidate, not a production-ready public servi
 - Terminal Brief OpenClaw routing remains activation-blocked until the [R6 no-bypass gates](./r6-terminal-brief-openclaw-routing-synthesis.md) are satisfied after upstream OpenClaw receipt proof.
 - Compatibility claims must name exact broker/plugin/runner/OpenClaw baselines.
 - The OpenClaw Gateway canary adapter is not containerized by this monorepo; it runs inside the selected OpenClaw Gateway runtime. Docker coverage applies to the broker and Docker runner unless a separate Gateway canary container is explicitly prepared.
+- OpenClaw latency diagnostics on target nodes (`seoseo/vps4`, `bangtong/vps3`) rely on operator-initiated journal/curl inspection per the [latency diagnostic runbook](../packages/openclaw-plugin-a2a/docs/operator-latency-diagnostic-runbook.md). Automated event-loop delay, session-store residue, and broker backlog monitoring are not yet surfaced through the plugin operator-event bridge.
 
 ## Alpha support policy
 

@@ -1,10 +1,181 @@
+# A2A Plane monorepo CI
+#
+# Path-filtered jobs ensure each package and docs-only changes are validated
+# independently, while the full check job runs the complete release gate on
+# main and for cross-cutting changes.
+#
+# https://github.com/jinwon-int/a2a-plane/actions
+
 name: ci
 on:
   pull_request:
   push:
     branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
 jobs:
+  # ── Detect changed paths ────────────────────────────────────────────
+  paths-filter:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      broker: ${{ steps.filter.outputs.broker }}
+      docker-runner: ${{ steps.filter.outputs.docker-runner }}
+      plugin: ${{ steps.filter.outputs.plugin }}
+      contracts: ${{ steps.filter.outputs.contracts }}
+      docs: ${{ steps.filter.outputs.docs }}
+      scripts: ${{ steps.filter.outputs.scripts }}
+      root: ${{ steps.filter.outputs.root }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            broker:
+              - 'packages/broker/**'
+            docker-runner:
+              - 'packages/docker-runner/**'
+            plugin:
+              - 'packages/openclaw-plugin-a2a/**'
+            contracts:
+              - 'contracts/**'
+              - 'fixtures/**'
+            docs:
+              - 'docs/**'
+            scripts:
+              - 'scripts/**'
+              - 'scanner/**'
+            root:
+              - 'package.json'
+              - 'package-lock.json'
+              - '.github/workflows/**'
+              - '.gitleaks.toml'
+
+  # ── Setup and dependency installation ───────────────────────────────
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      cache-key: ${{ steps.npm-cache.outputs.cache-key }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - id: npm-cache
+        run: echo "cache-key=${{ hashFiles('package-lock.json') }}" >> "$GITHUB_OUTPUT"
+      - run: npm ci --ignore-scripts --include=dev
+
+  # ── Monorepo layout and package metadata checks ────────────────────
+  layout:
+    needs: [setup, paths-filter]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts --include=dev
+      - run: npm run check:layout
+      - run: npm run check:packages
+
+  # ── Broker package (API, lifecycle, evidence bridge) ────────────────
+  broker:
+    needs: [setup, paths-filter]
+    if: ${{ needs.paths-filter.outputs.broker == 'true' || needs.paths-filter.outputs.contracts == 'true' || needs.paths-filter.outputs.root == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts --include=dev
+      - run: npm run check -w packages/broker
+
+  # ── Docker runner package (isolated execution, evidence) ────────────
+  docker-runner:
+    needs: [setup, paths-filter]
+    if: ${{ needs.paths-filter.outputs.docker-runner == 'true' || needs.paths-filter.outputs.root == 'true' }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/docker-runner
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts --include=dev
+        working-directory: .
+      - run: npm run check
+
+  # ── OpenClaw plugin package (broker adapter, Gateway hooks) ────────
+  plugin:
+    needs: [setup, paths-filter]
+    if: ${{ needs.paths-filter.outputs.plugin == 'true' || needs.paths-filter.outputs.contracts == 'true' || needs.paths-filter.outputs.root == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts --include=dev
+      - run: npm run check -w packages/openclaw-plugin-a2a
+
+  # ── Contract conformance and fixtures ────────────────────────────────
+  contracts:
+    needs: [setup, paths-filter]
+    if: ${{ needs.paths-filter.outputs.contracts == 'true' || needs.paths-filter.outputs.scripts == 'true' || needs.paths-filter.outputs.root == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.24.x'
+      - run: go install github.com/zricethezav/gitleaks/v8@latest
+      - run: echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+      - run: npm ci --ignore-scripts --include=dev
+      - run: npm run test:conformance
+      - run: npm run scan:external-secrets
+      - run: npm run check:compatibility-baselines
+
+  # ── Docs-only validation (no code build required) ───────────────────
+  docs:
+    needs: [setup, paths-filter]
+    if: ${{ needs.paths-filter.outputs.docs == 'true' && needs.paths-filter.outputs.broker != 'true' && needs.paths-filter.outputs.docker-runner != 'true' && needs.paths-filter.outputs.plugin != 'true' && needs.paths-filter.outputs.contracts != 'true' && needs.paths-filter.outputs.scripts != 'true' && needs.paths-filter.outputs.root != 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts --include=dev
+      - run: npm run check:layout
+      - run: echo "docs-only change — code build/smoke skipped"
+
+  # ── Full release gate (main branch and cross-cutting changes) ───────
   check:
+    if: ${{ github.ref == 'refs/heads/main' || needs.paths-filter.outputs.scripts == 'true' || needs.paths-filter.outputs.root == 'true' }}
+    needs: [setup, paths-filter]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

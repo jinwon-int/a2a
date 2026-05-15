@@ -54,7 +54,8 @@
     "check:team2-soonwook-r16-terminal-brief-libero": "node --test scripts/check-team2-soonwook-r16-terminal-brief-libero.test.mjs",
     "check:team2-soonwook-r20-libero-go-nogo-retry": "node --test scripts/check-team2-soonwook-r20-libero-go-nogo-retry.test.mjs",
     "check:team2-soonwook-r23-terminal-brief-taskflow-monorepo-libero": "node --test scripts/check-team2-soonwook-r23-terminal-brief-taskflow-monorepo-libero.test.mjs",
-    "check:team1-yukson-r25-team2-terminal-brief-ops-readiness-libero": "node --test scripts/check-team1-yukson-r25-team2-terminal-brief-ops-readiness-libero.test.mjs"
+    "check:team1-yukson-r25-team2-terminal-brief-ops-readiness-libero": "node --test scripts/check-team1-yukson-r25-team2-terminal-brief-ops-readiness-libero.test.mjs",
+    "check:team1-bangtong-r26-no-live-terminal-brief-integration-rehearsal": "node --test scripts/check-team1-bangtong-r26-no-live-terminal-brief-integration-rehearsal.test.mjs"
   },
   "license": "MIT"
 }

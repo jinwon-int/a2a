@@ -58,6 +58,408 @@ export type A2ABrokerBuildInfoMetadata = {
   image: string;
 };
 
+// ---------------------------------------------------------------------------
+// R24 all-node OpenClaw latency optimization diagnostics
+// ---------------------------------------------------------------------------
+
+/**
+ * Session-store residue diagnostic projection.
+ *
+ * OpenClaw session stores accumulate ephemeral entries during normal operation.
+ * Large or stale residue may indicate slow session cleanup, memory pressure, or
+ * a leak in the wake/dispatch lifecycle.
+ */
+export type A2ABrokerSessionStoreResidueDiagnostics = {
+  source: "openclaw.sessionStore";
+  totalEntries: number;
+  staleEntries: number;
+  oldestEntryAgeMs?: number;
+  largestSessionKey?: string;
+  largestSessionSizeBytes?: number;
+  /** Aggregate size of all session store entries in bytes. */
+  totalSizeBytes?: number;
+};
+
+/**
+ * Single provider/plugin discovery drift item.
+ */
+export type A2ABrokerProviderDiscoveryDriftItem = {
+  providerId: string;
+  providerType: string;
+  expectedVersion?: string;
+  observedVersion?: string;
+  /** Registration timestamp or last-seen timestamp in epoch ms. */
+  lastSeenAt?: number;
+  status: "current" | "stale" | "unknown" | "absent";
+};
+
+/**
+ * Provider/plugin discovery drift summary.
+ *
+ * Tracks version skew and registration gaps between expected and observed
+ * OpenClaw providers/plugins across all nodes.
+ */
+export type A2ABrokerProviderDiscoveryDrift = {
+  source: "openclaw.providerDiscovery";
+  status: "current" | "stale" | "unknown";
+  items: A2ABrokerProviderDiscoveryDriftItem[];
+  staleCount: number;
+  absentCount: number;
+};
+
+/**
+ * OpenClaw runtime version, event-loop health, and model route diagnostics.
+ */
+export type A2ABrokerOpenClawRuntimeDiagnostics = {
+  source: "openclaw.runtime";
+  /** OpenClaw version string, e.g. "1.8.5". */
+  version?: string;
+  /** Runtime mode: standalone, headless, or node. */
+  mode?: string;
+  /** Active model route identifier. */
+  activeModel?: string;
+  /** List of configured model routes for latency analysis. */
+  modelRoutes?: Array<{
+    modelId: string;
+    providerId?: string;
+    latencyP50Ms?: number;
+    latencyP95Ms?: number;
+    latencyP99Ms?: number;
+    errorRate?: number;
+  }>;
+  /** Event loop lag statistics. */
+  eventLoop?: A2ABrokerEventLoopHealth;
+};
+
+/**
+ * OpenClaw event-loop health projection.
+ */
+export type A2ABrokerEventLoopHealth = {
+  status: "healthy" | "degraded" | "stuck";
+  maxLagMs: number;
+  avgLagMs: number;
+  samples: number;
+};
+
+/**
+ * Model route latency diagnostics for a single model.
+ */
+export type A2ABrokerModelRouteDiagnostics = {
+  modelId: string;
+  providerId?: string;
+  latencyP50Ms?: number;
+  latencyP95Ms?: number;
+  latencyP99Ms?: number;
+  errorRate?: number;
+  lastLatencyMs?: number;
+  routeHint?: string;
+  /** Event-loop lag at time of sample, to separate model latency from runtime congestion. */
+  eventLoopLagMs?: number;
+};
+
+/**
+ * A2A task backlog diagnostics.
+ *
+ * Captures the current queue pressure and aging across all nodes.
+ */
+export type A2ABrokerOpenClawTaskBacklogDiagnostics = {
+  source: "openclaw.taskBacklog";
+  totalQueued: number;
+  totalRunning: number;
+  totalStale: number;
+  oldestQueuedAgeMs?: number;
+  /** Per-node breakdown for routing decisions. */
+  perNode: Array<{
+    nodeId: string;
+    queued: number;
+    running: number;
+    stale: number;
+    oldestQueuedAgeMs?: number;
+  }>;
+};
+
+// ---------------------------------------------------------------------------
+// R24 projection builders
+// ---------------------------------------------------------------------------
+
+/**
+ * Extract session-store residue diagnostics from health/diagnostics payload.
+ */
+export function buildBrokerSessionStoreResidueDiagnostics(
+  diagnostics: unknown,
+): A2ABrokerSessionStoreResidueDiagnostics | undefined {
+  if (!isPlainRecord(diagnostics)) return undefined;
+  const sessionStore = isPlainRecord(diagnostics.sessionStore)
+    ? diagnostics.sessionStore
+    : isPlainRecord(diagnostics.session_store)
+      ? diagnostics.session_store
+      : undefined;
+  if (!sessionStore) return undefined;
+
+  const totalEntries = firstNonNegativeInteger(
+    sessionStore.totalEntries,
+    sessionStore.total_entries,
+    sessionStore.count,
+    sessionStore.entryCount,
+    sessionStore.entry_count,
+  );
+  if (totalEntries === undefined) return undefined;
+
+  const staleEntries = firstNonNegativeInteger(
+    sessionStore.staleEntries,
+    sessionStore.stale_entries,
+    sessionStore.staleCount,
+    sessionStore.stale_count,
+  ) ?? 0;
+  const oldestEntryAgeMs = firstFiniteNumber(
+    sessionStore.oldestEntryAgeMs,
+    sessionStore.oldest_entry_age_ms,
+    sessionStore.maxAgeMs,
+    sessionStore.max_age_ms,
+  );
+  const largestSessionKey = firstSafeString(
+    sessionStore.largestSessionKey,
+    sessionStore.largest_session_key,
+    sessionStore.largestKey,
+    sessionStore.largest_key,
+  );
+  const largestSessionSizeBytes = firstNonNegativeInteger(
+    sessionStore.largestSessionSizeBytes,
+    sessionStore.largest_session_size_bytes,
+    sessionStore.largestSizeBytes,
+    sessionStore.largest_size_bytes,
+  );
+  const totalSizeBytes = firstNonNegativeInteger(
+    sessionStore.totalSizeBytes,
+    sessionStore.total_size_bytes,
+    sessionStore.sizeBytes,
+    sessionStore.size_bytes,
+  );
+
+  return {
+    source: "openclaw.sessionStore",
+    totalEntries,
+    staleEntries,
+    ...(oldestEntryAgeMs !== undefined ? { oldestEntryAgeMs } : {}),
+    ...(largestSessionKey !== undefined ? { largestSessionKey } : {}),
+    ...(largestSessionSizeBytes !== undefined ? { largestSessionSizeBytes } : {}),
+    ...(totalSizeBytes !== undefined ? { totalSizeBytes } : {}),
+  };
+}
+
+/**
+ * Extract provider/plugin discovery drift from health/diagnostics payload.
+ */
+export function buildBrokerProviderDiscoveryDrift(
+  diagnostics: unknown,
+): A2ABrokerProviderDiscoveryDrift | undefined {
+  if (!isPlainRecord(diagnostics)) return undefined;
+  const providers = firstArray(
+    diagnostics.providers,
+    diagnostics.providerDiscovery,
+    diagnostics.provider_drift,
+    diagnostics.providerDrift,
+    diagnostics.plugins,
+    diagnostics.registeredProviders,
+    diagnostics.registered_providers,
+  );
+  if (!providers || !Array.isArray(providers)) return undefined;
+
+  const items: A2ABrokerProviderDiscoveryDriftItem[] = [];
+  for (const entry of providers) {
+    if (!isPlainRecord(entry)) continue;
+    const providerId =
+      firstSafeString(entry.providerId, entry.provider_id, entry.id, entry.name) ??
+      entry.providerId as string | undefined;
+    if (!providerId) continue;
+    const providerType = firstSafeString(entry.providerType, entry.provider_type, entry.type, entry.kind) ?? "unknown";
+    const expectedVersion = firstSafeString(entry.expectedVersion, entry.expected_version, entry.expected);
+    const observedVersion = firstSafeString(entry.observedVersion, entry.observed_version, entry.version, entry.current);
+    const lastSeenAt = firstFiniteNumber(entry.lastSeenAt, entry.last_seen_at, entry.timestamp);
+    const statusRaw = firstSafeString(entry.status, entry.driftStatus, entry.drift_status)?.toLowerCase() as string | undefined;
+    const status: "current" | "stale" | "unknown" | "absent" =
+      statusRaw === "current" ? "current" :
+      statusRaw === "stale" ? "stale" :
+      statusRaw === "absent" ? "absent" :
+      observedVersion && expectedVersion && observedVersion !== expectedVersion ? "stale" :
+      observedVersion ? "current" :
+      "unknown";
+
+    items.push({
+      providerId,
+      providerType,
+      ...(expectedVersion ? { expectedVersion } : {}),
+      ...(observedVersion ? { observedVersion } : {}),
+      ...(lastSeenAt !== undefined ? { lastSeenAt } : {}),
+      status,
+    });
+  }
+
+  if (!items.length) return undefined;
+
+  const staleCount = items.filter((i) => i.status === "stale").length;
+  const absentCount = items.filter((i) => i.status === "absent").length;
+  const globalStatus: "current" | "stale" | "unknown" =
+    staleCount > 0 ? "stale" :
+    absentCount > 0 ? "stale" :
+    items.every((i) => i.status === "current") ? "current" :
+    "unknown";
+
+  return {
+    source: "openclaw.providerDiscovery",
+    status: globalStatus,
+    items: items.slice(0, 50),
+    staleCount,
+    absentCount,
+  };
+}
+
+/**
+ * Extract OpenClaw runtime diagnostics including version, model routes, and event-loop health.
+ */
+export function buildBrokerOpenClawRuntimeDiagnostics(
+  diagnostics: unknown,
+): A2ABrokerOpenClawRuntimeDiagnostics | undefined {
+  if (!isPlainRecord(diagnostics)) return undefined;
+  const runtime = isPlainRecord(diagnostics.openclawRuntime)
+    ? diagnostics.openclawRuntime
+    : isPlainRecord(diagnostics.runtime)
+      ? diagnostics.runtime
+      : undefined;
+  if (!runtime) return undefined;
+
+  const version = firstSafeString(runtime.version, runtime.release, runtime.openclawVersion);
+  const mode = firstSafeString(runtime.mode, runtime.runtimeMode, runtime.deploymentMode);
+  const activeModel = firstSafeString(runtime.activeModel, runtime.model, runtime.defaultModel);
+
+  // Model routes
+  const rawRoutes = firstArray(
+    runtime.modelRoutes,
+    runtime.model_routes,
+    runtime.models,
+    runtime.routes,
+  );
+  const modelRoutes: A2ABrokerOpenClawRuntimeDiagnostics["modelRoutes"] = rawRoutes
+    ? rawRoutes.filter(isPlainRecord).map((route) => ({
+      modelId: firstSafeString(route.modelId, route.model_id, route.model, route.id) ?? "unknown",
+      ...(route.providerId ? { providerId: firstSafeString(route.providerId, route.provider_id, route.provider) } : {}),
+      ...(route.latencyP50Ms !== undefined ? { latencyP50Ms: firstFiniteNumber(route.latencyP50Ms, route.p50, route.p50Ms) } : {}),
+      ...(route.latencyP95Ms !== undefined ? { latencyP95Ms: firstFiniteNumber(route.latencyP95Ms, route.p95, route.p95Ms) } : {}),
+      ...(route.latencyP99Ms !== undefined ? { latencyP99Ms: firstFiniteNumber(route.latencyP99Ms, route.p99, route.p99Ms) } : {}),
+      ...(route.errorRate !== undefined ? { errorRate: firstFiniteNumber(route.errorRate, route.error_rate, route.errorPercentage) } : {}),
+    })).slice(0, 25)
+    : undefined;
+
+  // Event loop health
+  const rawEventLoop = isPlainRecord(runtime.eventLoop)
+    ? runtime.eventLoop
+    : isPlainRecord(runtime.event_loop)
+      ? runtime.event_loop
+      : isPlainRecord(runtime.eventLoopHealth)
+        ? runtime.eventLoopHealth
+        : undefined;
+  let eventLoop: A2ABrokerEventLoopHealth | undefined;
+  if (rawEventLoop) {
+    const maxLagMs = firstFiniteNumber(rawEventLoop.maxLagMs, rawEventLoop.max_lag_ms, rawEventLoop.maxLag, rawEventLoop.max) ?? 0;
+    const avgLagMs = firstFiniteNumber(rawEventLoop.avgLagMs, rawEventLoop.avg_lag_ms, rawEventLoop.average, rawEventLoop.mean) ?? 0;
+    const samples = firstNonNegativeInteger(rawEventLoop.samples, rawEventLoop.sampleCount, rawEventLoop.count) ?? 1;
+    const status: "healthy" | "degraded" | "stuck" =
+      maxLagMs >= 5000 ? "stuck" :
+      maxLagMs >= 500 ? "degraded" :
+      "healthy";
+    eventLoop = { status, maxLagMs, avgLagMs, samples };
+  }
+
+  if (!version && !mode && !activeModel && !modelRoutes && !eventLoop) return undefined;
+
+  return {
+    source: "openclaw.runtime",
+    ...(version ? { version } : {}),
+    ...(mode ? { mode } : {}),
+    ...(activeModel ? { activeModel } : {}),
+    ...(modelRoutes ? { modelRoutes } : {}),
+    ...(eventLoop ? { eventLoop } : {}),
+  };
+}
+
+/**
+ * Extract task backlog diagnostics from health/diagnostics payload.
+ */
+export function buildBrokerOpenClawTaskBacklogDiagnostics(
+  diagnostics: unknown,
+): A2ABrokerOpenClawTaskBacklogDiagnostics | undefined {
+  if (!isPlainRecord(diagnostics)) return undefined;
+
+  // Try direct backlog structure first
+  const backlog = isPlainRecord(diagnostics.taskBacklog)
+    ? diagnostics.taskBacklog
+    : isPlainRecord(diagnostics.backlog)
+      ? diagnostics.backlog
+      : isPlainRecord(diagnostics.queue)
+        ? diagnostics.queue
+        : undefined;
+
+  const totalQueued = firstNonNegativeInteger(
+    backlog?.queued,
+    backlog?.queuedCount,
+    backlog?.pending,
+    diagnostics.queued,
+    diagnostics.queuedCount,
+  ) ?? 0;
+  const totalRunning = firstNonNegativeInteger(
+    backlog?.running,
+    backlog?.runningCount,
+    backlog?.inProgress,
+    diagnostics.running,
+    diagnostics.runningCount,
+  ) ?? 0;
+  const totalStale = firstNonNegativeInteger(
+    backlog?.stale,
+    backlog?.staleCount,
+    backlog?.staleTasks,
+    diagnostics.stale,
+    diagnostics.staleCount,
+  ) ?? 0;
+  const oldestQueuedAgeMs = firstFiniteNumber(
+    backlog?.oldestQueuedAgeMs,
+    backlog?.oldest_queued_age_ms,
+    backlog?.oldestAgeMs,
+    diagnostics.oldestQueuedAgeMs,
+    diagnostics.oldest_queued_age_ms,
+  );
+
+  // Per-node breakdown
+  const rawPerNode = firstArray(
+    backlog?.perNode,
+    backlog?.per_node,
+    backlog?.nodes,
+    backlog?.byNode,
+    diagnostics.perNode,
+    diagnostics.per_node,
+    diagnostics.nodes,
+  )?.filter(isPlainRecord);
+  const perNode: A2ABrokerOpenClawTaskBacklogDiagnostics["perNode"] =
+    rawPerNode?.map((node) => ({
+      nodeId: firstSafeString(node.nodeId, node.node_id, node.id, node.name, node.workerId) ?? "unknown",
+      queued: firstNonNegativeInteger(node.queued, node.queuedCount, node.pending, node.queued_count) ?? 0,
+      running: firstNonNegativeInteger(node.running, node.runningCount, node.inProgress, node.running_count) ?? 0,
+      stale: firstNonNegativeInteger(node.stale, node.staleCount, node.staleTasks, node.stale_count) ?? 0,
+      ...(node.oldestQueuedAgeMs !== undefined ? { oldestQueuedAgeMs: firstFiniteNumber(node.oldestQueuedAgeMs, node.oldest_queued_age_ms) } : {}),
+    })).slice(0, 50) ??
+    [];
+
+  if (totalQueued === 0 && totalRunning === 0 && totalStale === 0 && !perNode.length) return undefined;
+
+  return {
+    source: "openclaw.taskBacklog",
+    totalQueued,
+    totalRunning,
+    totalStale,
+    ...(oldestQueuedAgeMs !== undefined ? { oldestQueuedAgeMs } : {}),
+    perNode: perNode.length > 0 ? perNode : [{ nodeId: "all", queued: totalQueued, running: totalRunning, stale: totalStale }],
+  };
+}
+
 export type A2AOperatorReceiptProjectionState =
   | "accepted"
   | "sent"
@@ -392,6 +794,10 @@ export function projectBrokerAuditWarnings(diagnostics: unknown, health: unknown
   const liveReadinessWarning = buildBrokerLiveReadinessWarning(liveReadiness);
   const runtimeOwner = buildBrokerRuntimeOwnerMetadata(health);
   const buildInfo = buildBrokerBuildInfoMetadata(health);
+  const sessionStoreResidue = buildBrokerSessionStoreResidueDiagnostics(diagnostics);
+  const providerDiscoveryDrift = buildBrokerProviderDiscoveryDrift(diagnostics);
+  const openclawRuntime = buildBrokerOpenClawRuntimeDiagnostics(diagnostics);
+  const taskBacklog = buildBrokerOpenClawTaskBacklogDiagnostics(diagnostics);
   if (!isPlainRecord(diagnostics)) return diagnostics;
 
   const existingWarnings = Array.isArray(diagnostics.pluginWarnings)
@@ -414,6 +820,10 @@ export function projectBrokerAuditWarnings(diagnostics: unknown, health: unknown
     ...(noLiveRehearsal ? { noLiveRehearsal } : {}),
     ...(liveReadiness ? { liveReadiness } : {}),
     ...(runtimeOwner ? { brokerRuntimeOwner: runtimeOwner } : {}),
+    ...(sessionStoreResidue ? { sessionStoreResidue } : {}),
+    ...(providerDiscoveryDrift ? { providerDiscoveryDrift } : {}),
+    ...(openclawRuntime ? { openclawRuntime } : {}),
+    ...(taskBacklog ? { taskBacklog } : {}),
     brokerBuildInfo: buildInfo,
   };
 }

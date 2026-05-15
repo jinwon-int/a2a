@@ -206,7 +206,7 @@ When Team2 implementation PRs arrive, this rehearsal packet becomes the **base a
 
 - All R1&#8211;R5 rehearsal domains pass with current evidence.
 - Team2 implementation PR is merged and its CI passes.
-- No live path was introduced without OpenClaus outbound adapter.
+- No live path was introduced without OpenClaw outbound adapter.
 - Operator approval comment exists for the merge.
 
 ### NO-GO conditions (any one is sufficient)

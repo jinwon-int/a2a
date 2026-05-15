@@ -12,4 +12,22 @@ This matrix records A2A Plane monorepo candidate baselines. Public-facing compat
 
 ## Release rule
 
+## Versioning strategy
+
+Each package in the monorepo follows an independent semver release train:
+
+| Package | npm name | Release tag prefix | Current version |
+|---|---|---|---|
+| Broker | `a2a-broker` | `broker-v` | `0.1.0` (private) |
+| Docker runner | `@openclaw/a2a-docker-runner` | `docker-runner-v` | `0.1.0` (public) |
+| OpenClaw plugin | `openclaw-plugin-a2a` | `plugin-v` | `0.1.0` (private) |
+| Shared contracts | (monorepo root) | `r23`, `r24`, … | Milestone tag |
+
+Breaking changes within `0.x` do not require a major version bump, but the matrix
+row must be updated to the new baseline when a known break occurs. Before any
+package declares `1.0.0`, the compatible OpenClaw peer release must be resolved
+and linked here.
+
+## Release rule
+
 A public release candidate must update this table with exact source commits/tags for every imported package and link the CI run that validated the candidate commit. Release notes and external docs must introduce the project as A2A Plane and keep OpenClaw framed as the reference integration unless broader integrations have their own evidence rows.

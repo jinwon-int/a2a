@@ -73,9 +73,12 @@ A2A는 "작업을 접수하고, 격리된 워커에 넘기고, 최종 증거(PR/
 
 > [!NOTE]
 > 현재 4개 저장소 체제와 통합 workspace의 사용자 경험을 계속 정리 중입니다.
-> 사용자 경험 개선을 위해 **모노레포 통합**을 검토 중입니다.
-> 상세 체크리스트: [Monorepo Migration Checklist](monorepo-migration-checklist.md)
-> 추적 이슈: [a2a-plane#240](https://github.com/jinwon-int/a2a-plane/issues/240)
+> 사용자 경험 개선을 위해 **모노레포 통합**을 진행 중입니다.
+>
+> *Cutover proof status*: `🟢 9/12 acceptance gates passed` — see the [monorepo architecture & cutover proof](monorepo-migration-checklist.md) for full acceptance gates, versioning strategy, rollback plan, and migration checklist.
+>
+> 상세 체크리스트: [Monorepo Architecture & Cutover Proof](monorepo-migration-checklist.md)
+> 추적 이슈: [a2a-plane#240](https://github.com/jinwon-int/a2a-plane/issues/240) · [#337](https://github.com/jinwon-int/a2a-plane/issues/337)
 
 ## 라이선스
 

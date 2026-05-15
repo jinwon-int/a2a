@@ -75,7 +75,7 @@ Every parent aggregation projection must carry these fields:
 | `terminalKind` | One of `pr`, `done`, or `block`. |
 | `terminalEvidenceUrl` | URL of redacted PR/Done/Block evidence. |
 | `terminalSummary` | Bounded human-readable summary suitable for the parent Terminal Brief. |
-| `terminalBriefTitle` | Concise parent-broker-rendered title. With a known total, use `A2A Terminal Brief <상태>: <worker>(<completed>/<total>)`, for example `A2A Terminal Brief 완료: dungae(1/7)`. If the round total is unknown, omit the denominator rather than rendering `?`, for example `A2A Terminal Brief 완료: yukson(2)`. |
+| `terminalBriefTitle` | Concise parent/origin-broker-rendered title. The default operator-facing completed-worker title with known total is `A2A Terminal Brief 완료: <worker>(<completed>/<total>)`, equivalently `A2A Terminal Brief 완료: worker(n/N)`; for example `A2A Terminal Brief 완료: dungae(1/7)`. If the round total is genuinely unavailable, omit the denominator rather than rendering `?`, for example `A2A Terminal Brief 완료: yukson(2)`. |
 | `projectionState` | `pending`, `projected`, `blocked`, or `conflict`. |
 | `redacted` | Must be `true`. |
 | `projectedAt` | ISO-8601 timestamp when the parent projection was recorded. |
@@ -95,17 +95,20 @@ A parent projection that cannot be represented within this redaction boundary mu
 
 The aggregate Terminal Brief title is a parent-broker-only projection. The child broker supplies terminal evidence, but only the parent broker renders the operator-facing title from the parent aggregation ledger.
 
+For the operator-facing default path, the parent broker is also the origin broker: `initiatingBrokerId == parentBrokerId == originBrokerId == operatorFacingTerminalBriefSender`. Cross-team brokers are child/handoff evidence relays only; they do not render or send the operator-facing parent-round title.
+
 Title gates:
 
-- known-total format: `A2A Terminal Brief <상태>: <worker>(<completed>/<total>)`;
+- default known-total completed-worker format: `A2A Terminal Brief 완료: <worker>(<completed>/<total>)` (`A2A Terminal Brief 완료: worker(n/N)` as the placeholder form);
+- non-completed status format: `A2A Terminal Brief <상태>: <worker>(<completed>/<total>)`, using the bounded status labels defined by the parent contract;
 - unknown-total fallback: `A2A Terminal Brief <상태>: <worker>(<completed>)`; the parent broker must never render an incorrect denominator such as `(2/?)`;
 - example success title: `A2A Terminal Brief 완료: dungae(1/7)`;
-- title source: parent broker ledger fields for terminal status, worker id, completed count, and total count when known;
+- title source: parent/origin broker ledger fields for terminal status, worker id, completed count, total count when known, `parentRoundId`, `originBrokerId`, `parentBrokerId`, and `operatorFacingTerminalBriefSender`;
 - max length: 80 characters;
 - forbidden title content: task id, child issue URL, PR/Done/Block URL, terminal summary/body, child broker id, handoff broker id, provider message id, receipt status, ACK status, raw logs, secrets, private paths, and runtime/bootstrap file names;
 - the title is not proof of provider delivery, operator receipt, approval, or terminal-outbox ACK.
 
-The concise title policy is broker-neutral and symmetric: both Gwakga-origin and Seoseo-origin parent rounds use the same parent-broker-only renderer and the same no-live/no-ACK gates, regardless of whether `parentBrokerId` equals `originBrokerId`. The canary fixture includes one known-total Gwakga-origin title, one unknown-total Seoseo-origin title, and one symmetric Seoseo-origin + Gwakga-parent title to prevent regressions to verbose or ambiguous title text.
+The concise title policy is broker-neutral and symmetric for evidence projection compatibility. The operator-facing default notification path is stricter: the initiating broker remains both parent and origin, and is the only sender. The canary fixture includes one known-total Gwakga-origin title, one unknown-total Seoseo-origin title, and one symmetric Seoseo-origin + Gwakga-parent compatibility title to prevent regressions to verbose or ambiguous title text; the four-case parent-origin routing fixture separately enforces the default operator-facing title and sender rule.
 
 ## Body/evidence separation
 
@@ -135,6 +138,7 @@ The aggregate Terminal Brief notification is owned and administered by the paren
 
 Ownership gates:
 
+0. Default operator-facing Terminal Brief notifications are parent/origin-only: the initiating broker must equal `parentBrokerId`, `originBrokerId`, and `operatorFacingTerminalBriefSender`. A handoff broker may relay evidence to that parent/origin ledger, but must not send the operator-facing parent-round notification.
 1. The `terminalBriefTitle` may only be set by the broker whose `parentBrokerId` equals the projection's broker of record. In v0, `parentBrokerId` must equal `originBrokerId`; in v1 (symmetric), `parentBrokerId` may differ from `originBrokerId`, and the title owner is determined by `parentBrokerId` alone.
 2. A child or handoff broker that receives parent metadata must not render its own aggregate Terminal Brief notification for the parent round.
 3. Child evidence produced by a handoff broker flows into the parent aggregation ledger as evidence only; the handoff broker must not send its own parent-round title to any provider.

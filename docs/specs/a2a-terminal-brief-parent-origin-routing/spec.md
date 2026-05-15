@@ -7,7 +7,9 @@ A2A Terminal Brief work has taken too many ad-hoc rounds because parent/origin o
 The operator-facing requirement is not “any cross-broker Terminal Brief.” The required behavior is **parent-seeded Terminal Brief routing**:
 
 - the broker that initiates the work owns the parent round;
+- the initiating broker is both parent and origin for operator-facing default Terminal Brief notifications;
 - that initiating broker is the only operator-facing Terminal Brief sender;
+- the default completed-worker title is `A2A Terminal Brief 완료: worker(n/N)`, rendered from worker id, completed order, and parent round total metadata;
 - same-team work stays local;
 - cross-team work uses the opposite broker only as a child/handoff broker that relays projections back to the initiating parent broker.
 
@@ -33,7 +35,7 @@ The current live gates proved pieces of this behavior, but the code/test/docs st
 
 Invariant:
 
-> The initiating broker is the parent/origin broker and the only operator-facing Terminal Brief sender.
+> The initiating broker is the parent/origin broker and the only operator-facing Terminal Brief sender. Completed-worker notifications with known totals use `A2A Terminal Brief 완료: <worker>(<n>/<N>)`.
 
 ## Scope
 
@@ -45,7 +47,7 @@ Invariant:
 - Require parent existence before accepting a cross-team child projection.
 - Preserve relay-success duplicate suppression and relay-failure local fallback.
 - Define test and evidence requirements across `a2a-broker`, `openclaw-plugin-a2a`, and `a2a-plane`.
-- Keep Terminal Brief title format concise: `A2A Terminal Brief 완료: <worker>(<order>/<total>)`.
+- Keep Terminal Brief title format concise and default to the operator-requested form: `A2A Terminal Brief 완료: <worker>(<n>/<N>)` (`A2A Terminal Brief 완료: worker(n/N)` as the placeholder).
 
 ### Out of scope
 
@@ -67,6 +69,7 @@ Invariant:
 - [ ] Plugin tests prove relay success suppresses duplicate child local notification.
 - [ ] Plugin tests prove relay failure falls back to local operator notification.
 - [ ] Plane contract/fixtures/release gate cover the four routing cases.
+- [ ] Plane conformance enforces title metadata for `A2A Terminal Brief 완료: worker(n/N)` and rejects child/handoff operator-facing ownership.
 - [ ] Runner/internal output remains evidence fallback, not the Terminal Brief headline.
 - [ ] Wiki/runbook stays aligned with implementation.
 
@@ -112,6 +115,7 @@ Each implementation PR or worker packet must include:
 - tests run and results;
 - CI status;
 - how the four cases are covered;
+- title metadata proof: status label `완료`, worker id, completed order `n`, total `N`, and the parent/origin sender;
 - safety actions explicitly not performed;
 - remaining blockers or follow-up issues.
 

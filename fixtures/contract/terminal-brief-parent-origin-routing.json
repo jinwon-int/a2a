@@ -4,6 +4,24 @@
   "issue": "https://github.com/jinwon-int/a2a-broker/issues/634",
   "description": "Four-case parent-origin Terminal Brief routing matrix. The initiating broker owns the parent/origin round and is the only operator-facing Terminal Brief sender; cross-team work is represented only as child/handoff projections relayed back to the initiating parent broker.",
   "invariant": "initiating broker == parentBrokerId == originBrokerId == operatorFacingTerminalBriefSender",
+  "terminalBriefDefaultTitlePolicy": {
+    "defaultFormatPlaceholder": "A2A Terminal Brief 완료: worker(n/N)",
+    "defaultFormatTemplate": "A2A Terminal Brief 완료: <worker>(<completed>/<total>)",
+    "statusLabel": "완료",
+    "requiresKnownTotalForDefault": true,
+    "titleMetadataFields": [
+      "statusLabel",
+      "workerId",
+      "parentRoundOrder",
+      "parentRoundTotal",
+      "parentRoundId",
+      "originBrokerId",
+      "parentBrokerId",
+      "operatorFacingTerminalBriefSender"
+    ],
+    "operatorFacingOwnerRule": "initiatingBrokerId == parentBrokerId == originBrokerId == operatorFacingTerminalBriefSender",
+    "childOrHandoffMayRenderOperatorFacingTitle": false
+  },
   "allowedTeamScopes": [
     "team1-only",
     "team2-only",
@@ -40,6 +58,17 @@
       "terminalBriefNotification": {
         "senderBrokerId": "seoseo",
         "parentBrokerOnly": true,
+        "parentOriginOnly": true,
+        "titleMetadata": {
+          "statusLabel": "완료",
+          "workerId": "yukson",
+          "parentRoundOrder": 1,
+          "parentRoundTotal": 4,
+          "defaultTitle": "A2A Terminal Brief 완료: yukson(1/4)",
+          "renderedByBrokerId": "seoseo",
+          "operatorFacingOwnerIsParentOrigin": true,
+          "childOrHandoffRenderedOperatorFacingTitle": false
+        },
         "childLocalNotificationSuppressed": false,
         "relaySuccessSuppressesChildLocalNotification": false,
         "relayFailureFallsBackToLocalNotification": false
@@ -74,6 +103,17 @@
       "terminalBriefNotification": {
         "senderBrokerId": "seoseo",
         "parentBrokerOnly": true,
+        "parentOriginOnly": true,
+        "titleMetadata": {
+          "statusLabel": "완료",
+          "workerId": "soonwook",
+          "parentRoundOrder": 2,
+          "parentRoundTotal": 4,
+          "defaultTitle": "A2A Terminal Brief 완료: soonwook(2/4)",
+          "renderedByBrokerId": "seoseo",
+          "operatorFacingOwnerIsParentOrigin": true,
+          "childOrHandoffRenderedOperatorFacingTitle": false
+        },
         "childLocalNotificationSuppressed": true,
         "relaySuccessSuppressesChildLocalNotification": true,
         "relayFailureFallsBackToLocalNotification": true
@@ -107,6 +147,17 @@
       "terminalBriefNotification": {
         "senderBrokerId": "gwakga",
         "parentBrokerOnly": true,
+        "parentOriginOnly": true,
+        "titleMetadata": {
+          "statusLabel": "완료",
+          "workerId": "dungae",
+          "parentRoundOrder": 3,
+          "parentRoundTotal": 4,
+          "defaultTitle": "A2A Terminal Brief 완료: dungae(3/4)",
+          "renderedByBrokerId": "gwakga",
+          "operatorFacingOwnerIsParentOrigin": true,
+          "childOrHandoffRenderedOperatorFacingTitle": false
+        },
         "childLocalNotificationSuppressed": false,
         "relaySuccessSuppressesChildLocalNotification": false,
         "relayFailureFallsBackToLocalNotification": false
@@ -141,6 +192,17 @@
       "terminalBriefNotification": {
         "senderBrokerId": "gwakga",
         "parentBrokerOnly": true,
+        "parentOriginOnly": true,
+        "titleMetadata": {
+          "statusLabel": "완료",
+          "workerId": "bangtong",
+          "parentRoundOrder": 4,
+          "parentRoundTotal": 4,
+          "defaultTitle": "A2A Terminal Brief 완료: bangtong(4/4)",
+          "renderedByBrokerId": "gwakga",
+          "operatorFacingOwnerIsParentOrigin": true,
+          "childOrHandoffRenderedOperatorFacingTitle": false
+        },
         "childLocalNotificationSuppressed": true,
         "relaySuccessSuppressesChildLocalNotification": true,
         "relayFailureFallsBackToLocalNotification": true
@@ -180,6 +242,8 @@
     "Team1-only work routes through Gwakga",
     "provider accepted/send evidence must be treated as non-ACK only",
     "child broker sends an operator-facing parent Terminal Brief after relay success",
+    "child or handoff broker renders the operator-facing default Terminal Brief title",
+    "non-parent-origin broker owns the operator-facing Terminal Brief title",
     "parentless child projection creates an implicit parent"
   ],
   "validationCommands": [

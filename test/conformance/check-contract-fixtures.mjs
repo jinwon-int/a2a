@@ -595,6 +595,39 @@ assert.equal(
   terminalBriefParentOriginRouting.invariant,
   'initiating broker == parentBrokerId == originBrokerId == operatorFacingTerminalBriefSender',
 );
+assert.equal(
+  terminalBriefParentOriginRouting.terminalBriefDefaultTitlePolicy.defaultFormatPlaceholder,
+  'A2A Terminal Brief 완료: worker(n/N)',
+);
+assert.equal(
+  terminalBriefParentOriginRouting.terminalBriefDefaultTitlePolicy.defaultFormatTemplate,
+  'A2A Terminal Brief 완료: <worker>(<completed>/<total>)',
+);
+assert.equal(terminalBriefParentOriginRouting.terminalBriefDefaultTitlePolicy.statusLabel, '완료');
+assert.equal(terminalBriefParentOriginRouting.terminalBriefDefaultTitlePolicy.requiresKnownTotalForDefault, true);
+assert.equal(
+  terminalBriefParentOriginRouting.terminalBriefDefaultTitlePolicy.operatorFacingOwnerRule,
+  'initiatingBrokerId == parentBrokerId == originBrokerId == operatorFacingTerminalBriefSender',
+);
+assert.equal(
+  terminalBriefParentOriginRouting.terminalBriefDefaultTitlePolicy.childOrHandoffMayRenderOperatorFacingTitle,
+  false,
+);
+for (const field of [
+  'statusLabel',
+  'workerId',
+  'parentRoundOrder',
+  'parentRoundTotal',
+  'parentRoundId',
+  'originBrokerId',
+  'parentBrokerId',
+  'operatorFacingTerminalBriefSender',
+]) {
+  assert.ok(
+    terminalBriefParentOriginRouting.terminalBriefDefaultTitlePolicy.titleMetadataFields.includes(field),
+    `default title policy must require metadata field ${field}`,
+  );
+}
 assert.deepEqual(terminalBriefParentOriginRouting.allowedTeamScopes.sort(), ['team1+team2', 'team1-only', 'team2-only']);
 const registeredBrokerById = new Map(
   terminalBriefParentOriginRouting.registeredBrokers.map((broker) => [broker.brokerId, broker]),
@@ -623,6 +656,27 @@ for (const routingCase of terminalBriefParentOriginRouting.routingCases) {
   );
   assert.equal(routingCase.terminalBriefNotification.senderBrokerId, routingCase.parentBrokerId);
   assert.equal(routingCase.terminalBriefNotification.parentBrokerOnly, true);
+  assert.equal(routingCase.terminalBriefNotification.parentOriginOnly, true);
+  const titleMetadata = routingCase.terminalBriefNotification.titleMetadata;
+  assert.equal(titleMetadata.statusLabel, '완료', `${routingCase.caseId}: default title status must be 완료`);
+  assert.equal(titleMetadata.renderedByBrokerId, routingCase.parentBrokerId);
+  assert.equal(titleMetadata.renderedByBrokerId, routingCase.originBrokerId);
+  assert.equal(titleMetadata.renderedByBrokerId, routingCase.operatorFacingTerminalBriefSender);
+  assert.equal(titleMetadata.operatorFacingOwnerIsParentOrigin, true);
+  assert.equal(titleMetadata.childOrHandoffRenderedOperatorFacingTitle, false);
+  assert.match(titleMetadata.workerId, /^[a-z0-9_-]+$/);
+  assert.equal(Number.isInteger(titleMetadata.parentRoundOrder), true);
+  assert.equal(Number.isInteger(titleMetadata.parentRoundTotal), true);
+  assert.ok(titleMetadata.parentRoundOrder >= 1);
+  assert.ok(titleMetadata.parentRoundTotal >= titleMetadata.parentRoundOrder);
+  assert.equal(
+    titleMetadata.defaultTitle,
+    `A2A Terminal Brief 완료: ${titleMetadata.workerId}(${titleMetadata.parentRoundOrder}/${titleMetadata.parentRoundTotal})`,
+  );
+  assert.match(titleMetadata.defaultTitle, /^A2A Terminal Brief 완료: [a-z0-9_-]+\(\d+\/\d+\)$/);
+  if (routingCase.handoffBrokerId) {
+    assert.notEqual(titleMetadata.renderedByBrokerId, routingCase.handoffBrokerId);
+  }
   for (const [key, value] of Object.entries(routingCase.safety)) {
     assert.equal(value, false, `${routingCase.caseId}: safety ${key} must be false`);
   }
@@ -693,6 +747,8 @@ for (const forbidden of [
   'Team1-only work routes through Gwakga',
   'provider accepted/send evidence must be treated as non-ACK only',
   'child broker sends an operator-facing parent Terminal Brief after relay success',
+  'child or handoff broker renders the operator-facing default Terminal Brief title',
+  'non-parent-origin broker owns the operator-facing Terminal Brief title',
   'parentless child projection creates an implicit parent',
 ]) {
   assert.ok(terminalBriefParentOriginRouting.forbiddenInterpretations.includes(forbidden));

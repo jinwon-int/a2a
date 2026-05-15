@@ -83,6 +83,8 @@ Expected changes:
 
 - add/update four-case routing fixture;
 - document parent/origin vs handoff broker fields;
+- encode default Terminal Brief title metadata for `A2A Terminal Brief 완료: worker(n/N)`;
+- assert that the operator-facing sender is the initiating parent/origin broker, never a child/handoff broker;
 - add release-gate/conformance coverage that rejects missing/ambiguous cases.
 
 ### PR B — `a2a-broker` routing contract/tests
@@ -115,7 +117,7 @@ Purpose: only after PR A-C are stable, decide whether to add issue/PR template e
 
 - `a2a-plane`:
   - `npm run test:release-gate`
-  - relevant conformance fixture tests
+  - relevant conformance fixture tests, including default title metadata and parent/origin-only sender assertions
 - `a2a-broker`:
   - focused tests for Terminal Brief metadata, cross-broker projection, terminal outbox, task events
   - full `npm test` before merge

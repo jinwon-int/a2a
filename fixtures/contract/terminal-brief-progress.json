@@ -1,0 +1,175 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "fixtures/contract/terminal-brief-progress.json",
+  "title": "A2A Terminal Brief Progress Semantics Fixture (v0)",
+  "description": "Machine-readable fixture for Terminal Brief progress semantics, covering report types, evidence boundaries, safety gates, and parent aggregation rules. Frozen at Contract v0 (2026-05-16).",
+  "v0Freeze": {
+    "frozenAt": "2026-05-16",
+    "round": "a2a-r28-terminal-brief-progress-semantics-yukson-20260516",
+    "note": "Progress report types, evidence requirements, and progress-vs-terminal boundary are frozen."
+  },
+  "progressReportTypes": {
+    "progress": {
+      "description": "Generic progress update for active work.",
+      "requiredFields": ["kind", "taskId", "sequence", "summary", "isProgress", "isTerminal", "safetyConfirmed", "redacted"],
+      "optionalFields": ["changedFiles", "checksRun"],
+      "kindLiteral": "progress",
+      "isProgress": true,
+      "isTerminal": false
+    },
+    "progressCheckpoint": {
+      "description": "Progress update tied to a durable checkpoint.",
+      "requiredFields": ["kind", "taskId", "checkpointId", "checkpointState", "summary", "isProgress", "isTerminal", "safetyConfirmed", "redacted"],
+      "optionalFields": ["changedFiles"],
+      "kindLiteral": "progress-checkpoint",
+      "isProgress": true,
+      "isTerminal": false,
+      "allowedCheckpointStates": ["paused", "awaiting_operator"]
+    },
+    "progressAccept": {
+      "description": "Broker-level or runner-level acknowledgment of a progress report.",
+      "requiredFields": ["kind", "taskId", "sequence", "isProgress", "isTerminal", "isAcceptance", "isReadReceipt", "isTerminalAck"],
+      "kindLiteral": "progress-accept",
+      "isProgress": true,
+      "isTerminal": false,
+      "isAcceptance": true,
+      "isReadReceipt": false,
+      "isTerminalAck": false
+    }
+  },
+  "safetyGates": {
+    "noTerminalOutboxAckMutation": {
+      "description": "Progress must not mutate terminal-outbox ACK columns.",
+      "requiredEvidence": "terminalOutboxAckMutated: false in every progress record"
+    },
+    "noProviderNotification": {
+      "description": "Progress must not trigger provider notifications unless a separate approved contract explicitly authorizes progress notification.",
+      "requiredEvidence": "liveProviderSend: false in every progress record"
+    },
+    "noAggregateTitleAdvancement": {
+      "description": "Progress must not change the parent-round aggregate Terminal Brief title.",
+      "requiredEvidence": "Aggregate title rendering considers only terminal entries"
+    },
+    "noTerminalKindOverlap": {
+      "description": "Progress kind values must not overlap with terminal kind values (done, pr, blocked).",
+      "requiredEvidence": "kind values 'progress', 'progress-checkpoint', 'progress-accept' do not overlap with terminal kinds"
+    },
+    "noCursorAdvancement": {
+      "description": "Progress must not advance the terminal-outbox cursor.",
+      "requiredEvidence": "Terminal-outbox cursor advances only on terminal events"
+    },
+    "sequenceIntegrity": {
+      "description": "Progress sequences must be monotonically increasing, gap-detected, and replay-idempotent.",
+      "requiredEvidence": "Broker or fixture validation checks sequence continuity"
+    }
+  },
+  "boundaryRules": {
+    "progressIsNotTerminalEvidence": true,
+    "progressMustDeclareIsProgressTrue": true,
+    "progressMustDeclareIsTerminalFalse": true,
+    "terminalAckFalse": true,
+    "readReceiptFalse": true,
+    "isApprovalFalse": true,
+    "isTerminalAckFalse": true,
+    "downstreamConsumers": {
+      "mustNotTreatProgressAsTerminalCloseout": true,
+      "aggregateTitleRendering": "terminal entries only",
+      "outboxCursorAdvancement": "terminal events only",
+      "operatorVisibleReceipt": "terminal events only"
+    },
+    "progressOnlyLane": "Must not block/delay parent round terminal aggregate state"
+  },
+  "parentAggregationRules": {
+    "relayAsNonTerminalEntry": true,
+    "mustNotChangeProjectionStateToProjected": true,
+    "mustNotTriggerAggregateNotification": true,
+    "mustCarryParentMetadata": true,
+    "mustBeIgnoredForAggregateTitle": true,
+    "parentMayExposeProgressOptionally": true
+  },
+  "boundedConstraints": {
+    "summaryMaxChars": 280,
+    "changedFilesMaxEntries": 20,
+    "checksRunMaxEntries": 10,
+    "sequenceMonotonicallyIncreasing": true,
+    "sequenceGapDetection": true,
+    "sequenceReplayIdempotent": true
+  },
+  "validExamples": [
+    {
+      "kind": "progress",
+      "taskId": "task-yukson-r28-progress-001",
+      "sequence": 1,
+      "summary": "Completed contract skeleton, in-progress on fixture definition.",
+      "changedFiles": ["contracts/a2a/terminal-brief-progress-semantics.md"],
+      "checksRun": ["git diff --stat"],
+      "isProgress": true,
+      "isTerminal": false,
+      "safetyConfirmed": true,
+      "redacted": true
+    },
+    {
+      "kind": "progress-checkpoint",
+      "taskId": "task-yukson-r28-checkpoint-001",
+      "checkpointId": "chk-yukson-r28-20260516T120000Z",
+      "checkpointState": "paused",
+      "summary": "Reached checkpoint after contract skeleton. Awaiting operator input on scope boundary.",
+      "changedFiles": ["contracts/a2a/terminal-brief-progress-semantics.md"],
+      "isProgress": true,
+      "isTerminal": false,
+      "safetyConfirmed": true,
+      "redacted": true
+    },
+    {
+      "kind": "progress-accept",
+      "taskId": "task-yukson-r28-progress-001",
+      "sequence": 1,
+      "providerMessageId": "msg-redacted",
+      "isProgress": true,
+      "isTerminal": false,
+      "isAcceptance": true,
+      "isReadReceipt": false,
+      "isTerminalAck": false
+    }
+  ],
+  "invalidExamples": [
+    {
+      "reason": "progress kind overlaps with terminal kind",
+      "kind": "done",
+      "isProgress": true,
+      "isTerminal": false
+    },
+    {
+      "reason": "progress marked as terminal",
+      "kind": "progress",
+      "isProgress": true,
+      "isTerminal": true
+    },
+    {
+      "reason": "progress missing required sequence field",
+      "kind": "progress",
+      "taskId": "task-yukson-r28-progress-001",
+      "summary": "Missing sequence",
+      "isProgress": true,
+      "isTerminal": false
+    }
+  ],
+  "redactionRules": {
+    "noSecrets": true,
+    "noPrivateEndpoints": true,
+    "noRawSessionDumps": true,
+    "noHostSpecificPaths": true,
+    "noRuntimeBootstrapContextFiles": true,
+    "changedFilesMustBeRepoSafe": true,
+    "checkCommandsMustBeSafeToDisplay": true
+  },
+  "safetyConfirmations": {
+    "noPublicVisibilityChange": true,
+    "noProductionDeployOrRestart": true,
+    "noProductionDatabaseMutation": true,
+    "noLiveProviderSend": true,
+    "noTerminalOutboxAckMutation": true,
+    "noSecretRotationOrDisclosure": true,
+    "noRawSessionDump": true
+  }
+}

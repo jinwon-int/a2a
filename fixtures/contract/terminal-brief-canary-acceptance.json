@@ -1,0 +1,407 @@
+{
+  "fixtureId": "a2a-plane.contract.terminal-brief-canary-acceptance.v1",
+  "contract": "docs/specs/a2a-terminal-brief-canary/spec.md",
+  "description": "Acceptance contract for A2A Terminal Brief live-canary hardening. Defines frozen assertions for the five hardening gaps (backlog false suppression, sessionKey requirement, config shape flexibility, cursor selection safety, operatorEvents restore) discovered during the Seoseo fleet canary. Redacted, no-live, fixture-only conformance evidence.",
+  "parentIssue": "https://github.com/jinwon-int/a2a-plane/issues/364",
+  "issue": "https://github.com/jinwon-int/a2a-plane/issues/365",
+  "team": "team1-bangtong",
+  "brokerOfRecord": "seoseo",
+  "round": "R27",
+  "passingCanaryRef": "terminal-brief-live-fleet-seoseo-20260516T114832Z",
+  "v0Freeze": {
+    "frozenAt": "2026-05-16",
+    "round": "a2a-r27-team1-terminal-brief-canary-hardening-20260516T121247Z",
+    "note": "Five hardening gaps are frozen as acceptance criteria. No new gap may be added without a v0→v1 plan. Gap assertions are derived from the Seoseo fleet canary evidence."
+  },
+  "hardeningGaps": {
+    "gap1BacklogFalseSuppression": {
+      "description": "Canary scripts can accidentally start the poller after the task has completed, producing a false backlog suppression signal.",
+      "acceptanceRules": [
+        "canary-preflight-checks-task-terminal-state-before-poller",
+        "terminal-task-must-fail-visibly-not-silently-skip",
+        "no-backlog-suppression-for-terminal-tasks",
+        "mid-poll-terminal-detection-stops-poller-within-one-cycle"
+      ],
+      "assertionKeys": [
+        "preflightChecksTerminalState",
+        "terminalTaskVisibleFailure",
+        "noBacklogSuppressionForTerminalTask",
+        "midPollTerminalDetectionStopsPoller"
+      ]
+    },
+    "gap2SessionKeyRequirement": {
+      "description": "a2a.monitor.status requires sessionKey; ad hoc scripts that omit it miss poller state entirely.",
+      "acceptanceRules": [
+        "every-monitor-status-call-carries-explicit-sessionKey",
+        "missing-sessionKey-causes-visible-error-not-silent-empty",
+        "sessionKey-presence-logged-redacted-as-present-not-raw-value",
+        "canary-output-confirms-sessionKey-in-all-poller-queries"
+      ],
+      "assertionKeys": [
+        "explicitSessionKeyRequired",
+        "missingSessionKeyVisibleError",
+        "sessionKeyPresenceLoggedRedacted",
+        "sessionKeyInAllPollerQueries"
+      ]
+    },
+    "gap3ConfigShapeFlexibility": {
+      "description": "Terminal Brief config shape can be object-backed ({key: value}) rather than array-backed ([{key, value}]); canary preflight must handle both.",
+      "acceptanceRules": [
+        "preflight-accepts-object-backed-config",
+        "preflight-accepts-array-backed-config",
+        "normalization-produces-canonical-internal-form",
+        "shape-metadata-recorded-in-evidence",
+        "shape-assumption-failure-produces-visible-error"
+      ],
+      "assertionKeys": [
+        "objectBackedConfigAccepted",
+        "arrayBackedConfigAccepted",
+        "normalizationProducesCanonicalForm",
+        "shapeMetadataInEvidence",
+        "shapeAssumptionFailureVisibleError"
+      ]
+    },
+    "gap4CursorSelectionSafety": {
+      "description": "Multiple cursor candidates can exist in the terminal outbox; selection must use the latest cursor safely.",
+      "acceptanceRules": [
+        "cursor-selection-picks-latest-cursor",
+        "stale-cursor-rejected-monotonically",
+        "replayed-cursor-does-not-trigger-replay",
+        "cursor-selection-idempotent",
+        "cursor-selection-failure-visible-error"
+      ],
+      "assertionKeys": [
+        "latestCursorSelection",
+        "staleCursorRejected",
+        "replayedCursorNoReplayTrigger",
+        "cursorSelectionIdempotent",
+        "cursorFailureVisibleError"
+      ]
+    },
+    "gap5OperatorEventsRestore": {
+      "description": "Runtime windows should always restore operatorEvents={\"enabled\":false} even on script failure.",
+      "acceptanceRules": [
+        "operatorEvents-baseline-captured-before-modification",
+        "restore-on-normal-exit",
+        "restore-on-error-exit",
+        "restore-on-interrupt-exit",
+        "restore-failure-produces-visible-error"
+      ],
+      "assertionKeys": [
+        "baselineCapturedBeforeModification",
+        "restoreOnNormalExit",
+        "restoreOnErrorExit",
+        "restoreOnInterruptExit",
+        "restoreFailureVisibleError"
+      ]
+    }
+  },
+  "scenarios": [
+    {
+      "name": "preflight-rejects-terminal-task-before-poller-start",
+      "gap": "gap1BacklogFalseSuppression",
+      "given": {
+        "taskState": "done",
+        "pollerStatus": "not_started",
+        "preflightCheck": "terminal_state_check"
+      },
+      "then": {
+        "pollerStarted": false,
+        "errorProduced": true,
+        "errorIsVisible": true,
+        "backlogSuppressionSignal": false,
+        "reasonCodes": [
+          "task-already-terminal",
+          "poller-not-started-for-terminal-task"
+        ]
+      }
+    },
+    {
+      "name": "mid-poll-terminal-detection-stops-poller",
+      "gap": "gap1BacklogFalseSuppression",
+      "given": {
+        "taskState": "running",
+        "pollerStatus": "active",
+        "pollerCycles": 3,
+        "terminalTransitionAtCycle": 4
+      },
+      "then": {
+        "pollerStopped": true,
+        "stopDetectedAtCycle": 4,
+        "maxAllowedStopLagCycles": 1,
+        "backlogSuppressionSignal": false,
+        "reasonCodes": [
+          "terminal-detected-mid-poll",
+          "poller-stopped-within-allowed-lag"
+        ]
+      }
+    },
+    {
+      "name": "explicit-sessionKey-required-for-monitor-status",
+      "gap": "gap2SessionKeyRequirement",
+      "given": {
+        "monitorStatusCalls": [
+          { "sessionKey": "valid-key-001", "expectSuccess": true },
+          { "sessionKey": null, "expectSuccess": false },
+          { "sessionKey": "", "expectSuccess": false }
+        ]
+      },
+      "then": {
+        "validKeyCallsProducePollerState": true,
+        "missingKeyCallsProduceVisibleError": true,
+        "missingKeyCallsNeverProduceEmptyState": true,
+        "reasonCodes": [
+          "explicit-sessionKey-required",
+          "missing-sessionKey-visible-error",
+          "missing-sessionKey-not-silent-empty"
+        ]
+      }
+    },
+    {
+      "name": "sessionKey-presence-logged-in-canary-output",
+      "gap": "gap2SessionKeyRequirement",
+      "given": {
+        "canaryOutputIncludesSessionKeyPresence": true,
+        "canaryOutputIncludesRawSessionKey": false
+      },
+      "then": {
+        "sessionKeyPresenceConfirmed": true,
+        "rawSessionKeyNeverLogged": true,
+        "reasonCodes": [
+          "sessionKey-presence-logged-redacted",
+          "raw-sessionKey-not-exposed"
+        ]
+      }
+    },
+    {
+      "name": "object-backed-config-normalized",
+      "gap": "gap3ConfigShapeFlexibility",
+      "given": {
+        "configShape": "object",
+        "configValue": {
+          "terminalBriefEnabled": true,
+          "operatorEventsEnabled": false,
+          "pollerIntervalMs": 5000
+        }
+      },
+      "then": {
+        "preflightAccepted": true,
+        "normalizedToCanonicalForm": true,
+        "canonicalFormIsArray": true,
+        "shapeRecordedInEvidence": true,
+        "reasonCodes": [
+          "object-backed-config-accepted",
+          "object-backed-normalized-to-array"
+        ]
+      }
+    },
+    {
+      "name": "array-backed-config-normalized",
+      "gap": "gap3ConfigShapeFlexibility",
+      "given": {
+        "configShape": "array",
+        "configValue": [
+          { "key": "terminalBriefEnabled", "value": true },
+          { "key": "operatorEventsEnabled", "value": false },
+          { "key": "pollerIntervalMs", "value": 5000 }
+        ]
+      },
+      "then": {
+        "preflightAccepted": true,
+        "normalizedToCanonicalForm": true,
+        "canonicalFormIsArray": true,
+        "shapeRecordedInEvidence": true,
+        "reasonCodes": [
+          "array-backed-config-accepted",
+          "array-backed-matches-canonical-form"
+        ]
+      }
+    },
+    {
+      "name": "shape-assumption-failure-produces-visible-error",
+      "gap": "gap3ConfigShapeFlexibility",
+      "given": {
+        "configShape": "invalid",
+        "configValue": null,
+        "preflightAttemptsNormalization": true
+      },
+      "then": {
+        "preflightAccepted": false,
+        "visibleErrorProduced": true,
+        "reasonCodes": [
+          "unrecognized-config-shape",
+          "visible-error-produced"
+        ]
+      }
+    },
+    {
+      "name": "cursor-selects-latest-entry-safely",
+      "gap": "gap4CursorSelectionSafety",
+      "given": {
+        "cursorCandidates": [
+          { "cursorId": "cursor-stale-001", "timestamp": "2026-05-15T10:00:00Z" },
+          { "cursorId": "cursor-stale-002", "timestamp": "2026-05-15T12:00:00Z" },
+          { "cursorId": "cursor-latest-001", "timestamp": "2026-05-16T08:00:00Z" }
+        ],
+        "selectionStrategy": "latest_timestamp"
+      },
+      "then": {
+        "selectedCursorId": "cursor-latest-001",
+        "staleRejected": true,
+        "selectionIdempotent": true,
+        "reasonCodes": [
+          "latest-cursor-selected",
+          "stale-cursors-rejected",
+          "selection-idempotent"
+        ]
+      }
+    },
+    {
+      "name": "replayed-cursor-does-not-trigger-duplicate-evidence",
+      "gap": "gap4CursorSelectionSafety",
+      "given": {
+        "originalCursorId": "cursor-latest-001",
+        "originalTimestamp": "2026-05-16T08:00:00Z",
+        "replayAttempt": {
+          "cursorId": "cursor-latest-001",
+          "timestamp": "2026-05-16T08:00:00Z"
+        },
+        "evidenceAlreadyProduced": true
+      },
+      "then": {
+        "replaySuppressed": true,
+        "duplicateEvidenceNotProduced": true,
+        "reasonCodes": [
+          "replay-suppression",
+          "no-duplicate-evidence-from-replayed-cursor"
+        ]
+      }
+    },
+    {
+      "name": "cursor-selection-failure-produces-visible-error",
+      "gap": "gap4CursorSelectionSafety",
+      "given": {
+        "cursorCandidates": [],
+        "selectionStrategy": "latest_timestamp"
+      },
+      "then": {
+        "cursorSelected": false,
+        "visibleErrorProduced": true,
+        "silentFallbackNotAllowed": true,
+        "reasonCodes": [
+          "no-cursor-candidates",
+          "visible-error-no-silent-fallback"
+        ]
+      }
+    },
+    {
+      "name": "operatorEvents-restored-on-success-exit",
+      "gap": "gap5OperatorEventsRestore",
+      "given": {
+        "scriptExitType": "success",
+        "baselineCaptured": true,
+        "operatorEventsEnabled": true,
+        "scriptCompletesNormally": true
+      },
+      "then": {
+        "operatorEventsRestored": true,
+        "restoredValue": { "enabled": false },
+        "reasonCodes": [
+          "operatorEvents-restored-on-success",
+          "restored-to-enabled-false"
+        ]
+      }
+    },
+    {
+      "name": "operatorEvents-restored-on-error-exit",
+      "gap": "gap5OperatorEventsRestore",
+      "given": {
+        "scriptExitType": "error",
+        "baselineCaptured": true,
+        "operatorEventsEnabled": true,
+        "scriptFailsWithError": true
+      },
+      "then": {
+        "operatorEventsRestored": true,
+        "restoredValue": { "enabled": false },
+        "reasonCodes": [
+          "operatorEvents-restored-on-error",
+          "restored-to-enabled-false"
+        ]
+      }
+    },
+    {
+      "name": "operatorEvents-restored-on-interrupt-exit",
+      "gap": "gap5OperatorEventsRestore",
+      "given": {
+        "scriptExitType": "interrupt",
+        "baselineCaptured": true,
+        "operatorEventsEnabled": true,
+        "scriptInterrupted": true
+      },
+      "then": {
+        "operatorEventsRestored": true,
+        "restoredValue": { "enabled": false },
+        "reasonCodes": [
+          "operatorEvents-restored-on-interrupt",
+          "restored-to-enabled-false"
+        ]
+      }
+    },
+    {
+      "name": "operatorEvents-baseline-captured-before-modification",
+      "gap": "gap5OperatorEventsRestore",
+      "given": {
+        "initialState": { "enabled": false },
+        "modificationIntent": { "enabled": true },
+        "baselineRecordedAction": "capture-before-set"
+      },
+      "then": {
+        "baselineRecorded": true,
+        "canRestoreToInitialState": true,
+        "reasonCodes": [
+          "baseline-captured",
+          "restore-possible-from-baseline"
+        ]
+      }
+    }
+  ],
+  "assertions": [
+    "backlog false suppression must not occur: preflight checks terminal state before starting poller",
+    "terminal task must produce visible error, not silent skip",
+    "every a2a.monitor.status call must carry an explicit sessionKey",
+    "missing sessionKey must cause visible error, not silent empty state",
+    "config shape normalization must accept both object-backed and array-backed forms",
+    "unrecognized config shape must produce visible error",
+    "cursor selection must always pick the latest cursor",
+    "replayed cursor must not trigger duplicate evidence production",
+    "cursor selection failure must produce visible error, not silent fallback",
+    "operatorEvents must be restored to {enabled: false} on success, error, and interrupt exits",
+    "operatorEvents baseline must be captured before modification",
+    "all evidence is redacted: no secrets, host paths, raw session keys, runtime/bootstrap files",
+    "no live provider send, no terminal-outbox ACK mutation, no deploy, no restart"
+  ],
+  "safetyConfirmations": {
+    "noProductionDeployOrRestart": true,
+    "noGatewayRestart": true,
+    "noBrokerRestart": true,
+    "noWorkerRestart": true,
+    "noLiveProviderSend": true,
+    "noTerminalOutboxAckMutation": true,
+    "noProductionDatabaseMutation": true,
+    "noSecretRotationOrDisclosure": true,
+    "noHistoryRewrite": true,
+    "noForcePush": true,
+    "noReleasePublication": true,
+    "noAutomaticMergeOrApproval": true,
+    "noRepositoryVisibilityChange": true,
+    "redacted": true,
+    "syntheticFixtureOnly": true,
+    "noRawSessionDump": true,
+    "noHostSpecificPrivatePath": true,
+    "noOpenClawRuntimeBootstrapArtifact": true
+  },
+  "validationCommands": [
+    "node test/conformance/check-terminal-brief-canary-acceptance.mjs"
+  ]
+}

@@ -19,6 +19,7 @@ const fixtureFiles = {
   replayTrace: 'second-worker-replay-trace.json',
   liveCanaryApprovalBoundary: 'live-canary-replay-approval-boundary.json',
   stabilityGate: 'r20-stability-gate.json',
+  workerCapabilityProfile: 'worker-capability-profile.json',
 };
 
 const forbiddenRuntimePaths = [
@@ -87,6 +88,7 @@ const {
   replayTrace,
   liveCanaryApprovalBoundary,
   stabilityGate,
+  workerCapabilityProfile,
 } = fixtures;
 
 assert.deepEqual(lifecycle.terminalStates.sort(), ['blocked', 'cancelled', 'done', 'pr']);
@@ -1207,6 +1209,89 @@ for (const [key, value] of Object.entries(stabilityGate.safetyConfirmations)) {
 assert.ok(Array.isArray(stabilityGate.validationCommands) && stabilityGate.validationCommands.length >= 1);
 assert.ok(stabilityGate.validationCommands.includes('node test/conformance/check-contract-fixtures.mjs'));
 assert.equal(stabilityGate.redacted, true);
+
+// --- Worker Capability Profile fixture validation ---
+
+assert.ok(workerCapabilityProfile.fixtureId, 'workerCapabilityProfile must carry fixtureId');
+assert.equal(workerCapabilityProfile.contract, 'contracts/a2a/worker-capability-profile.md');
+assert.equal(workerCapabilityProfile.issue, 'https://github.com/jinwon-int/a2a-plane/issues/382');
+assert.equal(workerCapabilityProfile.parentIssue, 'https://github.com/jinwon-int/a2a-plane/issues/380');
+assert.ok(workerCapabilityProfile.v0Freeze, 'workerCapabilityProfile must carry v0Freeze marker');
+assert.ok(workerCapabilityProfile.v0Freeze.frozenAt, 'workerCapabilityProfile v0Freeze must include frozenAt');
+
+// Profiles array must be present with at least one entry
+assert.ok(Array.isArray(workerCapabilityProfile.profiles) && workerCapabilityProfile.profiles.length >= 1);
+const profileWorkerNames = new Set(workerCapabilityProfile.profiles.map((p) => p.workerName));
+for (const profile of workerCapabilityProfile.profiles) {
+  assert.match(profile.workerName, workerNamePattern, 'unsafe workerName ' + profile.workerName);
+  // freshnessTimestamp is required
+  assert.ok(profile.freshnessTimestamp, 'freshnessTimestamp is required');
+  assert.ok(Date.parse(profile.freshnessTimestamp), 'freshnessTimestamp must be valid ISO-8601');
+  // No forbidden fields
+  for (const forbidden of workerCapabilityProfile.forbiddenProfileFields) {
+    assert.ok(!(forbidden in profile), 'profile must not include forbidden field ' + forbidden);
+  }
+}
+
+// Assignment recommendations array must be present with at least one entry
+assert.ok(Array.isArray(workerCapabilityProfile.assignmentRecommendations)
+  && workerCapabilityProfile.assignmentRecommendations.length >= 1);
+for (const rec of workerCapabilityProfile.assignmentRecommendations) {
+  assert.ok(rec.scenario, 'each recommendation must have a scenario name');
+  assert.ok(profileWorkerNames.has(rec.workerName), 'recommendation ' + rec.scenario + ' must reference a defined profile worker');
+  assert.ok(typeof rec.recommended === 'boolean', 'recommended must be boolean');
+  assert.ok(rec.recommendationReason, 'recommendationReason must be a string');
+  assert.ok(typeof rec.operatorOverrideAllowed === 'boolean', 'operatorOverrideAllowed must be boolean');
+  // staleProfileTimeoutMs must be a positive number
+  assert.ok(typeof rec.staleProfileTimeoutMs === 'number' && rec.staleProfileTimeoutMs > 0);
+  assert.ok(typeof rec.staleProfileHardTimeoutMs === 'number' && rec.staleProfileHardTimeoutMs > 0);
+  // If profile is stale, freshness must exceed hard timeout
+  if (rec.profileStale) {
+    const freshnessMs = rec.profileFreshnessSeconds * 1000;
+    assert.ok(freshnessMs > rec.staleProfileHardTimeoutMs || freshnessMs > rec.staleProfileTimeoutMs,
+      'stale profile ' + rec.scenario + ' must have freshness > timeout');
+  }
+  // No forbidden fields in recommendation
+  for (const forbidden of workerCapabilityProfile.forbiddenProfileFields) {
+    assert.ok(!(forbidden in rec), 'recommendation must not include forbidden field ' + forbidden);
+  }
+}
+
+// Terminal Brief slow lane examples must be present
+assert.ok(Array.isArray(workerCapabilityProfile.terminalBriefSlowLaneExamples)
+  && workerCapabilityProfile.terminalBriefSlowLaneExamples.length >= 1);
+for (const example of workerCapabilityProfile.terminalBriefSlowLaneExamples) {
+  assert.ok(example.scenario, 'each slow lane example must have a scenario name');
+  const hasSummary = 'terminalSummary' in example;
+  const hasBlocker = 'blockerReason' in example;
+  const hasAssertion = 'assertion' in example;
+  assert.ok(hasSummary || hasBlocker || hasAssertion,
+    'slow lane example ' + example.scenario + ' must have terminalSummary, blockerReason, or assertion');
+}
+
+// Stale profile policy exists
+assert.ok(workerCapabilityProfile.staleProfilePolicy, 'staleProfilePolicy must be defined');
+assert.equal(workerCapabilityProfile.staleProfilePolicy.staleProfilesMustNotBeUsedForCapacityCriticalAssignments, true);
+assert.equal(workerCapabilityProfile.staleProfilePolicy.neverCausesBrokerCrashOrAssignmentDeadlock, true);
+
+// Safety confirmations
+for (const [key, value] of Object.entries(workerCapabilityProfile.safetyConfirmations)) {
+  assert.equal(value, true, 'workerCapabilityProfile safety confirmation ' + key + ' must be true');
+}
+
+// Validation commands must include conformance test
+assert.ok(workerCapabilityProfile.validationCommands.includes('node test/conformance/check-contract-fixtures.mjs'),
+  'validationCommands must reference conformance test');
+
+// Forbidden runtime paths from fixture
+const wcpFixtureText = fs.readFileSync(path.join(fixtureDir, 'worker-capability-profile.json'), 'utf8');
+for (const forbiddenPath of forbiddenRuntimePaths) {
+  assert.ok(
+    !wcpFixtureText.includes(forbiddenPath),
+    'worker-capability-profile fixture must not reference OpenClaw runtime/bootstrap path ' + forbiddenPath,
+  );
+}
+
 
 console.log(JSON.stringify({
   ok: true,

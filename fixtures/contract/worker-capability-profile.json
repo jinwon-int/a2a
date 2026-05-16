@@ -1,0 +1,233 @@
+{
+  "fixtureId": "a2a-plane.contract.worker-capability-profile.v1",
+  "contract": "contracts/a2a/worker-capability-profile.md",
+  "issue": "https://github.com/jinwon-int/a2a-plane/issues/382",
+  "parentIssue": "https://github.com/jinwon-int/a2a-plane/issues/380",
+  "description": "R31 worker capability profile schema and assignment recommendation semantics. No secrets, raw host logs, or private paths are collected.",
+  "profiles": [
+    {
+      "workerName": "worker-capability-conformance",
+      "cpuCount": 4,
+      "cpuArchitectureClass": "x64",
+      "memoryTotalClass": "large",
+      "memoryPressureClass": "low",
+      "diskFreeClass": "high",
+      "storagePressureClass": "low",
+      "dockerAvailable": true,
+      "dockerCachePressure": "low",
+      "gatewayHealthSummary": "healthy",
+      "recentTaskRuntimeClass": "medium",
+      "recentTaskTimeoutClass": "none",
+      "workloadStrengths": [
+        "code-patch",
+        "build-test",
+        "docs-evidence",
+        "inspection"
+      ],
+      "freshnessTimestamp": "2026-05-16T18:25:00Z"
+    },
+    {
+      "workerName": "worker-capability-memory-constrained",
+      "cpuCount": 2,
+      "cpuArchitectureClass": "arm64",
+      "memoryTotalClass": "small",
+      "memoryPressureClass": "high",
+      "diskFreeClass": "low",
+      "storagePressureClass": "moderate",
+      "dockerAvailable": false,
+      "dockerCachePressure": "unknown",
+      "gatewayHealthSummary": "degraded",
+      "recentTaskRuntimeClass": "medium",
+      "recentTaskTimeoutClass": "rare",
+      "workloadStrengths": [
+        "fixtures",
+        "inspection"
+      ],
+      "freshnessTimestamp": "2026-05-16T18:20:00Z"
+    },
+    {
+      "workerName": "worker-capability-build-heavy",
+      "cpuCount": 16,
+      "cpuArchitectureClass": "x64",
+      "memoryTotalClass": "xlarge",
+      "memoryPressureClass": "moderate",
+      "diskFreeClass": "high",
+      "storagePressureClass": "low",
+      "dockerAvailable": true,
+      "dockerCachePressure": "low",
+      "gatewayHealthSummary": "healthy",
+      "recentTaskRuntimeClass": "fast",
+      "recentTaskTimeoutClass": "none",
+      "workloadStrengths": [
+        "code-patch",
+        "build-test",
+        "canary"
+      ],
+      "freshnessTimestamp": "2026-05-16T18:25:00Z"
+    }
+  ],
+  "assignmentRecommendations": [
+    {
+      "scenario": "preferred-workload-match",
+      "workerName": "worker-capability-conformance",
+      "taskWorkload": "code-patch",
+      "recommended": true,
+      "recommendationReason": "preferred workload: code-patch",
+      "expectedLatencyClass": "medium",
+      "heavyBuildAllowed": false,
+      "maxConcurrentTasks": 1,
+      "operatorOverrideAllowed": true,
+      "profileFreshnessSeconds": 10,
+      "staleProfileTimeoutMs": 300000,
+      "staleProfileHardTimeoutMs": 1800000,
+      "profileStale": false
+    },
+    {
+      "scenario": "avoided-memory-pressure-critical",
+      "workerName": "worker-capability-memory-constrained",
+      "taskWorkload": "build-test",
+      "recommended": false,
+      "recommendationReason": "avoided: memoryPressureClass=high",
+      "expectedLatencyClass": "medium",
+      "heavyBuildAllowed": false,
+      "maxConcurrentTasks": 1,
+      "operatorOverrideAllowed": true,
+      "profileFreshnessSeconds": 300,
+      "staleProfileTimeoutMs": 300000,
+      "staleProfileHardTimeoutMs": 1800000,
+      "profileStale": false
+    },
+    {
+      "scenario": "preferred-build-heavy",
+      "workerName": "worker-capability-build-heavy",
+      "taskWorkload": "build-test",
+      "recommended": true,
+      "recommendationReason": "preferred: expectedLatencyClass=fast",
+      "expectedLatencyClass": "fast",
+      "heavyBuildAllowed": true,
+      "maxConcurrentTasks": 3,
+      "operatorOverrideAllowed": true,
+      "profileFreshnessSeconds": 10,
+      "staleProfileTimeoutMs": 300000,
+      "staleProfileHardTimeoutMs": 1800000,
+      "profileStale": false
+    },
+    {
+      "scenario": "avoided-stale-profile",
+      "workerName": "worker-capability-conformance",
+      "taskWorkload": "code-patch",
+      "recommended": false,
+      "recommendationReason": "avoided: stale profile",
+      "expectedLatencyClass": "slow",
+      "heavyBuildAllowed": false,
+      "maxConcurrentTasks": 1,
+      "operatorOverrideAllowed": true,
+      "profileFreshnessSeconds": 2000,
+      "staleProfileTimeoutMs": 300000,
+      "staleProfileHardTimeoutMs": 1800000,
+      "profileStale": true,
+      "staleWarning": true,
+      "staleExpired": true
+    },
+    {
+      "scenario": "avoided-max-concurrent",
+      "workerName": "worker-capability-conformance",
+      "taskWorkload": "inspection",
+      "recommended": false,
+      "recommendationReason": "avoided: at maxConcurrentTasks",
+      "expectedLatencyClass": "medium",
+      "heavyBuildAllowed": false,
+      "maxConcurrentTasks": 1,
+      "currentConcurrentTasks": 1,
+      "operatorOverrideAllowed": true,
+      "profileFreshnessSeconds": 10,
+      "staleProfileTimeoutMs": 300000,
+      "staleProfileHardTimeoutMs": 1800000,
+      "profileStale": false
+    },
+    {
+      "scenario": "avoided-heavy-build-not-allowed",
+      "workerName": "worker-capability-conformance",
+      "taskWorkload": "build-test",
+      "recommended": false,
+      "recommendationReason": "avoided: heavyBuildAllowed=false, task is build-test",
+      "expectedLatencyClass": "medium",
+      "heavyBuildAllowed": false,
+      "maxConcurrentTasks": 1,
+      "operatorOverrideAllowed": true,
+      "profileFreshnessSeconds": 10,
+      "staleProfileTimeoutMs": 300000,
+      "staleProfileHardTimeoutMs": 1800000,
+      "profileStale": false
+    }
+  ],
+  "terminalBriefSlowLaneExamples": [
+    {
+      "scenario": "capacity-limited-memory-high",
+      "terminalSummary": "worker worker-capability-memory-constrained was capacity-limited: memoryPressureClass=high, leading to increased task latency. Task completed within expected bounds given the capacity state.",
+      "blameHandoffNote": "capacity-limited slow lane: worker worker-capability-memory-constrained had memoryPressureClass at high. No evidence of stuck/failed task behavior.",
+      "taskResult": "done"
+    },
+    {
+      "scenario": "capacity-limited-docker-cold-cache",
+      "terminalSummary": "worker worker-capability-conformance was capacity-limited: dockerCachePressure=high (cold cache), leading to increased build latency. Task completed.",
+      "taskResult": "pr"
+    },
+    {
+      "scenario": "blocked-on-max-concurrent",
+      "blockerReason": "worker worker-capability-conformance blocked on capacity: at maxConcurrentTasks (1). Task assignment re-queued for re-try on different worker.",
+      "taskResult": "blocked"
+    },
+    {
+      "scenario": "stuck-failed-example",
+      "terminalSummary": "worker worker-capability-build-heavy stuck/failed: process crashed (segfault) during build step. No output produced.",
+      "taskResult": "blocked"
+    },
+    {
+      "scenario": "capacity-limited-vs-stuck-distinction",
+      "assertion": "Capacity-limited latency MUST be explicitly distinguished from stuck/failed behavior. A task that eventually completes at reduced throughput is done or pr, not blocked or cancelled, unless it also meets the stuck/failed criteria."
+    }
+  ],
+  "staleProfilePolicy": {
+    "staleProfileTimeoutMs": 300000,
+    "staleProfileHardTimeoutMs": 1800000,
+    "staleWarningShiftsLatencyClassOneLevel": true,
+    "expiredFallsBackToConservativeDefaults": true,
+    "staleProfilesMustNotBeUsedForCapacityCriticalAssignments": true,
+    "neverCausesBrokerCrashOrAssignmentDeadlock": true
+  },
+  "forbiddenProfileFields": [
+    "hostName",
+    "ipAddress",
+    "networkTopology",
+    "privatePath",
+    "providerToken",
+    "apiKey",
+    "secret",
+    "rawSessionDump",
+    "fullLog",
+    "runtimeBootstrapFileNames",
+    "runtimeBootstrapDirName",
+    "workspaceContextFiles"
+  ],
+  "safetyConfirmations": {
+    "noDeployOrRestart": true,
+    "noLiveCanary": true,
+    "noDbMutation": true,
+    "noTerminalAckMutation": true,
+    "noReplay": true,
+    "noHistoricalReplay": true,
+    "noSecretCollection": true,
+    "profileDataIsOptional": true,
+    "profilesAreRedactedForPublic": true,
+    "capacityLimitedNotConflatedWithStuckFailed": true
+  },
+  "validationCommands": [
+    "node test/conformance/check-contract-fixtures.mjs"
+  ],
+  "v0Freeze": {
+    "frozenAt": "2026-05-16",
+    "round": "a2a-r31-worker-capability-profiles-20260516T1825Z",
+    "note": "R31 worker capability profile schema and assignment recommendation semantics. No new profile fields or assignment semantics may be added without a v0→v1 compatibility plan."
+  }
+}

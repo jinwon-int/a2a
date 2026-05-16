@@ -17,6 +17,7 @@ Public-safe contract skeletons for A2A protocol and task lifecycle behavior.
 - [Parent Terminal Brief aggregation](./parent-terminal-brief-aggregation.md)
 - [Durable checkpoint & human interrupt](./checkpoint-interrupt.md)
 - [R20 stability gate](./r20-stability-gate.md) — hot-table persistence, queue/outbox hygiene, no-live canary boundaries, stale R14 PR reconciliation
+- [R31 worker capability profile](./worker-capability-profile.md) — worker capability profile schema, assignment recommendation semantics, capacity-limited slow lane phrasing
 
 ## Compatibility
 
@@ -35,6 +36,7 @@ Machine-readable reference fixtures for broker/plugin/runner validation:
 - [Parent Terminal Brief aggregation canary](../../fixtures/contract/parent-terminal-brief-aggregation.json)
 - [Checkpoint & human-interrupt scenarios](../../fixtures/contract/checkpoint-interrupt.json)
 - [R20 stability gate](../../fixtures/contract/r20-stability-gate.json) — machine-readable R20 gate fixture
+- [R31 worker capability profile](../../fixtures/contract/worker-capability-profile.json) — worker capability profile fixture
 
 ### Compatibility fixtures
 

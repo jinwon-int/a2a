@@ -1,0 +1,263 @@
+{
+  "fixtureId": "a2a-plane.contract.canonical-progress-validation-matrix.v1",
+  "contract": "contracts/a2a/canonical-progress-validation-matrix.md",
+  "description": "Validation matrix for canonical n/N progress semantics in A2A Terminal Brief aggregation. Ensures completed/total counts reflect canonical task outcomes, not lane order, event sequence, origin-local projection count, retries, duplicates, out-of-order delivery, or transient state.",
+  "parentIssue": "https://github.com/jinwon-int/a2a-plane/issues/370",
+  "laneIssue": "https://github.com/jinwon-int/a2a-plane/issues/376",
+  "run": "a2a-r29-terminal-brief-canonical-progress-correction-20260516T1412Z",
+  "sourceOnly": true,
+  "noLiveProviderSend": true,
+  "noTerminalOutboxAck": true,
+  "noDeployOrRestart": true,
+  "noDatabaseMutation": true,
+  "noSecretMovement": true,
+  "runtimeBootstrapHygieneChecked": false,
+  "coverage": {
+    "totalScenarios": 10,
+    "coveredRules": [
+      "canonical-task-completed-count",
+      "retry-superseded",
+      "duplicate-replay",
+      "failed-cancelled",
+      "out-of-order",
+      "single-task",
+      "cross-broker",
+      "sessionKey",
+      "ack-read",
+      "go-gate"
+    ]
+  },
+  "scenarios": [
+    {
+      "id": "C01",
+      "name": "canonical-task-completed-count",
+      "description": "n/N uses completed canonical child tasks as numerator, total canonical child tasks as denominator. Not lane order, event sequence, or origin-local projection count.",
+      "given": {
+        "canonicalChildTasks": ["task-1", "task-2", "task-3", "task-4", "task-5", "task-6", "task-7"],
+        "succeededTaskIds": ["task-1", "task-3", "task-5"],
+        "totalCanonicalTasks": 7
+      },
+      "then": {
+        "completed": 3,
+        "total": 7,
+        "totalKnown": true,
+        "reason": "Only tasks with succeeded terminal status count toward completed. Lane order (task-1 first, task-3 third, task-5 fifth) is irrelevant; event sequence (which task reported terminal first) is irrelevant; origin-projection-count (which broker projected) is irrelevant."
+      },
+      "not": {
+        "completedEqualsSucceededByLaneOrder": false,
+        "completedEqualsTerminalEventCount": false,
+        "completedEqualsOriginProjectionCount": false
+      }
+    },
+    {
+      "id": "C02",
+      "name": "retry-superseded-original-does-not-inflate-completed",
+      "description": "When a canonical task is retried (original fails, retry succeeds), completed counts only the terminal success once. The original failed attempt is superseded and must not inflate completed.",
+      "given": {
+        "canonicalChildTasks": ["task-a", "task-b"],
+        "taskEvents": [
+          { "taskId": "task-a", "status": "failed", "attempt": 1 },
+          { "taskId": "task-a", "status": "succeeded", "attempt": 2, "supersedes": "attempt-1" },
+          { "taskId": "task-b", "status": "succeeded", "attempt": 1 }
+        ]
+      },
+      "then": {
+        "completed": 2,
+        "total": 2,
+        "totalKnown": true,
+        "supersededOriginalNotCounted": true,
+        "detail": "task-a succeeded after retry. The failed attempt (attempt 1) is superseded. Only one canonical task completion is counted for task-a. task-b succeeded on first attempt. Both count as 1 each."
+      },
+      "failsIf": "completed would be 1 (if original retry edge-case conflated) or 3 (if both succeeded and superseded failed were counted separately)"
+    },
+    {
+      "id": "C03",
+      "name": "duplicate-replay-does-not-inflate-completed",
+      "description": "Replaying the same terminal event (duplicate delivery, broker restart replay, outbox reprocess) must not increment the completed count.",
+      "given": {
+        "canonicalChildTasks": ["task-x", "task-y"],
+        "taskEvents": [
+          { "taskId": "task-x", "status": "succeeded", "deliveryId": "d1" },
+          { "taskId": "task-y", "status": "succeeded", "deliveryId": "d2" },
+          { "taskId": "task-x", "status": "succeeded", "deliveryId": "d1", "isReplay": true },
+          { "taskId": "task-y", "status": "succeeded", "deliveryId": "d2", "isReplay": true }
+        ]
+      },
+      "then": {
+        "completed": 2,
+        "total": 2,
+        "totalKnown": true,
+        "duplicatesSuppressed": true,
+        "replayNoIncrement": true,
+        "detail": "task-x and task-y each succeeded once. The replay events with the same deliveryId are idempotently suppressed and must not increment completed."
+      },
+      "failsIf": "completed > 2 (replay events inflated the count)"
+    },
+    {
+      "id": "C04",
+      "name": "failed-cancelled-do-not-count-as-completed",
+      "description": "Canonical tasks that end in failed, cancelled, or blocked state are NOT counted as completed. They are still part of total.",
+      "given": {
+        "canonicalChildTasks": ["task-p", "task-q", "task-r", "task-s"],
+        "taskEvents": [
+          { "taskId": "task-p", "status": "succeeded" },
+          { "taskId": "task-q", "status": "failed" },
+          { "taskId": "task-r", "status": "canceled" },
+          { "taskId": "task-s", "status": "succeeded" }
+        ]
+      },
+      "then": {
+        "completed": 2,
+        "total": 4,
+        "totalKnown": true,
+        "failedNotCounted": true,
+        "cancelledNotCounted": true,
+        "detail": "Only task-p and task-s succeeded (completed = 2). task-q failed (not completed), task-r canceled (not completed). All 4 are part of total."
+      },
+      "failsIf": "completed = 3 or 4 (failed/cancelled leaked into completed) or completed = 1 (succeeded count wrong)"
+    },
+    {
+      "id": "C05",
+      "name": "out-of-order-completion-count-is-order-independent",
+      "description": "Completed count is independent of the order in which tasks reach terminal state. Tasks completing late arrive at the same count as tasks completing early.",
+      "given": {
+        "canonicalChildTasks": ["task-m", "task-n", "task-o"],
+        "terminalOrderScenarioA": ["task-o", "task-m", "task-n"],
+        "terminalOrderScenarioB": ["task-n", "task-o", "task-m"],
+        "allSucceeded": true
+      },
+      "then": {
+        "completed": 3,
+        "total": 3,
+        "totalKnown": true,
+        "orderIndependent": true,
+        "detail": "Whether tasks complete in order A (o, m, n), order B (n, o, m), or any other order, the completed count is always 3/3."
+      },
+      "failsIf": "completed differs between order A and order B, or completed reflects sequence position instead of canonical task count"
+    },
+    {
+      "id": "C06",
+      "name": "single-task-1-1-fallback",
+      "description": "A parent round with exactly one canonical child task renders 1/1 when that task completes.",
+      "given": {
+        "canonicalChildTasks": ["task-only"],
+        "taskEvents": [
+          { "taskId": "task-only", "status": "succeeded" }
+        ]
+      },
+      "then": {
+        "completed": 1,
+        "total": 1,
+        "totalKnown": true,
+        "detail": "1/1 is valid and expected for a single-task round. The denominator reflects that there is one canonical task."
+      },
+      "failsIf": "completed = 0 (task succeeded but not counted), total = 0 (total missing), or n/N omitted because N=1"
+    },
+    {
+      "id": "C07",
+      "name": "cross-broker-aggregation-counts-canonical-tasks-not-projections",
+      "description": "In cross-broker parent-round aggregation, the completed/total counts reflect canonical child tasks under the child broker of record, not the number of projection entries in the parent broker's ledger.",
+      "given": {
+        "canonicalChildTasks": ["brokerA-task-1", "brokerA-task-2", "brokerB-task-3"],
+        "parentProjections": [
+          { "projectionKey": "parentRound:brokerA:brokerA-task-1:pr", "projectionState": "projected" },
+          { "projectionKey": "parentRound:brokerA:brokerA-task-2:pr", "projectionState": "projected" },
+          { "projectionKey": "parentRound:brokerB:brokerB-task-3:pr", "projectionState": "projected" }
+        ],
+        "childTaskStatuses": {
+          "brokerA-task-1": "succeeded",
+          "brokerA-task-2": "succeeded",
+          "brokerB-task-3": "succeeded"
+        }
+      },
+      "then": {
+        "completed": 3,
+        "total": 3,
+        "totalKnown": true,
+        "projectionCountDoesNotReplaceCompleted": true,
+        "detail": "There are 3 canonical child tasks (2 under broker A, 1 under broker B), each succeeded. Completed = 3 across brokers. Parent projection count is also 3 in this case but the projection count could differ from completed (e.g., if a task has multiple projections for different terminal kinds)."
+      },
+      "failsIf": "completed reflects projection count instead of canonical child task count, or brokA-projection-count is used instead of cross-broker aggregate"
+    },
+    {
+      "id": "C08",
+      "name": "sessionKey-redacted-from-progress-evidence",
+      "description": "sessionKey values must be redacted from n/N progress evidence. The completed/total counts do not include session identifiers; sessionKey is not used in n/N computation.",
+      "given": {
+        "canonicalChildTasks": ["task-alpha", "task-beta"],
+        "taskEvents": [
+          { "taskId": "task-alpha", "status": "succeeded", "sessionKey": "session-wxyz-1234" },
+          { "taskId": "task-beta", "status": "succeeded", "sessionKey": "session-efgh-5678" }
+        ],
+        "sessionKeyInSummary": false,
+        "sessionKeyInTitle": false,
+        "sessionKeyInEvidence": true
+      },
+      "then": {
+        "completed": 2,
+        "total": 2,
+        "totalKnown": true,
+        "sessionKeyNotInN": true,
+        "sessionKeyRedactedEvidence": true,
+        "detail": "completed = 2 regardless of sessionKey values. sessionKey must not appear in title, body summary, or evidence URLs of Terminal Brief notifications."
+      },
+      "failsIf": "sessionKey appears in title, n/N text, or evidence summaries of the Terminal Brief notification"
+    },
+    {
+      "id": "C09",
+      "name": "ack-read-visibility-boundary",
+      "description": "n/N progress is a terminal evidence projection, not a terminal ACK. It does not prove provider delivery, operator read, human visibility, or terminal-outbox ACK.",
+      "given": {
+        "canonicalChildTasks": ["task-one", "task-two"],
+        "taskEvents": [
+          { "taskId": "task-one", "status": "succeeded" },
+          { "taskId": "task-two", "status": "succeeded" }
+        ]
+      },
+      "then": {
+        "completed": 2,
+        "total": 2,
+        "totalKnown": true,
+        "isTerminalAck": false,
+        "isReadReceipt": false,
+        "isOperatorApproval": false,
+        "liveProviderSend": false,
+        "terminalOutboxAckMutated": false,
+        "detail": "n/N = 2/2 is an evidence projection of completed canonical child tasks. It must not be treated as ACK/read/visibility/approval. Provider accepted-send evidence is send-acceptance only."
+      },
+      "failsIf": "n/N notification is treated as terminal ACK, read receipt, or operator approval for deploy/restart/send/DB-mutation actions"
+    },
+    {
+      "id": "C10",
+      "name": "go-gate-safety-boundary",
+      "description": "Source-only GO for this validation matrix does not authorize production deploy, Gateway restart, live provider send, terminal-outbox ACK, database mutation, secret rotation, or repository visibility change.",
+      "given": {
+        "sourceOnly": true,
+        "allowedActions": [
+          "read source code",
+          "run conformance tests",
+          "create PR",
+          "post Done/Block evidence"
+        ],
+        "prohibitedActions": [
+          "production deploy",
+          "Gateway restart",
+          "broker/worker restart",
+          "live provider/Telegram send",
+          "terminal-outbox ACK",
+          "database mutation/prune/migration",
+          "secret rotation/disclosure",
+          "repository visibility change",
+          "history rewrite/force-push",
+          "release/tag publish"
+        ]
+      },
+      "then": {
+        "matrixPassConfirmsSourceOnly": true,
+        "noActionAuthorizesLiveActions": true,
+        "detail": "This validation matrix is a source-only reading. No step creates, deploys, restarts, sends, or mutates anything. Provider accepted-send evidence is send-acceptance only."
+      },
+      "failsIf": "any test in this matrix triggers a production deploy, restart, live send, DB mutation, ACK, or secret operation"
+    }
+  ]
+}

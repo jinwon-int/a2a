@@ -1,0 +1,20 @@
+{
+  "nodeId": "hermes-agent-reference-worker",
+  "role": "analyst",
+  "displayName": "Hermes Agent Reference Worker",
+  "brokerUrl": "http://127.0.0.1:8787",
+  "workerMode": "mobile",
+  "capabilities": {
+    "canAnalyze": true,
+    "canBackfill": false,
+    "canPatchWorkspace": true,
+    "canPromoteLive": false,
+    "workspaceIds": ["public-safe-reference"],
+    "environments": ["research"]
+  },
+  "metadata": {
+    "runtime": "hermes-agent",
+    "openClawRequired": "false",
+    "transport": "http-poll"
+  }
+}

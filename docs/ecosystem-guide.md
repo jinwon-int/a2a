@@ -40,13 +40,14 @@ A2A는 "작업을 접수하고, 격리된 워커에 넘기고, 최종 증거(PR/
 - **운영자/팀 리더**: `a2a-plane` 이슈와 readiness 문서에서 작업 지시와 공개 가능 여부를 확인합니다.
 - **broker를 설치하거나 API를 붙이는 개발자**: `packages/broker/README.md`와 `contracts/a2a/`를 확인합니다.
 - **격리 패치 워커를 운영하는 사람**: `packages/docker-runner/README.md`를 확인하고, PR/Done/Block evidence 규칙을 따릅니다.
+- **OpenClaw가 아닌 HTTP worker를 붙이는 개발자**: [docs/specs/hermes-worker-integration/spec.md](specs/hermes-worker-integration/spec.md)에서 broker-agnostic worker 등록, heartbeat, polling, evidence alias를 확인합니다.
 - **OpenClaw Gateway 사용자**: `packages/openclaw-plugin-a2a/README.md`에서 broker 연결 설정과 안전 경계를 확인합니다.
 
 ## 기본 작업 흐름
 
 1. `a2a-plane` 이슈가 작업 요청과 성공 조건을 정의합니다.
 2. `a2a-broker`가 task를 만들고 가능한 worker에게 배정합니다.
-3. `a2a-docker-runner` 같은 worker가 격리 컨테이너에서 작업을 수행합니다.
+3. `a2a-docker-runner` 같은 worker, 또는 Hermes-style HTTP worker가 격리/외부 런타임에서 작업을 수행합니다.
 4. worker는 `Start` marker 후 `PR`, `Done`, 또는 `Block` evidence를 남깁니다.
 5. broker와 plane 문서/이슈가 결과 URL과 artifact evidence를 모아 closeout합니다.
 6. OpenClaw를 쓰는 환경에서는 `openclaw-plugin-a2a`가 Gateway와 broker 사이의 adapter 역할을 합니다.

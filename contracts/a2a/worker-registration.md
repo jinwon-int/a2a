@@ -13,6 +13,20 @@ Worker registration data must remain stable and public-safe across the monorepo 
 - `lastSeenAt`: timestamp used for liveness display only; not proof of terminal delivery.
 - `currentTaskId`: optional task reference for in-progress visibility.
 
+## Broker-agnostic HTTP worker fields
+
+The broker worker API also accepts runtime-neutral HTTP worker registration records for non-OpenClaw workers such as Hermes Agent reference workers:
+
+- `nodeId`: stable public-safe worker id.
+- `role`: A2A party role, usually `analyst` for worker execution.
+- `displayName`: human-readable public-safe worker label.
+- `brokerUrl`: local/test broker endpoint advertised by the worker; never include private production endpoints in public fixtures.
+- `capabilities`: normalized `WorkerCapabilities` object with booleans plus `workspaceIds` and `environments`.
+- `workerMode`: current accepted values are `persistent` and `mobile`; polling workers may use `mobile` until a v1 worker-mode expansion exists.
+- `metadata`: string-only public-safe hints such as `runtime=hermes-agent`, `transport=http-poll`, and `openClawRequired=false`.
+
+Generic worker task polling may use `GET /tasks?worker=<nodeId>&status=pending`. The server maps this to the existing `assignedWorkerId=<nodeId>&status=queued` read model. Generic terminal evidence may use `POST /tasks/:id/evidence`; `done` and `pr` outcomes complete the task, while `blocked` and `failed` outcomes fail it with redacted error evidence.
+
 ## Stable read-model assumptions
 
 - Read models may show queued, claimed, running, and terminal tasks without exposing private infrastructure details.

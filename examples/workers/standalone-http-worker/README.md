@@ -10,6 +10,13 @@ Use it to review the minimum worker-facing contract:
 - local-only broker endpoint placeholders;
 - terminal evidence limited to `done`, `pr`, or `blocked` results.
 
+For the current broker-agnostic HTTP contract, see:
+
+```bash
+cat docs/specs/hermes-worker-integration/spec.md
+cat fixtures/contract/hermes-worker-registration.json
+```
+
 ## Why this proves a second lane
 
 The worker card has no OpenClaw runtime fields, Gateway settings, provider IDs, Telegram identifiers, host paths, or secrets. A compatible standalone worker can be written in any runtime that can speak the broker worker API and preserve the terminal evidence boundaries in `contracts/a2a/terminal-semantics.md`.

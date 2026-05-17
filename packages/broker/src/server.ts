@@ -72,6 +72,7 @@ import type {
   TaskClaimRequest,
   TaskCompleteRequest,
   TaskDiagnosticReport,
+  TaskEvidenceRequest,
   TaskFailRequest,
   TaskKind,
   TaskListFilters,
@@ -1365,6 +1366,29 @@ export function createBrokerServer(options: BrokerServerOptions = {}): BrokerSer
         return sendJson(res, 200, task);
       }
 
+      if (req.method === "POST" && segments[0] === "tasks" && segments[1] && segments[2] === "evidence") {
+        const body = await readJson<TaskEvidenceRequest>(req);
+        if (!body?.workerId) {
+          throw new BrokerError("bad_request", "workerId is required");
+        }
+        if (enforceRequesterIdentity) {
+          assertRequesterMatchesParty(requesterIdentity, { id: body.workerId }, "task.evidence");
+        }
+        const outcome = body.outcome ?? "done";
+        if (outcome === "done" || outcome === "pr") {
+          const task = broker.completeTask(segments[1], body.workerId, body.result);
+          return sendJson(res, 200, task);
+        }
+        if (outcome === "blocked" || outcome === "failed") {
+          const task = broker.failTask(segments[1], body.workerId, body.error ?? {
+            code: outcome,
+            message: body.result?.summary ?? body.result?.note ?? `worker posted ${outcome} evidence`,
+          });
+          return sendJson(res, 200, task);
+        }
+        throw new BrokerError("bad_request", "outcome must be done, pr, blocked, or failed");
+      }
+
       if (req.method === "POST" && segments[0] === "tasks" && segments[1] && segments[2] === "fail") {
         const body = await readJson<TaskFailRequest>(req);
         if (!body?.workerId) {
@@ -1895,9 +1919,10 @@ function taskFiltersFromUrl(url: URL): {
   assignedWorkerId?: string;
   taskOrigin?: TaskOrigin;
 } {
-  return {
-    exchangeId: optionalString(url.searchParams.get("exchangeId")),
-    status: optionalEnum(url.searchParams.get("status"), [
+  const rawStatus = url.searchParams.get("status");
+  const status = rawStatus === "pending"
+    ? "queued"
+    : optionalEnum(rawStatus, [
       "blocked",
       "queued",
       "claimed",
@@ -1905,7 +1930,10 @@ function taskFiltersFromUrl(url: URL): {
       "succeeded",
       "failed",
       "canceled",
-    ]),
+    ]);
+  return {
+    exchangeId: optionalString(url.searchParams.get("exchangeId")),
+    status,
     targetNodeId: optionalString(url.searchParams.get("targetNodeId")),
     proposalId: optionalString(url.searchParams.get("proposalId")),
     intent: optionalEnum(url.searchParams.get("intent"), [
@@ -1920,7 +1948,7 @@ function taskFiltersFromUrl(url: URL): {
       "rollback_live",
     ]),
     claimedBy: optionalString(url.searchParams.get("claimedBy")),
-    assignedWorkerId: optionalString(url.searchParams.get("assignedWorkerId")),
+    assignedWorkerId: optionalString(url.searchParams.get("assignedWorkerId")) ?? optionalString(url.searchParams.get("worker")),
     taskOrigin: optionalEnum(url.searchParams.get("taskOrigin"), ["github", "api", "sessions_send", "operator", "unknown"]),
   };
 }

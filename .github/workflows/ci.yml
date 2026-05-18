@@ -191,4 +191,5 @@ jobs:
       - run: npm ci --ignore-scripts --include=dev
       - run: npm run check
       - run: npm run check:quickstart-conformance
+      - run: npm run check:external-harness-conformance
       - run: npm run test:release-gate

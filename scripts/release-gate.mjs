@@ -7,6 +7,7 @@ const steps = [
   ['runner-import-smoke', 'npm', ['run', 'check:runner-import-smoke']],
   ['terminal-brief-routing', 'npm', ['run', 'check:terminal-brief-routing']],
   ['message-id-ack-boundary', 'npm', ['run', 'check:message-id-ack-boundary']],
+  ['external-harness-conformance', 'npm', ['run', 'check:external-harness-conformance']],
   ['public-readiness', 'npm', ['run', 'scan:public-readiness']],
   ['readiness-gates', 'npm', ['run', 'scan:readiness-gates']],
   ['external-secrets', 'npm', ['run', 'scan:external-secrets']],

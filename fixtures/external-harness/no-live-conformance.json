@@ -1,0 +1,63 @@
+{
+  "schema": "a2a.externalHarness.noLiveConformance.v1",
+  "mode": "no-live",
+  "harness": {
+    "name": "example-external-harness",
+    "usesOpenClawCli": false,
+    "description": "Public-safe external harness fixture for local conformance only"
+  },
+  "broker": {
+    "baseUrl": "http://127.0.0.1:8787",
+    "production": false
+  },
+  "worker": {
+    "id": "external-harness-worker",
+    "capabilities": [
+      "register",
+      "poll-task",
+      "submit-terminal-evidence",
+      "idempotent-replay"
+    ]
+  },
+  "task": {
+    "id": "external-harness-no-live-1",
+    "assignedWorkerId": "external-harness-worker",
+    "payload": {
+      "noLive": true,
+      "replaySafe": true,
+      "instruction": "Return deterministic Done evidence or a clear local Block. Do not contact live providers."
+    },
+    "expectedTerminalEvidence": [
+      "Done",
+      "Block"
+    ]
+  },
+  "terminalBrief": {
+    "adapterContract": "stdin-json-envelope/stdout-json-receipt-decision",
+    "ackEligibleConfirmationSources": [
+      "current_session_visible",
+      "manual_operator_receipt"
+    ],
+    "nonAckEvidence": [
+      "provider_accepted",
+      "provider_sent",
+      "queue_accepted",
+      "spool_produced"
+    ],
+    "finalCountExample": {
+      "completed": 3,
+      "total": 3,
+      "label": "(3/3)",
+      "meaning": "closeout candidate input only, not automatic irreversible action"
+    }
+  },
+  "safety": {
+    "liveProviderSend": false,
+    "terminalAckReplay": false,
+    "gatewayRestart": false,
+    "brokerRestart": false,
+    "databaseMutation": false,
+    "releaseOrPublish": false,
+    "secretMovement": false
+  }
+}

@@ -37,6 +37,7 @@ Machine-readable reference fixtures for broker/plugin/runner validation:
 - [Checkpoint & human-interrupt scenarios](../../fixtures/contract/checkpoint-interrupt.json)
 - [R20 stability gate](../../fixtures/contract/r20-stability-gate.json) — machine-readable R20 gate fixture
 - [R31 worker capability profile](../../fixtures/contract/worker-capability-profile.json) — worker capability profile fixture
+- [External harness no-live conformance](../../fixtures/external-harness/no-live-conformance.json) — public-safe external harness fixture for OpenClaw-agnostic no-live integration
 
 ### Compatibility fixtures
 

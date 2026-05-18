@@ -22,6 +22,14 @@ npm run smoke:quickstart
 
 This builds all workspace packages and validates quickstart conformance and release-gate tests.
 
+If you are integrating a non-OpenClaw harness, use the external harness path after this local smoke:
+
+~~~bash
+npm run check:external-harness-conformance
+~~~
+
+The public-safe guide is docs/external-harness-quickstart.md; it keeps OpenClaw as a reference integration only and validates the no-live fixture in fixtures/external-harness/no-live-conformance.json.
+
 ## 1. Run the local A2A Plane broker
 
 From the broker workspace, use the package's documented local start command:

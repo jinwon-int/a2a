@@ -1,0 +1,29 @@
+{
+  "id": "hermes-local-smoke-1",
+  "intent": "analyze",
+  "requester": {
+    "id": "local-operator",
+    "kind": "node",
+    "role": "operator"
+  },
+  "target": {
+    "id": "hermes-agent-reference-worker",
+    "kind": "node",
+    "role": "analyst"
+  },
+  "assignedWorkerId": "hermes-agent-reference-worker",
+  "targetNodeId": "hermes-agent-reference-worker",
+  "message": "Hermes reference worker local dry-run task",
+  "payload": {
+    "mode": "hermes-reference-dry-run",
+    "noLive": true,
+    "replaySafe": true,
+    "expectedTerminalEvidence": "Done"
+  },
+  "taskOrigin": "operator",
+  "policyContext": {
+    "requiresApproval": false,
+    "liveImpact": false,
+    "targetEnvironment": "local"
+  }
+}

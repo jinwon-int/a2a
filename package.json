@@ -18,6 +18,7 @@
     "check:message-id-ack-boundary": "node scripts/check-message-id-ack-boundary.mjs",
     "check:compatibility-baselines": "node scripts/check-compatibility-baselines.mjs",
     "check:quickstart-conformance": "node scripts/check-quickstart-conformance.mjs",
+    "check:hermes-reference-worker": "node --test scripts/check-hermes-reference-worker.test.mjs",
     "check:no-diff-closeout-guidance": "node --test scripts/check-no-diff-closeout-guidance.test.mjs",
     "scan:public-readiness": "node scripts/public-readiness-scan.mjs",
     "scan:readiness-gates": "node scanner/readiness/fail-closed-gates.mjs --spec docs/readiness/fail-closed-gates.json",

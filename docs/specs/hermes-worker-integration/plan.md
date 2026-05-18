@@ -19,13 +19,13 @@ Reason: Phase 1 changes source contracts, broker HTTP surface, docs, and tests. 
 - a2a-broker: HTTP compatibility aliases and server validation test.
 - a2a-docker-runner: no change.
 - openclaw-plugin-a2a: no change.
-- Hermes Agent scripts/tools: no change.
+- Hermes Agent scripts/tools: reference dry-run script only, under examples/workers/hermes-reference-worker/.
 - Wiki/runbooks: update only if the operator workflow changes after merge.
 
 ## Execution lane
 
 - [x] Seoseo direct Phase 1 source PR.
-- [ ] Isolated worker implementation.
+- [x] Seoseo direct Phase 2 reference dry-run package.
 - [ ] Live Hermes registration/canary.
 
 Why this lane is safe: it modifies local source/docs/tests only and does not touch production broker state.
@@ -45,17 +45,19 @@ Why this lane is safe: it modifies local source/docs/tests only and does not tou
 
 - npm --workspace packages/broker test -- --test-name-pattern "Hermes-style worker"
 - npm --workspace packages/broker test
+- npm run check:hermes-reference-worker
+- python3 -m py_compile examples/workers/hermes-reference-worker/a2a_worker.py
+- Local loopback smoke: start packages/broker local server, create hermes-local-smoke-1, run examples/workers/hermes-reference-worker/a2a_worker.py --action run-once, confirm task succeeded.
 - git diff --check
 - GitHub Actions check on PR.
 
 ## Rollout plan
 
 - Merge source PR after local and CI validation.
-- Do not deploy, restart, register live Hermes workers, or send provider notifications.
+- Do not deploy, restart, register live Hermes workers, send provider notifications, or point the reference script at non-loopback brokers.
 - Create a separate tracker/approval packet before any live Hermes worker work.
 
 ## Rollback plan
 
 - Revert PR.
 - No production state cleanup is required.
-
